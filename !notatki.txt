@@ -1,0 +1,12 @@
+python.exe -m pip install --upgrade pip
+pip install PyQt5
+pip install PyQt5Designer
+pip install configparser
+pip install openpyxl
+pip install mysql-connector-python
+#pip install calendar
+
+designer
+
+pyuic5 main.ui -o main_ui.py
+pyrcc5 ikony.qrc -o ikony_rc.py

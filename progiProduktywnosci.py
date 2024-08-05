@@ -5,6 +5,7 @@ from _progiProduktywnosci_ui import Ui_Form
 import db
 
 from progiProduktywnosciDodaj import MainWindow_progiProduktywnosciDodaj
+from progiProduktywnosciEdytuj import MainWindow_progiProduktywnosciEdytuj
 
 class MainWindow_progiProduktywnosci(QWidget):
     def __init__(self):
@@ -13,6 +14,7 @@ class MainWindow_progiProduktywnosci(QWidget):
         self.ui.setupUi(self)
 
         self.ui.btn_zapisz.clicked.connect(self.otworz_okno_progiProduktywnosciDodaj)
+        self.ui.tab_dane.doubleClicked.connect(self.otworz_okno_progiProduktywnosciEdytuj)
 
         QApplication.instance().focusChanged.connect(self.wyszukaj_dane)
         self.wyszukaj_dane()
@@ -89,3 +91,11 @@ class MainWindow_progiProduktywnosci(QWidget):
     def otworz_okno_progiProduktywnosciDodaj(self):
         self.okno_progiProduktywnosciDodaj = MainWindow_progiProduktywnosciDodaj()
         self.okno_progiProduktywnosciDodaj.show()
+
+    @pyqtSlot()
+    def otworz_okno_progiProduktywnosciEdytuj(self):
+        row = self.ui.tab_dane.currentRow()
+        data = [self.ui.tab_dane.item(row, col).text() for col in range(self.ui.tab_dane.columnCount())]
+        self.okno_progiProduktywnosciEdytuj = MainWindow_progiProduktywnosciEdytuj(data)
+        self.okno_progiProduktywnosciEdytuj.setAttribute(Qt.WA_DeleteOnClose)  # Ensure the window is deleted when closed
+        self.okno_progiProduktywnosciEdytuj.show()

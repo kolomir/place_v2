@@ -83,7 +83,7 @@ class MainWindow_progiProduktywnosciDodaj(QWidget):
             aktywny = 0
         teraz = datetime.today()
         print('aktywny:', aktywny)
-        insert_data1 = "INSERT INTO instruktor VALUES (NULL, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');" % (pole_ranga_id, pole_prog1, pole_kwota1, pole_prog2, pole_kwota2, pole_prog3, pole_kwota3, str(aktywny), teraz)
+        insert_data1 = "INSERT INTO progi_prod VALUES (NULL, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');" % (pole_ranga_id, pole_prog1, pole_kwota1, pole_prog2, pole_kwota2, pole_prog3, pole_kwota3, str(aktywny), teraz)
         print(insert_data1)
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         db.execute_query(connection, insert_data1)

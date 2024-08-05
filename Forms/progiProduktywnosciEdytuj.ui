@@ -167,7 +167,7 @@
              <number>0</number>
             </property>
             <property name="leftMargin">
-             <number>50</number>
+             <number>0</number>
             </property>
             <property name="topMargin">
              <number>0</number>
@@ -182,6 +182,9 @@
              <widget class="QLabel" name="label_5">
               <property name="text">
                <string>Próg min.</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
@@ -210,7 +213,7 @@
              <widget class="QLabel" name="lab_prog1">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>80</width>
                 <height>0</height>
                </size>
               </property>
@@ -219,6 +222,13 @@
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_9">
+              <property name="text">
+               <string>%</string>
               </property>
              </widget>
             </item>
@@ -289,7 +299,7 @@
              <number>0</number>
             </property>
             <property name="leftMargin">
-             <number>50</number>
+             <number>0</number>
             </property>
             <property name="topMargin">
              <number>0</number>
@@ -304,6 +314,9 @@
              <widget class="QLabel" name="label_4">
               <property name="text">
                <string>Próg średni</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
@@ -332,7 +345,7 @@
              <widget class="QLabel" name="lab_prog2">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>80</width>
                 <height>0</height>
                </size>
               </property>
@@ -341,6 +354,13 @@
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_10">
+              <property name="text">
+               <string>%</string>
               </property>
              </widget>
             </item>
@@ -411,7 +431,7 @@
              <number>0</number>
             </property>
             <property name="leftMargin">
-             <number>50</number>
+             <number>0</number>
             </property>
             <property name="topMargin">
              <number>0</number>
@@ -426,6 +446,9 @@
              <widget class="QLabel" name="label_3">
               <property name="text">
                <string>Próg maks. </string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
@@ -454,7 +477,7 @@
              <widget class="QLabel" name="lab_prog3">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>80</width>
                 <height>0</height>
                </size>
               </property>
@@ -463,6 +486,13 @@
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_11">
+              <property name="text">
+               <string>%</string>
               </property>
              </widget>
             </item>
