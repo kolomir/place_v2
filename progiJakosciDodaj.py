@@ -65,7 +65,11 @@ class MainWindow_progiJakosciDodaj(QWidget):
         if index == 1:
             self.ui.combo_lokalizacja.setEnabled(True)
             self.ui.combo_wc.setEnabled(False)
+            select_data_ranga = "SELECT * FROM gniazda_robocze WHERE aktywna = 1;"
         if index == 2:
             self.ui.combo_lokalizacja.setEnabled(False)
             self.ui.combo_wc.setEnabled(True)
-        # TODO: w fonkcji "on_combo_ranga_changed()" w warunkach można dodać automatycznie kwotę dla danej rangi. Pole kwoty nie jest edytowalne
+            select_data_ranga = "SELECT * FROM gniazda_robocze WHERE aktywna = 1;"
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, select_data_ranga)
+        # TODO: w funkcji "on_combo_ranga_changed()" w warunkach można dodać automatycznie kwotę dla danej rangi. Pole kwoty nie jest edytowalne

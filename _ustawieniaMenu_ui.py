@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'forms\ustawieniaMenu.ui'
+# Form implementation generated from reading ui file 'Forms\ustawieniaMenu.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.10
 #
@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
-        Form.resize(194, 244)
+        Form.resize(194, 273)
         self.gridLayout = QtWidgets.QGridLayout(Form)
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
         self.gridLayout.setSpacing(0)
@@ -47,6 +47,9 @@ class Ui_Form(object):
         self.btn_progiJak = QtWidgets.QPushButton(self.widget_2)
         self.btn_progiJak.setObjectName("btn_progiJak")
         self.verticalLayout.addWidget(self.btn_progiJak)
+        self.btn_kwoty = QtWidgets.QPushButton(self.widget_2)
+        self.btn_kwoty.setObjectName("btn_kwoty")
+        self.verticalLayout.addWidget(self.btn_kwoty)
         self.gridLayout.addWidget(self.widget_2, 0, 0, 1, 1)
 
         self.retranslateUi(Form)
@@ -63,3 +66,4 @@ class Ui_Form(object):
         self.btn_instruktorzy.setText(_translate("Form", "Lider <=> WC"))
         self.btn_progiProd.setText(_translate("Form", "Wytyczne - Produktywność"))
         self.btn_progiJak.setText(_translate("Form", "Wytyczne - Jakość"))
+        self.btn_kwoty.setText(_translate("Form", "Kwoty Jakości"))

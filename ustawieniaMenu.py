@@ -9,6 +9,7 @@ from wcliniaForm import MainWindow_wclinia
 from liderzyForm import MainWindow_liderzy
 from progiProduktywnosci import MainWindow_progiProduktywnosci
 from progiJakosci import MainWindow_progiJakosci
+from kwotyJakoscForm import MainWindow_kwotyJakosc
 
 
 class MainWindow_ustawienia(QWidget):
@@ -24,6 +25,7 @@ class MainWindow_ustawienia(QWidget):
         self.ui.btn_liderzy.clicked.connect(self.otworz_okno_liderzyForm)
         self.ui.btn_progiProd.clicked.connect(self.otworz_okno_progiProduktywnosci)
         self.ui.btn_progiJak.clicked.connect(self.otworz_okno_progiJakosci)
+        self.ui.btn_kwoty.clicked.connect(self.otworz_okno_kwotyJakosc)
 
     def otworz_okno_lokalizacjeForm(self):
         self.okno_lokalizacjeForm = MainWindow_lokalizacje()
@@ -52,3 +54,7 @@ class MainWindow_ustawienia(QWidget):
     def otworz_okno_progiJakosci(self):
         self.okno_progiJakosci = MainWindow_progiJakosci()
         self.okno_progiJakosci.show()
+
+    def otworz_okno_kwotyJakosc(self):
+        self.okno_kwotyJakosc = MainWindow_kwotyJakosc()
+        self.okno_kwotyJakosc.show()

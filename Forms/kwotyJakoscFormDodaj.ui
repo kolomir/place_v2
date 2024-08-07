@@ -104,10 +104,10 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="QComboBox" name="combo_grupa">
+          <widget class="QComboBox" name="combo_ranga">
            <property name="minimumSize">
             <size>
-             <width>160</width>
+             <width>130</width>
              <height>0</height>
             </size>
            </property>
@@ -127,7 +127,27 @@
           </spacer>
          </item>
          <item>
-          <widget class="QComboBox" name="combo_linia"/>
+          <widget class="QLineEdit" name="text_kwota">
+           <property name="minimumSize">
+            <size>
+             <width>65</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+           <property name="placeholderText">
+            <string>Kwota za 100%</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_3">
+           <property name="text">
+            <string> zł</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>194</width>
-    <height>244</height>
+    <height>273</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -85,6 +85,13 @@
        <widget class="QPushButton" name="btn_progiJak">
         <property name="text">
          <string>Wytyczne - Jakość</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btn_kwoty">
+        <property name="text">
+         <string>Kwoty Jakości</string>
         </property>
        </widget>
       </item>
