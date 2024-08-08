@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'forms\progiJakosciDodaj.ui'
+# Form implementation generated from reading ui file 'Forms\progiJakosciDodaj.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.10
 #
@@ -111,11 +111,11 @@ class Ui_Form(object):
         self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout_4.setSpacing(0)
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
-        self.lineEdit_4 = QtWidgets.QLineEdit(self.widget_6)
-        self.lineEdit_4.setMinimumSize(QtCore.QSize(130, 0))
-        self.lineEdit_4.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
-        self.lineEdit_4.setObjectName("lineEdit_4")
-        self.horizontalLayout_4.addWidget(self.lineEdit_4)
+        self.text_kwota = QtWidgets.QLineEdit(self.widget_6)
+        self.text_kwota.setMinimumSize(QtCore.QSize(130, 0))
+        self.text_kwota.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.text_kwota.setObjectName("text_kwota")
+        self.horizontalLayout_4.addWidget(self.text_kwota)
         self.label_3 = QtWidgets.QLabel(self.widget_6)
         self.label_3.setObjectName("label_3")
         self.horizontalLayout_4.addWidget(self.label_3)
@@ -139,6 +139,6 @@ class Ui_Form(object):
         self.text_prog1.setPlaceholderText(_translate("Form", "Próg 1"))
         self.text_prog2.setPlaceholderText(_translate("Form", "Próg 2"))
         self.text_prog3.setPlaceholderText(_translate("Form", "Próg 3"))
-        self.lineEdit_4.setPlaceholderText(_translate("Form", "Kwota 100%"))
+        self.text_kwota.setPlaceholderText(_translate("Form", "Kwota 100%"))
         self.label_3.setText(_translate("Form", "zł"))
         self.btn_zapisz.setText(_translate("Form", "Zapisz"))

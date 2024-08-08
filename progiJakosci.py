@@ -18,7 +18,27 @@ class MainWindow_progiJakosci(QWidget):
         self.wyszukaj_dane()
 
     def wyszukaj_dane(self):
-        select_data = "select p.id, l.lokalizacja, r.ranga, p.pulap1, p.pulap2, p.pulap3, k.kwota, p.aktywny, p.data_dodania from progi_jakosc p left join ranga r on r.id = p.id_ranga left join kwoty_jakosc k on k.id_ranga = p.id_ranga left join lokalizacja l on l.id = p.id_lokalizacja order by l.lokalizacja,r.ranga ASC;"
+        select_data = """
+        select 
+            p.id, 
+            l.lokalizacja, 
+            gr.nazwa, 
+            r.ranga, 
+            p.pulap1, 
+            p.pulap2, 
+            p.pulap3, 
+            k.kwota, 
+            p.aktywny, 
+            p.data_dodania 
+        from 
+            progi_jakosc p 
+                left join ranga r on r.id = p.id_ranga 
+                left join gniazda_robocze gr on gr.id = p.id_wc 
+                left join kwoty_jakosc k on k.id_ranga = p.id_ranga 
+                left join lokalizacja l on l.id = p.id_lokalizacja 
+        order by 
+            r.ranga ASC;
+        """
         #select_data = "select * from progi_prod p;"
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         results = db.read_query(connection, select_data)
@@ -50,6 +70,7 @@ class MainWindow_progiJakosci(QWidget):
             self.ui.tab_dane.setItem(wiersz, 6, QTableWidgetItem(str(wynik[6])))
             self.ui.tab_dane.setItem(wiersz, 7, QTableWidgetItem(str(wynik[7])))
             self.ui.tab_dane.setItem(wiersz, 8, QTableWidgetItem(str(wynik[8])))
+            self.ui.tab_dane.setItem(wiersz, 9, QTableWidgetItem(str(wynik[9])))
             wiersz += 1
 
         self.ui.tab_dane.horizontalHeader().setStretchLastSection(True)
@@ -62,13 +83,15 @@ class MainWindow_progiJakosci(QWidget):
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(8, QHeaderView.ResizeToContents)
+        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(9, QHeaderView.ResizeToContents)
 
     def naglowki_tabeli(self):
-        self.ui.tab_dane.setColumnCount(9)  # Zmień na liczbę kolumn w twojej tabeli
+        self.ui.tab_dane.setColumnCount(10)  # Zmień na liczbę kolumn w twojej tabeli
         self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
         self.ui.tab_dane.setHorizontalHeaderLabels([
             'ID',
             'Lokalizacja',
+            'Grupa robocza',
             'Ranga',
             'Pułap1',
             'Pułap2',

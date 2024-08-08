@@ -304,7 +304,7 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="QLineEdit" name="lineEdit_4">
+          <widget class="QLineEdit" name="text_kwota">
            <property name="minimumSize">
             <size>
              <width>130</width>
