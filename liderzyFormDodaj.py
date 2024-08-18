@@ -13,7 +13,7 @@ class MainWindow_liderzyDodaj(QWidget):
         self.combo_ranga()
 
     def combo_ranga(self):
-        select_data_ranga = "SELECT * FROM ranga WHERE aktywny = 1;"
+        select_data_ranga = "SELECT * FROM ranga;"
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         results = db.read_query(connection, select_data_ranga)
 
@@ -64,7 +64,7 @@ class MainWindow_liderzyDodaj(QWidget):
         else:
             aktywny = 0
         print('aktywny:', aktywny)
-        insert_data1 = "INSERT INTO instruktor VALUES (NULL, '%s', '%s', '%s', '%s', '%s');" % (pole_nrAkt, pole_imie, pole_nazwisko, str(aktywny), pole_ranga_id)
+        insert_data1 = "INSERT INTO instruktor VALUES (NULL, '%s', '%s', '%s', '%s', '%s', 0);" % (pole_nrAkt, pole_imie, pole_nazwisko, str(aktywny), pole_ranga_id)
         print(insert_data1)
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         db.execute_query(connection, insert_data1)

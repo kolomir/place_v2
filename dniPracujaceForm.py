@@ -1,26 +1,30 @@
 from PyQt5.QtWidgets import QWidget, QTableWidgetItem,QHeaderView,QApplication
 from PyQt5.QtCore import pyqtSlot, Qt
 
-from _liderzyForm_ui import Ui_Form
+import dodatki
+from _dniPracujaceForm_ui import Ui_Form
 import db
+from datetime import date, datetime
 
-from liderzyFormDodaj import MainWindow_liderzyDodaj
-from liderzyFormEdytuj import MainWindow_liderzyEdytuj
+from dniPracujaceFormDodaj import MainWindow_dniPracujaceFormDodaj
 
-class MainWindow_liderzy(QWidget):
+class MainWindow_dniPracujaceForm(QWidget):
     def __init__(self):
         super().__init__()
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
-        self.ui.btn_zapisz.clicked.connect(self.otworz_okno_liderzyFormDodaj)
-        self.ui.tab_dane.doubleClicked.connect(self.otworz_okno_liderzyFormEdytuj)
+        self.ui.btn_zapisz.clicked.connect(self.otworz_okno_dniPracujaceFormDodaj)
+        self.combo_rok()
 
         QApplication.instance().focusChanged.connect(self.wyszukaj_dane)
         self.wyszukaj_dane()
 
     def wyszukaj_dane(self):
-        select_data = "select i.id, i.nr_akt, i.nazwisko, i.imie, r.ranga, i.aktywny, i.uzyte from instruktor i left join ranga r on r.id = i.id_ranga order by i.nazwisko ASC;"
+
+        combo_rok_text = self.ui.comboRok.currentText()
+
+        select_data = "select d.id, d.miesiac, d.godziny_pracy, d.dni_pracy, d.dni_wolne from dni_pracujace_w_roku d WHERE rok = %s;" % combo_rok_text
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         results = db.read_query(connection, select_data)
 
@@ -42,13 +46,12 @@ class MainWindow_liderzy(QWidget):
 
         wiersz = 0
         for wynik in rows:
+            miesiac = dodatki.nazwy_miesiecy[wynik[1]-1]
             self.ui.tab_dane.setItem(wiersz, 0, QTableWidgetItem(str(wynik[0])))
-            self.ui.tab_dane.setItem(wiersz, 1, QTableWidgetItem(str(wynik[1])))
+            self.ui.tab_dane.setItem(wiersz, 1, QTableWidgetItem(str(miesiac)))
             self.ui.tab_dane.setItem(wiersz, 2, QTableWidgetItem(str(wynik[2])))
             self.ui.tab_dane.setItem(wiersz, 3, QTableWidgetItem(str(wynik[3])))
             self.ui.tab_dane.setItem(wiersz, 4, QTableWidgetItem(str(wynik[4])))
-            self.ui.tab_dane.setItem(wiersz, 5, QTableWidgetItem(str(wynik[5])))
-            self.ui.tab_dane.setItem(wiersz, 6, QTableWidgetItem(str(wynik[6])))
             wiersz += 1
 
         self.ui.tab_dane.horizontalHeader().setStretchLastSection(True)
@@ -57,20 +60,16 @@ class MainWindow_liderzy(QWidget):
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeToContents)
 
     def naglowki_tabeli(self):
-        self.ui.tab_dane.setColumnCount(7)  # Zmień na liczbę kolumn w twojej tabeli
+        self.ui.tab_dane.setColumnCount(5)  # Zmień na liczbę kolumn w twojej tabeli
         self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
         self.ui.tab_dane.setHorizontalHeaderLabels([
             'ID',
-            'Imię',
-            'Nazwisko',
-            'Nr akt',
-            'Ranga',
-            'Aktywny',
-            'Grupa robocza'
+            'Miesiac',
+            'Godziny Pracy',
+            'Dni Pracy',
+            'Dni Wolne'
         ])
 
     def clear_table(self):
@@ -78,14 +77,23 @@ class MainWindow_liderzy(QWidget):
         self.ui.tab_dane.clearContents()
         self.ui.tab_dane.setRowCount(0)
 
-    def otworz_okno_liderzyFormDodaj(self):
-        self.okno_liderzyFormDodaj = MainWindow_liderzyDodaj()
-        self.okno_liderzyFormDodaj.show()
+    def otworz_okno_dniPracujaceFormDodaj(self):
+        self.okno_dniPracujaceFormDodaj = MainWindow_dniPracujaceFormDodaj()
+        self.okno_dniPracujaceFormDodaj.show()
 
-    @pyqtSlot()
-    def otworz_okno_liderzyFormEdytuj(self):
-        row = self.ui.tab_dane.currentRow()
-        data = [self.ui.tab_dane.item(row, col).text() for col in range(self.ui.tab_dane.columnCount())]
-        self.okno_liderzyFormEdytuj = MainWindow_liderzyEdytuj(data)
-        self.okno_liderzyFormEdytuj.setAttribute(Qt.WA_DeleteOnClose)  # Ensure the window is deleted when closed
-        self.okno_liderzyFormEdytuj.show()
+    def combo_rok(self):
+        select_data_linie = "SELECT rok FROM dni_pracujace_w_roku GROUP BY rok;"
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, select_data_linie)
+
+        ten_rok = datetime.today().year
+
+        lata = []
+        for wynik in results:
+            lata.append(wynik[0])
+            self.ui.comboRok.addItem(str(wynik[0]))
+
+        if ten_rok in lata:
+            self.ui.comboRok.setCurrentText(str(ten_rok))
+        else:
+            self.ui.comboRok.setCurrentIndex(0)  # domyślnie pierwszy element

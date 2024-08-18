@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'main.ui'
+# Form implementation generated from reading ui file 'Forms\main.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.10
 #
@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(291, 332)
+        MainWindow.resize(291, 406)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
@@ -148,6 +148,26 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.wid_raportowanie)
         self.verticalLayout_2.addWidget(self.widget_3)
         self.gridLayout.addWidget(self.widget, 0, 0, 1, 1)
+        self.widget_6 = QtWidgets.QWidget(self.centralwidget)
+        self.widget_6.setObjectName("widget_6")
+        self.verticalLayout_5 = QtWidgets.QVBoxLayout(self.widget_6)
+        self.verticalLayout_5.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_5.setSpacing(0)
+        self.verticalLayout_5.setObjectName("verticalLayout_5")
+        self.line_2 = QtWidgets.QFrame(self.widget_6)
+        self.line_2.setFrameShape(QtWidgets.QFrame.HLine)
+        self.line_2.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.line_2.setObjectName("line_2")
+        self.verticalLayout_5.addWidget(self.line_2)
+        self.widget_7 = QtWidgets.QWidget(self.widget_6)
+        self.widget_7.setObjectName("widget_7")
+        self.horizontalLayout_7 = QtWidgets.QHBoxLayout(self.widget_7)
+        self.horizontalLayout_7.setObjectName("horizontalLayout_7")
+        self.btn_oblicz = QtWidgets.QPushButton(self.widget_7)
+        self.btn_oblicz.setObjectName("btn_oblicz")
+        self.horizontalLayout_7.addWidget(self.btn_oblicz)
+        self.verticalLayout_5.addWidget(self.widget_7)
+        self.gridLayout.addWidget(self.widget_6, 2, 0, 1, 1)
         self.widget_4 = QtWidgets.QWidget(self.centralwidget)
         self.widget_4.setObjectName("widget_4")
         self.verticalLayout_4 = QtWidgets.QVBoxLayout(self.widget_4)
@@ -172,7 +192,7 @@ class Ui_MainWindow(object):
         self.btn_zamknij.setObjectName("btn_zamknij")
         self.horizontalLayout_6.addWidget(self.btn_zamknij)
         self.verticalLayout_4.addWidget(self.widget_5)
-        self.gridLayout.addWidget(self.widget_4, 1, 0, 1, 1)
+        self.gridLayout.addWidget(self.widget_4, 3, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
@@ -193,6 +213,7 @@ class Ui_MainWindow(object):
         self.btn_direct.setText(_translate("MainWindow", "Załaduj dane"))
         self.lab_raportowanie.setText(_translate("MainWindow", "Raportowanie"))
         self.btn_zaladuj_raportowanie.setText(_translate("MainWindow", "Załaduj dane"))
+        self.btn_oblicz.setText(_translate("MainWindow", "Oblicz"))
         self.btn_ustawienia.setText(_translate("MainWindow", "Ustawienia"))
         self.btn_zamknij.setText(_translate("MainWindow", "Zamknij"))
 import icon_rc

@@ -93,7 +93,7 @@ class MainWindow_nieobecnosci(QWidget):
     def wyszukaj_dane(self):
         miestac_roboczy = dodatki.data_miesiac_dzis()
         print('miesiac',miestac_roboczy)
-        select_data = "SELECT * FROM `nieobecnosci_prod` WHERE miesiac = '%s';" % ('2024-06-01') #(miestac_roboczy)
+        select_data = "SELECT * FROM `nieobecnosci_prod` WHERE miesiac = '%s';" % (miestac_roboczy) #(miestac_roboczy)
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         results = db.read_query(connection, select_data)
 

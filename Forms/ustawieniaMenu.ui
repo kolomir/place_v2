@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>194</width>
-    <height>273</height>
+    <height>303</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -82,6 +82,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="btn_kwoty">
+        <property name="text">
+         <string>Kwoty Jakości</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="btn_progiJak">
         <property name="text">
          <string>Wytyczne - Jakość</string>
@@ -89,9 +96,9 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="btn_kwoty">
+       <widget class="QPushButton" name="btn_dniPracujace">
         <property name="text">
-         <string>Kwoty Jakości</string>
+         <string>Dni wolne w roku</string>
         </property>
        </widget>
       </item>

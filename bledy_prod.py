@@ -5,7 +5,7 @@ import openpyxl
 import os
 from datetime import date, datetime
 
-from bledy_prod_ui import Ui_Form
+from _bledy_prod_ui import Ui_Form
 import db, dodatki
 
 
@@ -92,7 +92,7 @@ class MainWindow_bledy(QWidget):
     def wyszukaj_dane(self):
         miestac_roboczy = dodatki.data_miesiac_dzis()
         print('miesiac',miestac_roboczy)
-        select_data = "SELECT * FROM `bledy_prod` WHERE miesiac = '%s';" % ('2024-06-01') #(miestac_roboczy)
+        select_data = "SELECT * FROM `bledy_prod` WHERE miesiac = '%s';" % (miestac_roboczy) #(miestac_roboczy)
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         results = db.read_query(connection, select_data)
 

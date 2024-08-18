@@ -14,7 +14,7 @@ class MainWindow_progiProduktywnosciDodaj(QWidget):
         self.combo_ranga()
 
     def combo_ranga(self):
-        select_data_ranga = "SELECT * FROM ranga WHERE aktywny = 1;"
+        select_data_ranga = "SELECT * FROM ranga;"
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         results = db.read_query(connection, select_data_ranga)
 

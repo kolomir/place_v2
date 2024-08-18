@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, qApp
+from PyQt5.QtWidgets import QMainWindow, qApp, QApplication
 from PyQt5 import QtGui
 import configparser
 #import sys
@@ -10,6 +10,7 @@ import db, dodatki
 from bledy_prod import MainWindow_bledy
 from nieobecnosci_prod import MainWindow_nieobecnosci
 from ustawieniaMenu import MainWindow_ustawienia
+from wyliczeniaForm import MainWindow_wyliczeniaForm
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -32,7 +33,11 @@ class MainWindow(QMainWindow):
         self.ui.btn_bledy.clicked.connect(self.otworz_okno_bledy)
         self.ui.btn_nieobecnosci.clicked.connect(self.otworz_okno_nieobecnosci)
         self.ui.btn_ustawienia.clicked.connect(self.otworz_okno_ustawieniaMenu)
+        self.ui.btn_oblicz.clicked.connect(self.otworz_okno_wyliczeniaForm)
         self.ui.btn_zamknij.clicked.connect(qApp.quit)
+
+        QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_bledy)
+        QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_nieobecnosci)
 
         self.sprawdz_zaladowanie_bledy()
         self.sprawdz_zaladowanie_nieobecnosci()
@@ -42,7 +47,7 @@ class MainWindow(QMainWindow):
         prev_miesiac = data_dzis.month - 1 if data_dzis.month > 1 else 12
         prev_rok = data_dzis.year if data_dzis.month > 1 else data_dzis.year - 1
         data_miesiac = "%s-%s-%s" % (prev_rok,prev_miesiac,"1")
-        print(data_miesiac)
+        #print(data_miesiac)
         return data_miesiac
 
     #- TESTY --------------------------------------------------
@@ -89,18 +94,18 @@ class MainWindow(QMainWindow):
 
     def otwarty_miesiac(self):
         miestac_roboczy = self.data_miesiac_dzis()
-        print('miestac_roboczy:', miestac_roboczy)
+        #print('miestac_roboczy:', miestac_roboczy)
         select_data = "SELECT * FROM aktywny_miesiac WHERE miesiac = '%s'" % (str(miestac_roboczy))
         select_data = "SELECT * FROM aktywny_miesiac WHERE blokada = 0"
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         result = db.read_query(connection, select_data)
-        print('result1:', result)
-        print('result2:', result[0][1])
+        #print('result1:', result)
+        #print('result2:', result[0][1])
         data_obj = datetime.strptime(str(result[0][1]), '%Y-%m-%d')
         data_baza = "%s-%s-%s" % (data_obj.year, data_obj.month, "1")
         zamkniete_baza = result[0][2]
-        print('miesiac:', data_baza)
-        print('zamkniete_baza:', zamkniete_baza)
+        #print('miesiac:', data_baza)
+        #print('zamkniete_baza:', zamkniete_baza)
 
         if not result:
             print("Brak danych")
@@ -154,10 +159,14 @@ class MainWindow(QMainWindow):
         self.okno_ustawieniaMenu = MainWindow_ustawienia()
         self.okno_ustawieniaMenu.show()
 
+    def otworz_okno_wyliczeniaForm(self):
+        self.okno_wyliczeniaForm = MainWindow_wyliczeniaForm()
+        self.okno_wyliczeniaForm.show()
+
     def sprawdz_zaladowanie_bledy(self):
         miestac_roboczy = self.data_miesiac_dzis()
-        print('miesiac', miestac_roboczy)
-        select_data = "SELECT * FROM `bledy_prod` WHERE miesiac = '%s';" % ('2024-06-01')  # (miestac_roboczy)
+        #print('miesiac', miestac_roboczy)
+        select_data = "SELECT * FROM `bledy_prod` WHERE miesiac = '%s';" % (miestac_roboczy)  # (miestac_roboczy)
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         results = db.read_query(connection, select_data)
 
@@ -169,8 +178,8 @@ class MainWindow(QMainWindow):
 
     def sprawdz_zaladowanie_nieobecnosci(self):
         miestac_roboczy = self.data_miesiac_dzis()
-        print('miesiac', miestac_roboczy)
-        select_data = "SELECT * FROM `nieobecnosci_prod` WHERE miesiac = '%s';" % ('2024-06-01')  # (miestac_roboczy)
+        #print('miesiac', miestac_roboczy)
+        select_data = "SELECT * FROM `nieobecnosci_prod` WHERE miesiac = '%s';" % (miestac_roboczy)  # (miestac_roboczy)
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         results = db.read_query(connection, select_data)
 

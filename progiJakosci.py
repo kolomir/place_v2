@@ -15,6 +15,8 @@ class MainWindow_progiJakosci(QWidget):
 
         self.ui.btn_zapisz.clicked.connect(self.otworz_okno_progiJakosciDodaj)
 
+        QApplication.instance().focusChanged.connect(self.wyszukaj_dane)
+
         self.wyszukaj_dane()
 
     def wyszukaj_dane(self):

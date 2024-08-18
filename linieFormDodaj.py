@@ -24,7 +24,7 @@ class MainWindow_linieDodaj(QWidget):
     def zapisz(self):
         if not self.sprawdz_pole():
             return
-
+#TODO: Nie zapisują się lokalizacje!!
         pole_linie = self.ui.text_linia.text().strip()
         if self.ui.check_aktywny.isChecked():
             aktywny = 1
