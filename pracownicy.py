@@ -1,15 +1,13 @@
 from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QTableWidgetItem, QHeaderView
 import configparser
 import openpyxl
-#import sys
-import os
 from datetime import date, datetime
+import os
 
-from _bledy_prod_ui import Ui_Form
+from _pracownicy_ui import Ui_Form
 import db, dodatki
 
-
-class MainWindow_bledy(QWidget):
+class MainWindow_pracownicy(QWidget):
     def __init__(self):
         super().__init__()
         self.ui = Ui_Form()
@@ -20,7 +18,7 @@ class MainWindow_bledy(QWidget):
         self.config.read('config.ini')
         #- załadowanie zmiennych z pliku INI ------------------------------
         self.folder_bledy = self.config['sciezki']['folder_bledy']
-        self.plik = self.config['sciezki']['plik_bledy']
+        self.plik = self.config['sciezki']['plik_pracownicy']
         #------------------------------------------------------------------
         # - domyślna ścieżka dla pliku -----------------
         domyslny = f"{self.folder_bledy}"
@@ -57,7 +55,7 @@ class MainWindow_bledy(QWidget):
         default_directory = self.folder_bledy
         folder = QFileDialog.getExistingDirectory(self, 'Wybierz folder...', default_directory, options=options)
         folder = folder.replace("/", "\\")
-        #print(folder)
+        print(folder)
         self.ui.ed_sciezka_dane.setText(folder)
 
     def czytaj_dane(self):
@@ -77,14 +75,14 @@ class MainWindow_bledy(QWidget):
         for row in sheet.iter_rows(min_row=2, min_col=1, max_col=4, values_only=True):
             #sprawdzamy czy wiersz nie jest pusty (zakładając że pusty wiersz ma wszystkie kolumny o wartosci None i kończy zestawienie)
             if any(cell is not None for cell in row):
-                lista_wpisow.append([row[1],row[3],data_miesiac,teraz])
+                lista_wpisow.append([row[0],row[1],row[2],row[3],data_miesiac,teraz])
             else:
                 break
 
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
 
         for row in lista_wpisow:
-            insert_data = "INSERT INTO bledy_prod VALUES (NULL,'%s','%s','%s','%s');" % (row[0],row[1],row[2],row[3])
+            insert_data = "INSERT INTO pracownicy VALUES (NULL,'%s','%s','%s','%s','%s','%s');" % (row[0],row[1],row[2],row[3],row[4],row[5])
             db.execute_query(connection, insert_data)
 
         self.wyszukaj_dane()
@@ -92,7 +90,7 @@ class MainWindow_bledy(QWidget):
     def wyszukaj_dane(self):
         miestac_roboczy = dodatki.data_miesiac_dzis()
         print('miesiac',miestac_roboczy)
-        select_data = "SELECT * FROM `bledy_prod` WHERE miesiac = '%s';" % (miestac_roboczy) #(miestac_roboczy)
+        select_data = "SELECT * FROM `pracownicy` WHERE miesiac = '%s';" % (miestac_roboczy) #(miestac_roboczy)
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         results = db.read_query(connection, select_data)
 
@@ -112,9 +110,9 @@ class MainWindow_bledy(QWidget):
         self.ui.tab_dane.setRowCount(0)
 
     def naglowki_tabeli(self):
-        self.ui.tab_dane.setColumnCount(4)  # Zmień na liczbę kolumn w twojej tabeli
+        self.ui.tab_dane.setColumnCount(6)  # Zmień na liczbę kolumn w twojej tabeli
         self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
-        self.ui.tab_dane.setHorizontalHeaderLabels(['Nr akt', 'Bledy', 'Miesiac', 'Data dodania'])
+        self.ui.tab_dane.setHorizontalHeaderLabels(['Nr akt', 'Kod', 'Nazwisko', 'Imie', 'Miesiąc', 'Data dodania'])
 
     def pokaz_dane(self, rows):
         # Column count
@@ -130,6 +128,8 @@ class MainWindow_bledy(QWidget):
             self.ui.tab_dane.setItem(wiersz, 1, QTableWidgetItem(str(wynik[2])))
             self.ui.tab_dane.setItem(wiersz, 2, QTableWidgetItem(str(wynik[3])))
             self.ui.tab_dane.setItem(wiersz, 3, QTableWidgetItem(str(wynik[4])))
+            self.ui.tab_dane.setItem(wiersz, 4, QTableWidgetItem(str(wynik[5])))
+            self.ui.tab_dane.setItem(wiersz, 5, QTableWidgetItem(str(wynik[6])))
             wiersz += 1
 
         self.ui.tab_dane.horizontalHeader().setStretchLastSection(True)
@@ -137,3 +137,5 @@ class MainWindow_bledy(QWidget):
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)

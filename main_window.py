@@ -11,6 +11,9 @@ from bledy_prod import MainWindow_bledy
 from nieobecnosci_prod import MainWindow_nieobecnosci
 from ustawieniaMenu import MainWindow_ustawienia
 from wyliczeniaForm import MainWindow_wyliczeniaForm
+from pracownicy import MainWindow_pracownicy
+from direct_prod import MainWindow_direct_prod
+from raportowanie_prod import MainWindow_raportowanie_prod
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -30,17 +33,26 @@ class MainWindow(QMainWindow):
         #self.otwarty_miesiac()
         self.otwarty_miesiac_2()
         self.ui.btn_otworzMiesiac.clicked.connect(self.dodaj_miesiac)
+        self.ui.btn_zaladuj_pracownicy.clicked.connect(self.otworz_okno_pracownicy)
         self.ui.btn_bledy.clicked.connect(self.otworz_okno_bledy)
         self.ui.btn_nieobecnosci.clicked.connect(self.otworz_okno_nieobecnosci)
+        self.ui.btn_direct.clicked.connect(self.otworz_okno_direct_prod)
+        self.ui.btn_zaladuj_raportowanie.clicked.connect(self.otworz_okno_raportowanie_prod)
         self.ui.btn_ustawienia.clicked.connect(self.otworz_okno_ustawieniaMenu)
         self.ui.btn_oblicz.clicked.connect(self.otworz_okno_wyliczeniaForm)
         self.ui.btn_zamknij.clicked.connect(qApp.quit)
 
+        QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_pracownicy)
         QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_bledy)
         QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_nieobecnosci)
+        QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_direct_prod)
+        QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_raportowanie_prod)
 
         self.sprawdz_zaladowanie_bledy()
         self.sprawdz_zaladowanie_nieobecnosci()
+        self.sprawdz_zaladowanie_pracownicy()
+        self.sprawdz_zaladowanie_direct_prod()
+        self.sprawdz_zaladowanie_raportowanie_prod()
 
     def data_miesiac_dzis(self):
         data_dzis = date.today()
@@ -147,6 +159,10 @@ class MainWindow(QMainWindow):
 
         self.otwarty_miesiac_2()
 
+    def otworz_okno_pracownicy(self):
+        self.okno_pracownicy = MainWindow_pracownicy()
+        self.okno_pracownicy.show()
+
     def otworz_okno_bledy(self):
         self.okno_bledy = MainWindow_bledy()
         self.okno_bledy.show()
@@ -155,6 +171,14 @@ class MainWindow(QMainWindow):
         self.okno_nieobecnosci = MainWindow_nieobecnosci()
         self.okno_nieobecnosci.show()
 
+    def otworz_okno_direct_prod(self):
+        self.okno_direct_prod = MainWindow_direct_prod()
+        self.okno_direct_prod.show()
+
+    def otworz_okno_raportowanie_prod(self):
+        self.okno_raportowanie_prod = MainWindow_raportowanie_prod()
+        self.okno_raportowanie_prod.show()
+
     def otworz_okno_ustawieniaMenu(self):
         self.okno_ustawieniaMenu = MainWindow_ustawienia()
         self.okno_ustawieniaMenu.show()
@@ -162,6 +186,19 @@ class MainWindow(QMainWindow):
     def otworz_okno_wyliczeniaForm(self):
         self.okno_wyliczeniaForm = MainWindow_wyliczeniaForm()
         self.okno_wyliczeniaForm.show()
+
+    def sprawdz_zaladowanie_pracownicy(self):
+        miestac_roboczy = self.data_miesiac_dzis()
+        #print('miesiac', miestac_roboczy)
+        select_data = "SELECT * FROM `pracownicy` WHERE miesiac = '%s';" % (miestac_roboczy)  # (miestac_roboczy)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, select_data)
+
+        if not results:
+            self.ui.lab_dot_pracownicy.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_red.svg"))
+        else:
+            self.ui.lab_dot_pracownicy.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_green.svg"))
+        connection.close()
 
     def sprawdz_zaladowanie_bledy(self):
         miestac_roboczy = self.data_miesiac_dzis()
@@ -187,4 +224,30 @@ class MainWindow(QMainWindow):
             self.ui.lab_dot_nieobecnosci.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_red.svg"))
         else:
             self.ui.lab_dot_nieobecnosci.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_green.svg"))
+        connection.close()
+
+    def sprawdz_zaladowanie_direct_prod(self):
+        miestac_roboczy = self.data_miesiac_dzis()
+        #print('miesiac', miestac_roboczy)
+        select_data = "SELECT * FROM `direct` WHERE miesiac = '%s';" % (miestac_roboczy)  # (miestac_roboczy)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, select_data)
+
+        if not results:
+            self.ui.lab_dot_direct.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_red.svg"))
+        else:
+            self.ui.lab_dot_direct.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_green.svg"))
+        connection.close()
+
+    def sprawdz_zaladowanie_raportowanie_prod(self):
+        miestac_roboczy = self.data_miesiac_dzis()
+        #print('miesiac', miestac_roboczy)
+        select_data = "SELECT * FROM `logowanie_zlecen` WHERE miesiac = '%s';" % (miestac_roboczy)  # (miestac_roboczy)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, select_data)
+
+        if not results:
+            self.ui.lab_dot_raportowanie.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_red.svg"))
+        else:
+            self.ui.lab_dot_raportowanie.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_green.svg"))
         connection.close()

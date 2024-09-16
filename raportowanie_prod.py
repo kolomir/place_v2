@@ -1,15 +1,13 @@
 from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QTableWidgetItem, QHeaderView
 import configparser
 import openpyxl
-#import sys
-import os
 from datetime import date, datetime
+import os
 
-from _bledy_prod_ui import Ui_Form
+from _raportowanie_prod_ui import Ui_Form
 import db, dodatki
 
-
-class MainWindow_bledy(QWidget):
+class MainWindow_raportowanie_prod(QWidget):
     def __init__(self):
         super().__init__()
         self.ui = Ui_Form()
@@ -20,7 +18,7 @@ class MainWindow_bledy(QWidget):
         self.config.read('config.ini')
         #- załadowanie zmiennych z pliku INI ------------------------------
         self.folder_bledy = self.config['sciezki']['folder_bledy']
-        self.plik = self.config['sciezki']['plik_bledy']
+        self.plik = self.config['sciezki']['plik_raportowanie']
         #------------------------------------------------------------------
         # - domyślna ścieżka dla pliku -----------------
         domyslny = f"{self.folder_bledy}"
@@ -57,42 +55,65 @@ class MainWindow_bledy(QWidget):
         default_directory = self.folder_bledy
         folder = QFileDialog.getExistingDirectory(self, 'Wybierz folder...', default_directory, options=options)
         folder = folder.replace("/", "\\")
-        #print(folder)
+        print(folder)
         self.ui.ed_sciezka_dane.setText(folder)
 
     def czytaj_dane(self):
         if not self.folder_istnieje():
             return
         folder = self.ui.ed_sciezka_dane.text().strip()
-        print(folder)
+        #print(folder)
         wb = openpyxl.load_workbook(os.path.join(f'{folder}\\{self.plik}'))
-        sheet = wb['Arkusz1']
+        sheet = wb['Sheet']
         teraz = datetime.today()
         data_miesiac = str(dodatki.data_miesiac_dzis())
-        print(data_miesiac)
+        #print(data_miesiac)
 
         lista_wpisow = []
 
+        i = 1
         #czytamy wszystkie kolumny i wiersze ze wskazanego pliku
-        for row in sheet.iter_rows(min_row=2, min_col=1, max_col=4, values_only=True):
+        for row in sheet.iter_rows(min_row=2, min_col=1, max_col=13, values_only=True):
             #sprawdzamy czy wiersz nie jest pusty (zakładając że pusty wiersz ma wszystkie kolumny o wartosci None i kończy zestawienie)
             if any(cell is not None for cell in row):
-                lista_wpisow.append([row[1],row[3],data_miesiac,teraz])
+                wydajnosc = 0
+                if row[6] == '' or row[6] < 0:
+                    wydajnosc = 0
+                elif row[6] > 0 and row[8] == 0:
+                    wydajnosc = 0
+                elif row[6] > 0 and row[8] == '':
+                    wydajnosc = 0
+                elif row[6] == 0:
+                    wydajnosc = 0
+                else:
+                    wydajnosc = row[6] / row[8]
+                #print(i,[row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],wydajnosc,data_miesiac,teraz])
+                lista_wpisow.append([row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],wydajnosc,data_miesiac,teraz])
+                i=i+1
             else:
                 break
 
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
 
         for row in lista_wpisow:
-            insert_data = "INSERT INTO bledy_prod VALUES (NULL,'%s','%s','%s','%s');" % (row[0],row[1],row[2],row[3])
+            insert_data = "INSERT INTO logowanie_zlecen VALUES (NULL,'%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');" % (row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],row[13],row[14],row[15])
             db.execute_query(connection, insert_data)
 
         self.wyszukaj_dane()
 
+    def czysc_string_int(self, tekst):
+        wynik = int(tekst.replace(' ',''))
+        return wynik
+
+    def czysc_string_dec(self, tekst):
+        wynik = tekst.replace(' ', '')
+        wynik = wynik.replace(',', '.')
+        return wynik
+
     def wyszukaj_dane(self):
         miestac_roboczy = dodatki.data_miesiac_dzis()
         print('miesiac',miestac_roboczy)
-        select_data = "SELECT * FROM `bledy_prod` WHERE miesiac = '%s';" % (miestac_roboczy) #(miestac_roboczy)
+        select_data = "SELECT * FROM `logowanie_zlecen` WHERE miesiac = '%s';" % (miestac_roboczy) #(miestac_roboczy)
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         results = db.read_query(connection, select_data)
 
@@ -105,16 +126,16 @@ class MainWindow_bledy(QWidget):
             self.naglowki_tabeli()
             self.pokaz_dane(results)
         connection.close()
-
+#TODO: Dotąd wykonane jest. Trzeba sprawdzić poprawność pliku Excel, przygotować bazę oraz poprawić zapis co bazy. Na końcu poprawić to co poniżej.
     def clear_table(self):
         # Wyczyść zawartość tabeli
         self.ui.tab_dane.clearContents()
         self.ui.tab_dane.setRowCount(0)
 
     def naglowki_tabeli(self):
-        self.ui.tab_dane.setColumnCount(4)  # Zmień na liczbę kolumn w twojej tabeli
+        self.ui.tab_dane.setColumnCount(16)  # Zmień na liczbę kolumn w twojej tabeli
         self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
-        self.ui.tab_dane.setHorizontalHeaderLabels(['Nr akt', 'Bledy', 'Miesiac', 'Data dodania'])
+        self.ui.tab_dane.setHorizontalHeaderLabels(['Zlecenie', 'Wiązka', 'Operacja', 'Miesiąc raportu', 'Nr raportu', 'Nr akt', 'Raportowany', 'Raporty All', 'Planowany', 'Planowany All', 'Imie', 'Nazwisko', 'Grupa', 'Wydajność', 'Miesiąc', 'Data dodania'])
 
     def pokaz_dane(self, rows):
         # Column count
@@ -130,6 +151,18 @@ class MainWindow_bledy(QWidget):
             self.ui.tab_dane.setItem(wiersz, 1, QTableWidgetItem(str(wynik[2])))
             self.ui.tab_dane.setItem(wiersz, 2, QTableWidgetItem(str(wynik[3])))
             self.ui.tab_dane.setItem(wiersz, 3, QTableWidgetItem(str(wynik[4])))
+            self.ui.tab_dane.setItem(wiersz, 4, QTableWidgetItem(str(wynik[5])))
+            self.ui.tab_dane.setItem(wiersz, 5, QTableWidgetItem(str(wynik[6])))
+            self.ui.tab_dane.setItem(wiersz, 6, QTableWidgetItem(str(wynik[7])))
+            self.ui.tab_dane.setItem(wiersz, 7, QTableWidgetItem(str(wynik[8])))
+            self.ui.tab_dane.setItem(wiersz, 8, QTableWidgetItem(str(wynik[9])))
+            self.ui.tab_dane.setItem(wiersz, 9, QTableWidgetItem(str(wynik[10])))
+            self.ui.tab_dane.setItem(wiersz, 10, QTableWidgetItem(str(wynik[11])))
+            self.ui.tab_dane.setItem(wiersz, 11, QTableWidgetItem(str(wynik[12])))
+            self.ui.tab_dane.setItem(wiersz, 12, QTableWidgetItem(str(wynik[13])))
+            self.ui.tab_dane.setItem(wiersz, 13, QTableWidgetItem(str(wynik[14])))
+            self.ui.tab_dane.setItem(wiersz, 14, QTableWidgetItem(str(wynik[15])))
+            self.ui.tab_dane.setItem(wiersz, 15, QTableWidgetItem(str(wynik[16])))
             wiersz += 1
 
         self.ui.tab_dane.horizontalHeader().setStretchLastSection(True)
@@ -137,3 +170,15 @@ class MainWindow_bledy(QWidget):
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeToContents)
+        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
+        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(8, QHeaderView.ResizeToContents)
+        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(9, QHeaderView.ResizeToContents)
+        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(10, QHeaderView.ResizeToContents)
+        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(11, QHeaderView.ResizeToContents)
+        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(12, QHeaderView.ResizeToContents)
+        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(13, QHeaderView.ResizeToContents)
+        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(14, QHeaderView.ResizeToContents)
+        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(15, QHeaderView.ResizeToContents)

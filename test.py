@@ -1,39 +1,45 @@
-import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QComboBox, QVBoxLayout
-import datetime
+import db, dodatki
+import configparser
+import os
+import openpyxl
 
-class MyApp(QWidget):
-    def __init__(self):
-        super().__init__()
+config = configparser.ConfigParser()
+config.read('config.ini')
+folder_bledy = config['sciezki']['folder_bledy']
+plik = config['sciezki']['plik_raportowanie']
 
-        # Inicjalizacja listy lat
-        self.years = [2022, 2023, 2024, 2025, 2026]
+sciezka = "%s\\%s" % (folder_bledy,plik)
 
-        # Inicjalizacja ComboBox
-        self.comboBox = QComboBox(self)
-        #self.comboBox.addItems([str(year) for year in self.years])
-        for year in self.years:
-            self.comboBox.addItem(str(year))
+print(sciezka)
 
-        # Pobranie bieżącego roku
-        current_year = datetime.datetime.now().year
+wb = openpyxl.load_workbook(os.path.join(sciezka))
+sheet = wb['Sheet']
 
-        # Ustawienie bieżącego roku jako domyślnie wybranej wartości
-        if current_year in self.years:
-            self.comboBox.setCurrentText(str(current_year))
+lista_wpisow = []
+
+i = 1
+for row in sheet.iter_rows(min_row=2, min_col=1, max_col=13, values_only=True):
+    if any(cell is not None for cell in row):
+        print(i, ' | ', row[6],' | ',row[8])
+        wydajnosc = 0
+        if row[6] == '' or row[6] < 0:
+            print('test')
+            wydajnosc = 0
+        elif row[6] > 0 and row[8] == 0:
+            wydajnosc = 0
+        elif row[6] > 0 and row[8] == '':
+            wydajnosc = 0
+        elif row[6] == 0:
+            wydajnosc = 0
         else:
-            self.comboBox.setCurrentIndex(0)  # domyślnie pierwszy element
+            wydajnosc = row[6] / row[8]
 
-        # Układ
-        layout = QVBoxLayout()
-        layout.addWidget(self.comboBox)
-        self.setLayout(layout)
+        #print(i, [row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11], row[12], wydajnosc])
+        # lista_wpisow.append([row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],wydajnosc,data_miesiac,teraz])
+        i = i + 1
+    else:
+        break
 
-        # Konfiguracja okna
-        self.setWindowTitle('QComboBox Example')
-        self.show()
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    ex = MyApp()
-    sys.exit(app.exec_())
+print('------------------------------------------------')
+print('Koniec')
+print('------------------------------------------------')

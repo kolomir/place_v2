@@ -57,33 +57,40 @@ class MainWindow_wyliczeniaForm(QWidget):
         select_data = "SELECT * FROM `nieobecnosci_prod` WHERE miesiac = '%s';" % (miesiac)
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         results = db.read_query(connection, select_data)
+        print('-------------------------------')
+        print(results)
+        print('-------------------------------')
 
         prog100 = self.ui.lab_pracujacychNieobecnosci.text()
         prog75 = self.ui.lab_pracujacych075Nieobecnosci.text()
         prog50 = self.ui.lab_pracujacych050Nieobecnosci.text()
         print('prog100',prog100,'prog75',prog75,'prog50',prog50)
+        print('-------------------------------')
+        print('prog100',int(float(prog100)),'prog75',int(float(prog75)),'prog50',int(float(prog50)))
+        print('1/prog100',(int(float(prog100)) - int(float(prog75))))
 
         lista = []
         for dane in results:
+            wsp = 0
             suma_warunek = dane[14]+dane[15]+dane[16]+dane[17]+dane[18]
             if suma_warunek == 0:
-                suma = dane[4]+dane[5]+dane[6]+dane[7]+dane[8]+dane[9]+dane[10]+dane[11]+dane[12]+dane[13]+dane[14]+dane[15]+dane[16]+dane[17]+dane[18]
+                suma = int(float(dane[4])) + int(float(dane[5])) + int(float(dane[6])) + int(float(dane[7])) + int(float(dane[8])) + int(float(dane[9])) + int(float(dane[10])) + int(float(dane[11])) + int(float(dane[12])) + int(float(dane[13])) + int(float(dane[14])) + int(float(dane[15])) + int(float(dane[16])) + int(float(dane[17])) + int(float(dane[18]))
             else:
-                suma = dane[4] + dane[5] + dane[6] + dane[7] + dane[8] + dane[9] + dane[10] + dane[11] + dane[12] + dane[14] + dane[15] + dane[16] + dane[17] + dane[18]
+                suma = int(float(dane[4])) + int(float(dane[5])) + int(float(dane[6])) + int(float(dane[7])) + int(float(dane[8])) + int(float(dane[9])) + int(float(dane[10])) + int(float(dane[11])) + int(float(dane[12])) + int(float(dane[14])) + int(float(dane[15])) + int(float(dane[16])) + int(float(dane[17])) + int(float(dane[18]))
 
-            #if suma < prog50:
-            #    wsp = 2
-            #elif suma > (prog100 - prog75):
-            #    wsp = 1
-            #lista.append([dane[2], dane[1], dane[3], suma, wsp])
-            #print('%s %s' % (suma, wsp))
+            if suma > int(float(prog50)):
+                wsp = 2
+            if suma <= int(float(prog50)) and suma > (int(float(prog100)) - int(float(prog75))):
+                wsp = 1
+            lista.append([dane[0], dane[1], dane[2], dane[3], suma, wsp])
+            #print('%s || %s -- %s' % (suma, wsp, suma_warunek))
 
         if not results:
             self.clear_table()
             self.naglowki_tabeli()
         else:
             self.naglowki_tabeli()
-            self.pokaz_dane(results)
+            self.pokaz_dane(lista)
         connection.close()
 
     def pokaz_dane(self, rows):
@@ -101,6 +108,7 @@ class MainWindow_wyliczeniaForm(QWidget):
             self.ui.tab_dane_nieobecnosci.setItem(wiersz, 2, QTableWidgetItem(str(wynik[2])))
             self.ui.tab_dane_nieobecnosci.setItem(wiersz, 3, QTableWidgetItem(str(wynik[3])))
             self.ui.tab_dane_nieobecnosci.setItem(wiersz, 4, QTableWidgetItem(str(wynik[4])))
+            self.ui.tab_dane_nieobecnosci.setItem(wiersz, 5, QTableWidgetItem(str(wynik[5])))
             wiersz += 1
 
         self.ui.tab_dane_nieobecnosci.horizontalHeader().setStretchLastSection(True)
@@ -109,16 +117,18 @@ class MainWindow_wyliczeniaForm(QWidget):
         self.ui.tab_dane_nieobecnosci.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
         self.ui.tab_dane_nieobecnosci.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
         self.ui.tab_dane_nieobecnosci.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_nieobecnosci.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
 
     def naglowki_tabeli(self):
-        self.ui.tab_dane_nieobecnosci.setColumnCount(5)  # Zmień na liczbę kolumn w twojej tabeli
+        self.ui.tab_dane_nieobecnosci.setColumnCount(6)  # Zmień na liczbę kolumn w twojej tabeli
         self.ui.tab_dane_nieobecnosci.setRowCount(0)  # Ustawienie liczby wierszy na 0
         self.ui.tab_dane_nieobecnosci.setHorizontalHeaderLabels([
             'ID',
-            'Ranga',
-            'Kwota',
-            'Aktywny',
-            'Dodano'
+            'Nazwisko i imię',
+            'Nr akt',
+            'Stanowisko',
+            'Razem',
+            'Próg'
         ])
 
     def clear_table(self):
