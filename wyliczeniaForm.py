@@ -260,19 +260,3 @@ class MainWindow_wyliczeniaForm(QWidget):
                 print(dane[0], " | ", dane[12], ststus, wynik, ' | ', suma, wsp, wynik_n, ' | ', dane[28], wynik_b)
             else:
                 print(dane[0], " | ", dane[12], '--BRAK-- 0 ', ' | 0 0 0 | 0 0')
-
-    def q_nieobecnosci(self, osoba):
-        miesiac = dodatki.data_miesiac_dzis()
-        select_data_nieobecnosc = "SELECT * FROM `nieobecnosci_prod` WHERE nr_akt = '%s' and miesiac = '%s';" % (osoba,miesiac)
-        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-        results_nieobecnosc = db.read_query(connection, select_data_nieobecnosc)
-        connection.close()
-        return results_nieobecnosc
-
-    def q_bledy(self, osoba):
-        miesiac = dodatki.data_miesiac_dzis()
-        select_data_bledy = "SELECT * FROM `bledy_prod` WHERE nr_akt = '%s' and miesiac = '%s';" % (osoba,miesiac)
-        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-        results_bledy = db.read_query(connection, select_data_bledy)
-        connection.close()
-        return results_bledy
