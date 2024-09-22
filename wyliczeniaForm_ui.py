@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'forms/wyliczeniaform.ui'
+# Form implementation generated from reading ui file 'forms/wyliczeniaForm.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.10
 #
@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
-        Form.resize(790, 473)
+        Form.resize(790, 421)
         self.verticalLayout_6 = QtWidgets.QVBoxLayout(Form)
         self.verticalLayout_6.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_6.setSpacing(0)
@@ -579,24 +579,6 @@ class Ui_Form(object):
         self.verticalLayout_18.addWidget(self.widget_20)
         self.tabWidget.addTab(self.tab_podsumowanie, "")
         self.verticalLayout_3.addWidget(self.tabWidget)
-        self.line_2 = QtWidgets.QFrame(self.widget)
-        self.line_2.setFrameShape(QtWidgets.QFrame.HLine)
-        self.line_2.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.line_2.setObjectName("line_2")
-        self.verticalLayout_3.addWidget(self.line_2)
-        self.widget_29 = QtWidgets.QWidget(self.widget)
-        self.widget_29.setObjectName("widget_29")
-        self.horizontalLayout_21 = QtWidgets.QHBoxLayout(self.widget_29)
-        self.horizontalLayout_21.setObjectName("horizontalLayout_21")
-        spacerItem20 = QtWidgets.QSpacerItem(589, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_21.addItem(spacerItem20)
-        self.btn_przelicz = QtWidgets.QPushButton(self.widget_29)
-        self.btn_przelicz.setObjectName("btn_przelicz")
-        self.horizontalLayout_21.addWidget(self.btn_przelicz)
-        self.btn_zapisz = QtWidgets.QPushButton(self.widget_29)
-        self.btn_zapisz.setObjectName("btn_zapisz")
-        self.horizontalLayout_21.addWidget(self.btn_zapisz)
-        self.verticalLayout_3.addWidget(self.widget_29)
         self.verticalLayout_6.addWidget(self.widget)
 
         self.retranslateUi(Form)
@@ -671,5 +653,3 @@ class Ui_Form(object):
         self.label_41.setText(_translate("Form", "1/2 dni pracujacych:"))
         self.lab_pracujacych050Nieobecnosci2.setText(_translate("Form", "00.00"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_podsumowanie), _translate("Form", "Podsumowanie"))
-        self.btn_przelicz.setText(_translate("Form", "Przelicz"))
-        self.btn_zapisz.setText(_translate("Form", "Zapisz"))

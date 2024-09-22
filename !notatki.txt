@@ -10,3 +10,37 @@ designer
 
 pyuic5 main.ui -o main_ui.py
 pyrcc5 ikony.qrc -o ikony_rc.py
+
+
+
+Zapytanie - PRODUKTYWNOSC
+================================================================================
+select
+	p.Nr_akt
+	,p.Kod
+	,p.Nazwisko
+	,p.Imie
+	,d.dzial
+	,d.Direct_work
+	,d.`Direct_%`
+	,d.Indirect_work
+	,d.`Indirect_%`
+	,ROUND(COALESCE(SUM(lz.reported), 0), 2) AS 'raportowany'
+	,ROUND(COALESCE(SUM(lz.planned), 0), 2) AS 'planowany'
+	,ROUND(COALESCE(lz.planned / NULLIF(lz.reported, 0), 0), 2) AS 'wydajnosci'
+	,ROUND(d.`Direct_%` * COALESCE(lz.planned / NULLIF(lz.reported, 0), 0), 2) AS 'produktywnosc'
+from
+	pracownicy p
+		left join direct d on d.Nr_akt = p.Nr_akt
+		left join logowanie_zlecen lz on lz.nr_akt = p.Nr_akt
+where
+	d.dzial not in ('2030', '1-210', '4001', '4002', '4003', '4004', '4005', '4006', '4007', '4008', '4009', '4010', '401', '2-305')
+group by p.Nr_akt
+	,p.Kod
+	,p.Nazwisko
+	,p.Imie
+	,d.dzial
+	,d.Direct_work
+	,d.`Direct_%`
+	,d.Indirect_work
+	,d.`Indirect_%`

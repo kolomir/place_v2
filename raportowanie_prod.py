@@ -126,7 +126,7 @@ class MainWindow_raportowanie_prod(QWidget):
             self.naglowki_tabeli()
             self.pokaz_dane(results)
         connection.close()
-#TODO: Dotąd wykonane jest. Trzeba sprawdzić poprawność pliku Excel, przygotować bazę oraz poprawić zapis co bazy. Na końcu poprawić to co poniżej.
+
     def clear_table(self):
         # Wyczyść zawartość tabeli
         self.ui.tab_dane.clearContents()
