@@ -1,36 +1,20 @@
-import db, dodatki
+krotka_wierszy = (
+    ("Produkt 1", 100),
+    ("Produkt 2", 200),
+    ("Produkt 3", 300),
+    ("Produkt 4", 150),
+    ("Produkt 5", 120),
+    ("Produkt 6", 180),
+    ("Produkt 7", 0),
+    ("Produkt 8", 60),
+    ("Produkt 9", 110),
+    ("Produkt 10", 140),
+    ("Produkt 10", 0.00),
+    ("Produkt 10", 140.02),
+    ("Produkt 10", 140.45),
+)
 
-miesiac = dodatki.data_miesiac_dzis()
+# Sumowanie kwot (zakładam, że kwota jest w drugim elemencie każdej krotki)
+suma_kwot = sum(wiersz[1] for wiersz in krotka_wierszy)
 
-select_data_bledy = "SELECT * FROM `bledy_prod` WHERE miesiac = '%s';" % (miesiac)
-connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-results_bledy = db.read_query(connection, select_data_bledy)
-connection.close()
-
-szukaj = 1788
-#3033
-#2539
-#2511
-#2513
-wynik = 300.00
-
-for dane_b in results_bledy:
-    wynik_b = wynik
-    if szukaj == dane_b[1]:
-        if dane_b[2] == 1:
-            wynik_b = wynik * 0.75
-            break
-        if dane_b[2] == 2:
-            wynik_b = wynik * 0.5
-            break
-        if dane_b[2] == 3:
-            wynik_b = wynik * 0.25
-            break
-        if dane_b[2] > 3:
-            wynik_b = 0
-            break
-print(wynik, wynik_b)
-
-
-
-print('-------------------------------')
+print("Suma kwot:", suma_kwot)

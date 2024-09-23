@@ -20,7 +20,7 @@ class MainWindow_wyliczeniaForm(QWidget):
     def przeliczenie(self):
         self.licz_nieobecnosci()
         self.miesiac_info_nieobecnosci()
-        self.licz_produktywnosc()
+        self.licz_pracownicy()
 
 
     def miesiac_robocze(self):
@@ -138,7 +138,7 @@ class MainWindow_wyliczeniaForm(QWidget):
 
 # = PRODUKTYWNOŚĆ =========================================================================================================================================================
 
-    def licz_produktywnosc(self):
+    def licz_pracownicy(self):
         miesiac = dodatki.data_miesiac_dzis()
         select_data = '''select 
                             p.Nr_akt 
@@ -206,19 +206,16 @@ class MainWindow_wyliczeniaForm(QWidget):
         prog75 = self.ui.lab_pracujacych075Nieobecnosci.text()
         prog50 = self.ui.lab_pracujacych050Nieobecnosci.text()
 
-        # lista = []
-        prog = 96
+        lista = []
+        prog = 96.00
         for dane in results:
-            if dane[12] > prog:
+            if dane[6] > prog:
                 if dane[12] > results_progi[0][6]:
                     wynik = results_progi[0][7]
-                    ststus = 'OK'
                 elif dane[12] > results_progi[0][4]:
                     wynik = results_progi[0][5]
-                    ststus = 'OK'
                 elif dane[12] > results_progi[0][2]:
                     wynik = results_progi[0][3]
-                    ststus = 'OK'
 
                 wsp = 0
                 wynik_n = wynik
@@ -242,7 +239,7 @@ class MainWindow_wyliczeniaForm(QWidget):
 
                 if suma > int(float(prog50)):
                     wsp = 2
-                    wynik_n = 0
+                    wynik_n = 0.0
                 if suma <= int(float(prog50)) and suma > (int(float(prog100)) - int(float(prog75))):
                     wsp = 1
                     wynik_n = wynik / 2
@@ -255,8 +252,122 @@ class MainWindow_wyliczeniaForm(QWidget):
                 if dane[28] == 3:
                     wynik_b = wynik_n / 4
                 if dane[28] > 3:
-                    wynik_b = 0
+                    wynik_b = 0.0
 
-                print(dane[0], " | ", dane[12], ststus, wynik, ' | ', suma, wsp, wynik_n, ' | ', dane[28], wynik_b)
             else:
-                print(dane[0], " | ", dane[12], '--BRAK-- 0 ', ' | 0 0 0 | 0 0')
+                wynik = wynik_n = wynik_b = 0.00
+
+                wsp = 0
+                suma_warunek = dane[23] + dane[24] + dane[25] + dane[26] + dane[27]
+                if suma_warunek == 0:
+                    suma = int(float(dane[13])) + int(float(dane[14])) + int(float(dane[15])) + int(
+                        float(dane[16])) + int(
+                        float(dane[17])) + int(float(dane[18])) + int(float(dane[19])) + int(
+                        float(dane[20])) + int(
+                        float(dane[21])) + int(float(dane[22])) + int(float(dane[23])) + int(
+                        float(dane[24])) + int(
+                        float(dane[25])) + int(float(dane[26])) + int(float(dane[27]))
+                else:
+                    suma = int(float(dane[13])) + int(float(dane[14])) + int(float(dane[15])) + int(
+                        float(dane[16])) + int(
+                        float(dane[17])) + int(float(dane[18])) + int(float(dane[19])) + int(
+                        float(dane[20])) + int(
+                        float(dane[21])) + int(float(dane[23])) + int(float(dane[24])) + int(
+                        float(dane[25])) + int(
+                        float(dane[26])) + int(float(dane[27]))
+
+                if suma > int(float(prog50)):
+                    wsp = 2
+                if suma <= int(float(prog50)) and suma > (int(float(prog100)) - int(float(prog75))):
+                    wsp = 1
+            #print([dane[0], dane[1], dane[2], dane[3], dane[4], dane[6], dane[8], dane[9], dane[10], dane[11], dane[12], wynik, suma, wsp, wynik_n, dane[28], wynik_b])
+            lista.append([dane[0], dane[1], dane[2], dane[3], dane[4], dane[6], dane[8], dane[9], dane[10], dane[11], dane[12], wynik, suma, wsp, wynik_n, dane[28], wynik_b])
+
+        suma_kwot = sum(round(float(wiersz[16]), 2) for wiersz in lista)
+        self.ui.lab_sumaPracownicy.setText(str(suma_kwot))
+
+        if not results:
+            self.clear_table_pracownicy()
+            self.naglowki_tabeli_pracownicy()
+        else:
+            self.naglowki_tabeli_pracownicy()
+            self.pokaz_dane_pracownicy(lista)
+
+    def pokaz_dane_pracownicy(self, rows):
+        # Column count
+        if int(len(rows[0])) > 0:
+            self.ui.tab_dane_pracownicy.setColumnCount(int(len(rows[0])))
+
+        # Row count
+        self.ui.tab_dane_pracownicy.setRowCount(int(len(rows)))
+
+        wiersz = 0
+        for wynik in rows:
+            self.ui.tab_dane_pracownicy.setItem(wiersz, 0, QTableWidgetItem(str(wynik[0])))
+            self.ui.tab_dane_pracownicy.setItem(wiersz, 1, QTableWidgetItem(str(wynik[1])))
+            self.ui.tab_dane_pracownicy.setItem(wiersz, 2, QTableWidgetItem(str(wynik[2])))
+            self.ui.tab_dane_pracownicy.setItem(wiersz, 3, QTableWidgetItem(str(wynik[3])))
+            self.ui.tab_dane_pracownicy.setItem(wiersz, 4, QTableWidgetItem(str(wynik[4])))
+            self.ui.tab_dane_pracownicy.setItem(wiersz, 5, QTableWidgetItem(str(wynik[5])))
+            self.ui.tab_dane_pracownicy.setItem(wiersz, 6, QTableWidgetItem(str(wynik[6])))
+            self.ui.tab_dane_pracownicy.setItem(wiersz, 7, QTableWidgetItem(str(wynik[7])))
+            self.ui.tab_dane_pracownicy.setItem(wiersz, 8, QTableWidgetItem(str(wynik[8])))
+            self.ui.tab_dane_pracownicy.setItem(wiersz, 9, QTableWidgetItem(str(wynik[9])))
+            self.ui.tab_dane_pracownicy.setItem(wiersz, 10, QTableWidgetItem(str(wynik[10])))
+            self.ui.tab_dane_pracownicy.setItem(wiersz, 11, QTableWidgetItem(str(wynik[11])))
+            self.ui.tab_dane_pracownicy.setItem(wiersz, 12, QTableWidgetItem(str(wynik[12])))
+            self.ui.tab_dane_pracownicy.setItem(wiersz, 13, QTableWidgetItem(str(wynik[13])))
+            self.ui.tab_dane_pracownicy.setItem(wiersz, 14, QTableWidgetItem(str(wynik[14])))
+            self.ui.tab_dane_pracownicy.setItem(wiersz, 15, QTableWidgetItem(str(wynik[15])))
+            self.ui.tab_dane_pracownicy.setItem(wiersz, 16, QTableWidgetItem(str(wynik[16])))
+            wiersz += 1
+
+        self.ui.tab_dane_pracownicy.horizontalHeader().setStretchLastSection(True)
+        self.ui.tab_dane_pracownicy.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pracownicy.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pracownicy.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pracownicy.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pracownicy.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pracownicy.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pracownicy.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pracownicy.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pracownicy.horizontalHeader().setSectionResizeMode(8, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pracownicy.horizontalHeader().setSectionResizeMode(9, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pracownicy.horizontalHeader().setSectionResizeMode(10, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pracownicy.horizontalHeader().setSectionResizeMode(11, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pracownicy.horizontalHeader().setSectionResizeMode(12, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pracownicy.horizontalHeader().setSectionResizeMode(13, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pracownicy.horizontalHeader().setSectionResizeMode(14, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pracownicy.horizontalHeader().setSectionResizeMode(15, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pracownicy.horizontalHeader().setSectionResizeMode(16, QHeaderView.ResizeToContents)
+
+    def naglowki_tabeli_pracownicy(self):
+        self.ui.tab_dane_pracownicy.setColumnCount(17)  # Zmień na liczbę kolumn w twojej tabeli
+        self.ui.tab_dane_pracownicy.setRowCount(0)  # Ustawienie liczby wierszy na 0
+        self.ui.tab_dane_pracownicy.setHorizontalHeaderLabels([
+            'Nr akt',
+            'Kod',
+            'Nazwisko',
+            'Imię',
+            'Dział',
+            'Direct %',
+            'Indirect %',
+            'Raportowany',
+            'Planowany',
+            'Wydajność',
+            'Produktywność',
+            'Kwota premia',
+            'Suma nieobecności',
+            'Współczynnik',
+            'Kwota premia',
+            'Błędy',
+            'Premia łącznie'
+        ])
+
+    def clear_table_pracownicy(self):
+        # Wyczyść zawartość tabeli
+        self.ui.tab_dane_pracownicy.clearContents()
+        self.ui.tab_dane_pracownicy.setRowCount(0)
+
+# = LIDERZY =========================================================================================================================================================
+
