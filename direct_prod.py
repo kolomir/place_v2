@@ -72,20 +72,20 @@ class MainWindow_direct_prod(QWidget):
         lista_wpisow = []
 
         #czytamy wszystkie kolumny i wiersze ze wskazanego pliku
-        for row in sheet.iter_rows(min_row=17, min_col=1, max_col=25, values_only=True):
+        for row in sheet.iter_rows(min_row=2, min_col=1, max_col=25, values_only=True):
             #sprawdzamy czy wiersz nie jest pusty (zakładając że pusty wiersz ma wszystkie kolumny o wartosci None i kończy zestawienie)
             if any(cell is not None for cell in row):
                 nr_akt = int(row[0])
-                dep = int(row[8])
-                worked = self.czysc_string(row[16],' hrs')
-                direct_work = self.czysc_string(row[18],' hrs')
-                direct = self.czysc_string(row[19],' %')
-                indirect_work = self.czysc_string(row[20],' hrs')
-                indirect = self.czysc_string(row[21],' %')
-                pause = self.czysc_string(row[22],' hrs')
-                diff_hr = self.czysc_string(row[23],' hrs')
-                diff = self.czysc_string(row[24],' %')
-                lista_wpisow.append([nr_akt,row[5],dep,worked,direct_work,direct,indirect_work,indirect,pause,diff_hr,diff,data_miesiac,teraz])
+                dep = int(row[2])
+                worked = round(row[7], 2)
+                direct_work = round(row[8], 2)
+                direct = round(row[9], 2)
+                indirect_work = round(row[10], 2)
+                indirect = round(row[11], 2)
+                pause = round(row[12], 2)
+                diff_hr = round(row[13], 2)
+                diff = round(row[14], 2)
+                lista_wpisow.append([nr_akt,row[1],dep,worked,direct_work,direct,indirect_work,indirect,pause,diff_hr,diff,data_miesiac,teraz])
             else:
                 break
 
@@ -96,11 +96,6 @@ class MainWindow_direct_prod(QWidget):
             db.execute_query(connection, insert_data)
 
         self.wyszukaj_dane()
-
-    def czysc_string(self,tekst,tekst_wykl):
-        wynik = tekst.partition(tekst_wykl)
-        wynik = wynik[0].replace(',','.')
-        return wynik
 
     def wyszukaj_dane(self):
         miestac_roboczy = dodatki.data_miesiac_dzis()
