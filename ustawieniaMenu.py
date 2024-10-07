@@ -12,6 +12,7 @@ from progiJakosci import MainWindow_progiJakosci
 from kwotyJakoscForm import MainWindow_kwotyJakosc
 from liderWcForm import MainWindow_liderWc
 from dniPracujaceForm import MainWindow_dniPracujaceForm
+from pomocForm import MainWindow_pomocForm
 
 
 class MainWindow_ustawienia(QWidget):
@@ -30,6 +31,7 @@ class MainWindow_ustawienia(QWidget):
         self.ui.btn_kwoty.clicked.connect(self.otworz_okno_kwotyJakosc)
         self.ui.btn_instruktorzy.clicked.connect(self.otworz_okno_liderWcForm)
         self.ui.btn_dniPracujace.clicked.connect(self.otworz_okno_dniPracujaceForm)
+        self.ui.btn_pomoc.clicked.connect(self.otworz_okno_pomocForm)
 
     def otworz_okno_lokalizacjeForm(self):
         self.okno_lokalizacjeForm = MainWindow_lokalizacje()
@@ -70,3 +72,7 @@ class MainWindow_ustawienia(QWidget):
     def otworz_okno_dniPracujaceForm(self):
         self.okno_dniPracujaceForm = MainWindow_dniPracujaceForm()
         self.okno_dniPracujaceForm.show()
+
+    def otworz_okno_pomocForm(self):
+        self.okno_pomocForm = MainWindow_pomocForm()
+        self.okno_pomocForm.show()

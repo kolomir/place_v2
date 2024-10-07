@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'nieobecnosci_prod.ui'
+# Form implementation generated from reading ui file 'forms\nieobecnosci_prod.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.10
 #
@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
-        Form.resize(493, 418)
+        Form.resize(850, 479)
         self.gridLayout = QtWidgets.QGridLayout(Form)
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
         self.gridLayout.setSpacing(0)
@@ -61,9 +61,19 @@ class Ui_Form(object):
         self.btn_przegladaj.setObjectName("btn_przegladaj")
         self.horizontalLayout.addWidget(self.btn_przegladaj)
         self.verticalLayout_2.addWidget(self.widget_3)
-        self.btn_importuj = QtWidgets.QPushButton(self.widget_4)
+        self.widget_5 = QtWidgets.QWidget(self.widget_4)
+        self.widget_5.setObjectName("widget_5")
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.widget_5)
+        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout_2.setSpacing(2)
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.btn_importuj = QtWidgets.QPushButton(self.widget_5)
         self.btn_importuj.setObjectName("btn_importuj")
-        self.verticalLayout_2.addWidget(self.btn_importuj)
+        self.horizontalLayout_2.addWidget(self.btn_importuj)
+        self.btn_importuj_obco = QtWidgets.QPushButton(self.widget_5)
+        self.btn_importuj_obco.setObjectName("btn_importuj_obco")
+        self.horizontalLayout_2.addWidget(self.btn_importuj_obco)
+        self.verticalLayout_2.addWidget(self.widget_5)
         self.verticalLayout_3.addWidget(self.widget_4)
         self.line = QtWidgets.QFrame(self.widget)
         self.line.setFrameShape(QtWidgets.QFrame.HLine)
@@ -87,4 +97,5 @@ class Ui_Form(object):
         self.label_2.setText(_translate("Form", "v1"))
         self.label_3.setText(_translate("Form", "Ścieżka do pliku"))
         self.btn_przegladaj.setText(_translate("Form", "Przeglądaj"))
-        self.btn_importuj.setText(_translate("Form", "Importuj"))
+        self.btn_importuj.setText(_translate("Form", "Importuj pracowników PL"))
+        self.btn_importuj_obco.setText(_translate("Form", "Importuj obcokrajowców"))

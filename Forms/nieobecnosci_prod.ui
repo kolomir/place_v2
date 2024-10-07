@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>493</width>
-    <height>418</height>
+    <width>850</width>
+    <height>479</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -120,10 +120,38 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="btn_importuj">
-           <property name="text">
-            <string>Importuj</string>
-           </property>
+          <widget class="QWidget" name="widget_5" native="true">
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <property name="spacing">
+             <number>2</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QPushButton" name="btn_importuj">
+              <property name="text">
+               <string>Importuj pracowników PL</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btn_importuj_obco">
+              <property name="text">
+               <string>Importuj obcokrajowców</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </widget>
          </item>
         </layout>

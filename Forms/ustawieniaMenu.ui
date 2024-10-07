@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>194</width>
-    <height>303</height>
+    <height>331</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -99,6 +99,13 @@
        <widget class="QPushButton" name="btn_dniPracujace">
         <property name="text">
          <string>Dni wolne w roku</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btn_pomoc">
+        <property name="text">
+         <string>Wsparcie Prod.</string>
         </property>
        </widget>
       </item>

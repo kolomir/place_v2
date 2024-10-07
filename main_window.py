@@ -14,6 +14,7 @@ from wyliczeniaForm import MainWindow_wyliczeniaForm
 from pracownicy import MainWindow_pracownicy
 from direct_prod import MainWindow_direct_prod
 from raportowanie_prod import MainWindow_raportowanie_prod
+from raportowanie_total_prod import MainWindow_raportowanie_total_prod
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -38,6 +39,7 @@ class MainWindow(QMainWindow):
         self.ui.btn_nieobecnosci.clicked.connect(self.otworz_okno_nieobecnosci)
         self.ui.btn_direct.clicked.connect(self.otworz_okno_direct_prod)
         self.ui.btn_zaladuj_raportowanie.clicked.connect(self.otworz_okno_raportowanie_prod)
+        self.ui.btn_zaladuj_raportowanie_total.clicked.connect(self.otworz_okno_raportowanie_total_prod)
         self.ui.btn_ustawienia.clicked.connect(self.otworz_okno_ustawieniaMenu)
         self.ui.btn_oblicz.clicked.connect(self.otworz_okno_wyliczeniaForm)
         self.ui.btn_zamknij.clicked.connect(qApp.quit)
@@ -47,6 +49,7 @@ class MainWindow(QMainWindow):
         QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_nieobecnosci)
         QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_direct_prod)
         QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_raportowanie_prod)
+        QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_raportowanie_total_prod)
 
         self.sprawdz_zaladowanie_bledy()
         self.sprawdz_zaladowanie_nieobecnosci()
@@ -87,6 +90,8 @@ class MainWindow(QMainWindow):
             self.ui.lab_direct.setEnabled(True)
             self.ui.btn_zaladuj_raportowanie.setEnabled(True)
             self.ui.lab_raportowanie.setEnabled(True)
+            self.ui.btn_zaladuj_raportowanie_total.setEnabled(True)
+            self.ui.lab_raportowanie_total.setEnabled(True)
         else:
             print("Brak nieaktywnych rekordów")
             data_miesiac = date.today()
@@ -102,6 +107,8 @@ class MainWindow(QMainWindow):
             self.ui.lab_direct.setEnabled(False)
             self.ui.btn_zaladuj_raportowanie.setEnabled(False)
             self.ui.lab_raportowanie.setEnabled(False)
+            self.ui.btn_zaladuj_raportowanie_total.setEnabled(False)
+            self.ui.lab_raportowanie_total.setEnabled(False)
 
 
     def otwarty_miesiac(self):
@@ -134,6 +141,8 @@ class MainWindow(QMainWindow):
             self.ui.lab_direct.setEnabled(False)
             self.ui.btn_zaladuj_raportowanie.setEnabled(False)
             self.ui.lab_raportowanie.setEnabled(False)
+            self.ui.btn_zaladuj_raportowanie_total.setEnabled(False)
+            self.ui.lab_raportowanie_total.setEnabled(False)
         else:
             self.ui.lab_aktywnyMiesiac.setText('Bieżący miesiąc jest otwarty')
             self.ui.lab_aktywnyMiesiac.setStyleSheet("QLabel { background-color : green; }")
@@ -146,6 +155,8 @@ class MainWindow(QMainWindow):
             self.ui.lab_direct.setEnabled(True)
             self.ui.btn_zaladuj_raportowanie.setEnabled(True)
             self.ui.lab_raportowanie.setEnabled(True)
+            self.ui.btn_zaladuj_raportowanie_total.setEnabled(True)
+            self.ui.lab_raportowanie_total.setEnabled(True)
 
     def dodaj_miesiac(self):
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
@@ -178,6 +189,10 @@ class MainWindow(QMainWindow):
     def otworz_okno_raportowanie_prod(self):
         self.okno_raportowanie_prod = MainWindow_raportowanie_prod()
         self.okno_raportowanie_prod.show()
+
+    def otworz_okno_raportowanie_total_prod(self):
+        self.okno_raportowanie_total_prod = MainWindow_raportowanie_total_prod()
+        self.okno_raportowanie_total_prod.show()
 
     def otworz_okno_ustawieniaMenu(self):
         self.okno_ustawieniaMenu = MainWindow_ustawienia()
@@ -250,4 +265,17 @@ class MainWindow(QMainWindow):
             self.ui.lab_dot_raportowanie.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_red.svg"))
         else:
             self.ui.lab_dot_raportowanie.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_green.svg"))
+        connection.close()
+
+    def sprawdz_zaladowanie_raportowanie_total_prod(self):
+        miestac_roboczy = self.data_miesiac_dzis()
+        #print('miesiac', miestac_roboczy)
+        select_data = "SELECT * FROM `raportowanie_total` WHERE miesiac = '%s';" % (miestac_roboczy)  # (miestac_roboczy)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, select_data)
+
+        if not results:
+            self.ui.lab_dot_raportowanie_total.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_red.svg"))
+        else:
+            self.ui.lab_dot_raportowanie_total.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_green.svg"))
         connection.close()

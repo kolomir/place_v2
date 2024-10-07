@@ -141,61 +141,54 @@ class MainWindow_wyliczeniaForm(QWidget):
     def licz_pracownicy(self):
         miesiac = dodatki.data_miesiac_dzis()
         select_data = '''select 
-                            p.Nr_akt 
-                            ,p.Kod 
-                            ,p.Nazwisko 
-                            ,p.Imie
+                            d.Nr_akt 
+                            ,case 
+                                when p.Kod is null then 0
+                                else p.Kod
+                            end as Kod
+                            ,d.Nazwisko_i_imie 
                             ,d.dzial 
-                            ,d.Direct_work 
                             ,d.Direct_ 
-                            ,d.Indirect_work 
-                            ,d.Indirect_
+                            ,d.Indirect_ 
                             ,ROUND(COALESCE(SUM(lz.reported), 0), 2) AS 'raportowany'
                             ,ROUND(COALESCE(SUM(lz.planned), 0), 2) AS 'planowany'
                             ,ROUND(COALESCE(lz.planned / NULLIF(lz.reported, 0), 0), 2) AS 'wydajnosci'
                             ,ROUND(d.Direct_ * COALESCE(lz.planned / NULLIF(lz.reported, 0), 0), 2) AS 'produktywnosc'
-                            ,np.urlop_wypocz 
-                            ,np.urlop_bezplatny
-                            ,np.urlop_szkoleniowy 
-                            ,np.`Urlop_opieka_(art_188kp)` 
-                            ,np.urlop_okolicznosc 
-                            ,np.zwol_lek 
-                            ,np.urlop_macierz 
-                            ,np.opieka_zus 
-                            ,np.urlop_wychow 
-                            ,np.inne_nieobecn 
-                            ,np.usp 
-                            ,np.nn 
-                            ,np.rehab 
-                            ,np.rodz 
-                            ,np.krew 
-                            ,np.razem 
+                            ,case
+                                when np.nr_akt > 5999 then np.razem 
+                                else 
+                                    case 
+                                        when (np.krew + np.rodz + np.rehab + np.nn + np.usp) = 0 then np.krew + np.rodz + np.rehab + np.nn + np.usp + np.inne_nieobecn + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz 
+                                        else np.krew + np.rodz + np.rehab + np.nn + np.usp + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz
+                                    end
+                            end as nieobecnosci
                             ,case 
                                 when bp.bledy is null then 0
                                 else bp.bledy
-                            end as bledy2
+                            end as bledow
                         from 
-        	                pracownicy p 
-        	                    left join direct d on d.Nr_akt = p.Nr_akt 
-        		                left join logowanie_zlecen lz on lz.nr_akt = p.Nr_akt 
-                                left join nieobecnosci_prod np on np.nr_akt  = p.Nr_akt 
-                                left join bledy_prod bp on bp.nr_akt = p.Nr_akt 
-        	            where
-        	                d.dzial not in ('2030', '1-210', '4001', '4002', '4003', '4004', '4005', '4006', '4007', '4008', '4009', '4010', '401', '2-305')
-        	                and p.miesiac = '%s'
-        	            group by p.Nr_akt 
-                            ,p.Kod 
-                            ,p.Nazwisko 
-                            ,p.Imie
+                            direct d
+                                join logowanie_zlecen lz on d.Nr_akt = lz.nr_akt 
+                                left join nieobecnosci_prod np on np.nr_akt  = d.Nr_akt 
+                                left join bledy_prod bp on bp.nr_akt = d.Nr_akt 
+		                        left join pracownicy p on p.Nr_akt = d.Nr_akt 
+                        where 
+                            d.dzial not in ('2030', '1-210', '4001', '4002', '4003', '4004', '4005', '4006', '4007', '4008', '4009', '4010', '401', '2-305')
+                            and d.miesiac = '%s'
+                            and lz.miesiac = '%s'
+                        group by 
+                            d.Nr_akt 
+                            ,d.Nazwisko_i_imie 
                             ,d.dzial 
                             ,d.Direct_work 
                             ,d.Direct_ 
-                            ,d.Indirect_work 
-                            ,d.Indirect_
-                        ''' % (miesiac)
+                            ,d.Indirect_work
+                            ,d.Indirect_ 
+                        ''' % (miesiac,miesiac)
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         results = db.read_query(connection, select_data)
         connection.close()
+#TODO: poprawić resztę i dostosować do nowego zapytania. Poprawić również: wyliczanie finalne premii dla pracowników oraz wyświetlanie i punktowanie zakładki NIEOBECNOSCI
 
         select_data_progi = "select * from progi_prod pp where pp.id_ranga = 3 and pp.aktywny = 1"
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
@@ -208,82 +201,51 @@ class MainWindow_wyliczeniaForm(QWidget):
 
         lista = []
         prog = 96.00
+
         for dane in results:
-            if dane[6] > prog:
-                if dane[12] > results_progi[0][6]:
+            wynik = 0
+            if dane[4] > prog:
+                if dane[9] > results_progi[0][6]:
                     wynik = results_progi[0][7]
-                elif dane[12] > results_progi[0][4]:
+                elif dane[9] > results_progi[0][4]:
                     wynik = results_progi[0][5]
-                elif dane[12] > results_progi[0][2]:
+                elif dane[9] > results_progi[0][2]:
                     wynik = results_progi[0][3]
 
                 wsp = 0
                 wynik_n = wynik
-                suma_warunek = dane[23] + dane[24] + dane[25] + dane[26] + dane[27]
-                if suma_warunek == 0:
-                    suma = int(float(dane[13])) + int(float(dane[14])) + int(float(dane[15])) + int(
-                        float(dane[16])) + int(
-                        float(dane[17])) + int(float(dane[18])) + int(float(dane[19])) + int(
-                        float(dane[20])) + int(
-                        float(dane[21])) + int(float(dane[22])) + int(float(dane[23])) + int(
-                        float(dane[24])) + int(
-                        float(dane[25])) + int(float(dane[26])) + int(float(dane[27]))
-                else:
-                    suma = int(float(dane[13])) + int(float(dane[14])) + int(float(dane[15])) + int(
-                        float(dane[16])) + int(
-                        float(dane[17])) + int(float(dane[18])) + int(float(dane[19])) + int(
-                        float(dane[20])) + int(
-                        float(dane[21])) + int(float(dane[23])) + int(float(dane[24])) + int(
-                        float(dane[25])) + int(
-                        float(dane[26])) + int(float(dane[27]))
-
-                if suma > int(float(prog50)):
+                if dane[10] > int(float(prog50)):
                     wsp = 2
                     wynik_n = 0.0
-                if suma <= int(float(prog50)) and suma > (int(float(prog100)) - int(float(prog75))):
+                if dane[10] <= int(float(prog50)) and dane[10] > (int(float(prog100)) - int(float(prog75))):
                     wsp = 1
                     wynik_n = wynik / 2
 
                 wynik_b = wynik_n
-                if dane[28] == 1:
+                if dane[11] == 1:
                     wynik_b = (wynik_n / 4) * 3
-                if dane[28] == 2:
+                if dane[11] == 2:
                     wynik_b = wynik_n / 2
-                if dane[28] == 3:
+                if dane[11] == 3:
                     wynik_b = wynik_n / 4
-                if dane[28] > 3:
+                if dane[11] > 3:
                     wynik_b = 0.0
 
             else:
                 wynik = wynik_n = wynik_b = 0.00
 
                 wsp = 0
-                suma_warunek = dane[23] + dane[24] + dane[25] + dane[26] + dane[27]
-                if suma_warunek == 0:
-                    suma = int(float(dane[13])) + int(float(dane[14])) + int(float(dane[15])) + int(
-                        float(dane[16])) + int(
-                        float(dane[17])) + int(float(dane[18])) + int(float(dane[19])) + int(
-                        float(dane[20])) + int(
-                        float(dane[21])) + int(float(dane[22])) + int(float(dane[23])) + int(
-                        float(dane[24])) + int(
-                        float(dane[25])) + int(float(dane[26])) + int(float(dane[27]))
-                else:
-                    suma = int(float(dane[13])) + int(float(dane[14])) + int(float(dane[15])) + int(
-                        float(dane[16])) + int(
-                        float(dane[17])) + int(float(dane[18])) + int(float(dane[19])) + int(
-                        float(dane[20])) + int(
-                        float(dane[21])) + int(float(dane[23])) + int(float(dane[24])) + int(
-                        float(dane[25])) + int(
-                        float(dane[26])) + int(float(dane[27]))
-
-                if suma > int(float(prog50)):
+                wynik_n = wynik
+                if dane[10] > int(float(prog50)):
                     wsp = 2
-                if suma <= int(float(prog50)) and suma > (int(float(prog100)) - int(float(prog75))):
+                if dane[10] <= int(float(prog50)) and dane[10] > (int(float(prog100)) - int(float(prog75))):
                     wsp = 1
-            #print([dane[0], dane[1], dane[2], dane[3], dane[4], dane[6], dane[8], dane[9], dane[10], dane[11], dane[12], wynik, suma, wsp, wynik_n, dane[28], wynik_b])
-            lista.append([dane[0], dane[1], dane[2], dane[3], dane[4], dane[6], dane[8], dane[9], dane[10], dane[11], dane[12], wynik, suma, wsp, wynik_n, dane[28], wynik_b])
 
-        suma_kwot = sum(round(float(wiersz[16]), 2) for wiersz in lista)
+
+            print([dane[0], dane[1], dane[2], dane[3], dane[4], dane[5], dane[6], dane[7], dane[8], dane[9], wynik, dane[10], wsp, wynik_n, dane[11], wynik_b])
+            lista.append([dane[0], dane[1], dane[2], dane[3], dane[4], dane[5], dane[6], dane[7], dane[8], dane[9], wynik, dane[10], wsp, wynik_n, dane[11], wynik_b])
+
+        suma_kwot = sum(round(float(wiersz[15]), 2) for wiersz in lista)
         self.ui.lab_sumaPracownicy.setText(str(suma_kwot))
 
         if not results:
@@ -319,7 +281,6 @@ class MainWindow_wyliczeniaForm(QWidget):
             self.ui.tab_dane_pracownicy.setItem(wiersz, 13, QTableWidgetItem(str(wynik[13])))
             self.ui.tab_dane_pracownicy.setItem(wiersz, 14, QTableWidgetItem(str(wynik[14])))
             self.ui.tab_dane_pracownicy.setItem(wiersz, 15, QTableWidgetItem(str(wynik[15])))
-            self.ui.tab_dane_pracownicy.setItem(wiersz, 16, QTableWidgetItem(str(wynik[16])))
             wiersz += 1
 
         self.ui.tab_dane_pracownicy.horizontalHeader().setStretchLastSection(True)
@@ -339,7 +300,6 @@ class MainWindow_wyliczeniaForm(QWidget):
         self.ui.tab_dane_pracownicy.horizontalHeader().setSectionResizeMode(13, QHeaderView.ResizeToContents)
         self.ui.tab_dane_pracownicy.horizontalHeader().setSectionResizeMode(14, QHeaderView.ResizeToContents)
         self.ui.tab_dane_pracownicy.horizontalHeader().setSectionResizeMode(15, QHeaderView.ResizeToContents)
-        self.ui.tab_dane_pracownicy.horizontalHeader().setSectionResizeMode(16, QHeaderView.ResizeToContents)
 
     def naglowki_tabeli_pracownicy(self):
         self.ui.tab_dane_pracownicy.setColumnCount(17)  # Zmień na liczbę kolumn w twojej tabeli
@@ -347,8 +307,7 @@ class MainWindow_wyliczeniaForm(QWidget):
         self.ui.tab_dane_pracownicy.setHorizontalHeaderLabels([
             'Nr akt',
             'Kod',
-            'Nazwisko',
-            'Imię',
+            'Nazwisko i imię',
             'Dział',
             'Direct %',
             'Indirect %',

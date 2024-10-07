@@ -4,6 +4,7 @@ import openpyxl
 #import sys
 import os
 from datetime import date, datetime
+import calendar
 
 from _nieobecnosci_prod_ui import Ui_Form
 import db, dodatki
@@ -21,6 +22,7 @@ class MainWindow_nieobecnosci(QWidget):
         #- załadowanie zmiennych z pliku INI ------------------------------
         self.folder_bledy = self.config['sciezki']['folder_bledy']
         self.plik = self.config['sciezki']['plik_nieobecnosci']
+        self.plik_obco = self.config['sciezki']['plik_obcokrajowcy']
         #------------------------------------------------------------------
         # - domyślna ścieżka dla pliku -----------------
         domyslny = f"{self.folder_bledy}"
@@ -29,6 +31,7 @@ class MainWindow_nieobecnosci(QWidget):
 
         self.ui.btn_przegladaj.clicked.connect(self.przycisk_sciezka)
         self.ui.btn_importuj.clicked.connect(self.czytaj_dane)
+        self.ui.btn_importuj_obco.clicked.connect(self.czytaj_dane_obco)
         self.wyszukaj_dane()
 
 
@@ -52,6 +55,57 @@ class MainWindow_nieobecnosci(QWidget):
         folder = folder.replace("/", "\\")
         print(folder)
         self.ui.ed_sciezka_dane.setText(folder)
+
+    def licz_dni_wolne(self,dane):
+        miestac_roboczy = dodatki.data_miesiac_dzis()
+        data = datetime.strptime(miestac_roboczy, "%Y-%m-%d")
+        miesiac = data.month
+        rok = data.year
+        _, dni_miesiaca = calendar.monthrange(rok, miesiac)
+
+        select_data = "SELECT * FROM `dni_pracujace_w_roku` WHERE rok = '%s' and miesiac = '%s';" % (rok,miesiac)  # (miestac_roboczy)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, select_data)
+
+        dni_z_bazy = results[0][4]
+
+        dni_wolne = dni_z_bazy - int(dane)
+        if dni_wolne < 0:
+            dni_wolne = 0
+        return dni_wolne
+
+    def czytaj_dane_obco(self):
+        if not self.folder_istnieje():
+            return
+        folder = self.ui.ed_sciezka_dane.text().strip()
+        print(f'{folder}\\{self.plik_obco}')
+        wb = openpyxl.load_workbook(os.path.join(f'{folder}\\{self.plik_obco}'))
+        sheet = wb['Sheet']
+        teraz = datetime.today()
+        data_miesiac = str(dodatki.data_miesiac_dzis())
+        print(data_miesiac)
+
+        lista_wpisow = []
+
+        #czytamy wszystkie kolumny i wiersze ze wskazanego pliku
+        for row in sheet.iter_rows(min_row=2, min_col=0, max_col=3, values_only=True):
+            #sprawdzamy czy wiersz nie jest pusty (zakładając że pusty wiersz ma wszystkie kolumny o wartosci None i kończy zestawienie)
+            if any(cell is not None for cell in row):
+                if row[1] == None:
+                    break
+                else:
+                    dni_wolne = self.licz_dni_wolne(row[2])
+                    lista_wpisow.append([row[0],row[1],row[2],dni_wolne,data_miesiac,teraz])
+            else:
+                break
+
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+
+        for row in lista_wpisow:
+            insert_data = "INSERT INTO nieobecnosci_prod VALUES (NULL,'%s','%s',NULL,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'%s','%s','%s','%s');" % (row[1],row[0],row[2],row[3],row[4],row[5])
+            db.execute_query(connection, insert_data)
+
+        self.wyszukaj_dane()
 
     def czytaj_dane(self):
         if not self.folder_istnieje():
@@ -85,7 +139,7 @@ class MainWindow_nieobecnosci(QWidget):
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
 
         for row in lista_wpisow:
-            insert_data = "INSERT INTO nieobecnosci_prod VALUES (NULL,'%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');" % (row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],row[13],row[14],row[15],row[16],row[17],row[18],row[19],row[20])
+            insert_data = "INSERT INTO nieobecnosci_prod VALUES (NULL,'%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',0,'%s','%s','%s');" % (row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],row[13],row[14],row[15],row[16],row[17],row[18],row[19],row[20])
             db.execute_query(connection, insert_data)
 
         self.wyszukaj_dane()
@@ -135,6 +189,7 @@ class MainWindow_nieobecnosci(QWidget):
             'Rehab.',
             'Rodz.',
             'Krew',
+            'Dni w pracy',
             'Razem',
             'Miesiac',
             'Data dodania'
@@ -171,6 +226,7 @@ class MainWindow_nieobecnosci(QWidget):
             self.ui.tab_dane.setItem(wiersz, 18, QTableWidgetItem(str(wynik[19])))
             self.ui.tab_dane.setItem(wiersz, 19, QTableWidgetItem(str(wynik[20])))
             self.ui.tab_dane.setItem(wiersz, 20, QTableWidgetItem(str(wynik[21])))
+            self.ui.tab_dane.setItem(wiersz, 21, QTableWidgetItem(str(wynik[22])))
             wiersz += 1
 
         self.ui.tab_dane.horizontalHeader().setStretchLastSection(True)
@@ -195,3 +251,4 @@ class MainWindow_nieobecnosci(QWidget):
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(18, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(19, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(20, QHeaderView.ResizeToContents)
+        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(21, QHeaderView.ResizeToContents)
