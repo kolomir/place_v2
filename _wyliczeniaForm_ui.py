@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'forms/wyliczeniaform.ui'
+# Form implementation generated from reading ui file 'Forms\wyliczeniaForm.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.10
 #
@@ -240,11 +240,22 @@ class Ui_Form(object):
         self.verticalLayout_10.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_10.setSpacing(0)
         self.verticalLayout_10.setObjectName("verticalLayout_10")
-        self.tab_dane_pomoc = QtWidgets.QTableWidget(self.widget_11)
+        self.widget_30 = QtWidgets.QWidget(self.widget_11)
+        self.widget_30.setObjectName("widget_30")
+        self.verticalLayout_19 = QtWidgets.QVBoxLayout(self.widget_30)
+        self.verticalLayout_19.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_19.setObjectName("verticalLayout_19")
+        self.tab_wyliczenia_pomoc = QtWidgets.QTableWidget(self.widget_30)
+        self.tab_wyliczenia_pomoc.setObjectName("tab_wyliczenia_pomoc")
+        self.tab_wyliczenia_pomoc.setColumnCount(0)
+        self.tab_wyliczenia_pomoc.setRowCount(0)
+        self.verticalLayout_19.addWidget(self.tab_wyliczenia_pomoc)
+        self.tab_dane_pomoc = QtWidgets.QTableWidget(self.widget_30)
         self.tab_dane_pomoc.setObjectName("tab_dane_pomoc")
         self.tab_dane_pomoc.setColumnCount(0)
         self.tab_dane_pomoc.setRowCount(0)
-        self.verticalLayout_10.addWidget(self.tab_dane_pomoc)
+        self.verticalLayout_19.addWidget(self.tab_dane_pomoc)
+        self.verticalLayout_10.addWidget(self.widget_30)
         self.widget_13 = QtWidgets.QWidget(self.widget_11)
         self.widget_13.setObjectName("widget_13")
         self.horizontalLayout_7 = QtWidgets.QHBoxLayout(self.widget_13)
@@ -600,7 +611,7 @@ class Ui_Form(object):
         self.verticalLayout_6.addWidget(self.widget)
 
         self.retranslateUi(Form)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(3)
         QtCore.QMetaObject.connectSlotsByName(Form)
 
     def retranslateUi(self, Form):
