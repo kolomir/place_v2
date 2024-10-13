@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'forms\main.ui'
+# Form implementation generated from reading ui file 'Forms\main.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.10
 #
@@ -14,12 +14,11 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(316, 356)
+        MainWindow.resize(316, 391)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
-        self.gridLayout.setContentsMargins(4, 4, 4, 4)
-        self.gridLayout.setSpacing(2)
+        self.gridLayout.setContentsMargins(2, 2, 2, 2)
         self.gridLayout.setObjectName("gridLayout")
         self.widget = QtWidgets.QWidget(self.centralwidget)
         self.widget.setObjectName("widget")
@@ -201,6 +200,27 @@ class Ui_MainWindow(object):
         self.btn_zaladuj_raportowanie_total.setObjectName("btn_zaladuj_raportowanie_total")
         self.horizontalLayout_9.addWidget(self.btn_zaladuj_raportowanie_total)
         self.verticalLayout_2.addWidget(self.wid_raportowanie_total)
+        self.widget_8 = QtWidgets.QWidget(self.widget_3)
+        self.widget_8.setObjectName("widget_8")
+        self.horizontalLayout_6 = QtWidgets.QHBoxLayout(self.widget_8)
+        self.horizontalLayout_6.setContentsMargins(4, 4, 4, 4)
+        self.horizontalLayout_6.setSpacing(2)
+        self.horizontalLayout_6.setObjectName("horizontalLayout_6")
+        self.lab_dot_jakosc = QtWidgets.QLabel(self.widget_8)
+        self.lab_dot_jakosc.setMinimumSize(QtCore.QSize(20, 20))
+        self.lab_dot_jakosc.setMaximumSize(QtCore.QSize(20, 20))
+        self.lab_dot_jakosc.setText("")
+        self.lab_dot_jakosc.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_red.svg"))
+        self.lab_dot_jakosc.setScaledContents(True)
+        self.lab_dot_jakosc.setObjectName("lab_dot_jakosc")
+        self.horizontalLayout_6.addWidget(self.lab_dot_jakosc)
+        self.lab_jakosc = QtWidgets.QLabel(self.widget_8)
+        self.lab_jakosc.setObjectName("lab_jakosc")
+        self.horizontalLayout_6.addWidget(self.lab_jakosc)
+        self.btn_zaladuj_jakosc = QtWidgets.QPushButton(self.widget_8)
+        self.btn_zaladuj_jakosc.setObjectName("btn_zaladuj_jakosc")
+        self.horizontalLayout_6.addWidget(self.btn_zaladuj_jakosc)
+        self.verticalLayout_2.addWidget(self.widget_8)
         self.verticalLayout_4.addWidget(self.widget_3)
         self.gridLayout.addWidget(self.widget, 0, 0, 1, 1)
         self.widget_6 = QtWidgets.QWidget(self.centralwidget)
@@ -276,6 +296,8 @@ class Ui_MainWindow(object):
         self.btn_zaladuj_raportowanie.setText(_translate("MainWindow", "Załaduj dane"))
         self.lab_raportowanie_total.setText(_translate("MainWindow", "Raportowanie (total)"))
         self.btn_zaladuj_raportowanie_total.setText(_translate("MainWindow", "Załaduj dane"))
+        self.lab_jakosc.setText(_translate("MainWindow", "Jakość"))
+        self.btn_zaladuj_jakosc.setText(_translate("MainWindow", "Załaduj dane"))
         self.btn_oblicz.setText(_translate("MainWindow", "Oblicz"))
         self.btn_ustawienia.setText(_translate("MainWindow", "Ustawienia"))
         self.btn_zamknij.setText(_translate("MainWindow", "Zamknij"))

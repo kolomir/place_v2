@@ -94,7 +94,7 @@
          </font>
         </property>
         <property name="currentIndex">
-         <number>3</number>
+         <number>4</number>
         </property>
         <widget class="QWidget" name="tab_nieobecnosci">
          <attribute name="title">
@@ -713,7 +713,28 @@
               <number>0</number>
              </property>
              <item>
-              <widget class="QTableWidget" name="tab_dane_liderzy"/>
+              <widget class="QWidget" name="widget_31" native="true">
+               <layout class="QVBoxLayout" name="verticalLayout_20">
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="QTableWidget" name="tab_wyliczenia_liderzy"/>
+                </item>
+                <item>
+                 <widget class="QTableWidget" name="tab_dane_liderzy"/>
+                </item>
+               </layout>
+              </widget>
              </item>
              <item>
               <widget class="QWidget" name="widget_16" native="true">
@@ -838,7 +859,28 @@
               <number>0</number>
              </property>
              <item>
-              <widget class="QTableWidget" name="tab_dane_instruktorzy"/>
+              <widget class="QWidget" name="widget_32" native="true">
+               <layout class="QVBoxLayout" name="verticalLayout_21">
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="QTableWidget" name="tab_wyliczenia_instruktorzy"/>
+                </item>
+                <item>
+                 <widget class="QTableWidget" name="tab_dane_instruktorzy"/>
+                </item>
+               </layout>
+              </widget>
              </item>
              <item>
               <widget class="QWidget" name="widget_19" native="true">

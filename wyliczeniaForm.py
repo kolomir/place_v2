@@ -22,6 +22,7 @@ class MainWindow_wyliczeniaForm(QWidget):
         self.miesiac_info_nieobecnosci()
         self.licz_pracownicy()
         self.licz_wsparcie()
+        self.licz_liderzy()
 
 
     def miesiac_robocze(self):
@@ -427,9 +428,14 @@ class MainWindow_wyliczeniaForm(QWidget):
                                     i.nr_akt 
                                     ,p.Kod 
                                     ,CONCAT(i.nazwisko,' ',i.imie) as 'Nazwisko i imie' 
+                                    ,case 
+                                        when (np.krew + np.rodz + np.rehab + np.nn + np.usp) = 0 then np.krew + np.rodz + np.rehab + np.nn + np.usp + np.inne_nieobecn + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz 
+                                        else np.krew + np.rodz + np.rehab + np.nn + np.usp + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz
+                                    end as nieobecnosci
                                 from 
                                     instruktor i 
                                         left join pracownicy p on p.Nr_akt = i.nr_akt 
+                                            left join nieobecnosci_prod np on np.nr_akt = p.Nr_akt 
                                 where 
                                     i.id_ranga = 4
                                     and p.miesiac = '{0}'
@@ -441,25 +447,51 @@ class MainWindow_wyliczeniaForm(QWidget):
         results_pracownik = db.read_query(connection, select_data_pracownik)
         connection.close()
 
+
         lista_pracownik = []
         for dane in results_pracownik:
+
+
             direct = round(suma_direct[dane[0]]/(suma_direct[dane[0]]+suma_indirect[dane[0]]),2)
             indirect = round(suma_indirect[dane[0]]/(suma_direct[dane[0]]+suma_indirect[dane[0]]),2)
             wydajnosc = round((suma_planowany[dane[0]]/suma_raportowany[dane[0]])*100,2)
             produktywnosc = round((direct*(suma_planowany[dane[0]]/suma_raportowany[dane[0]]))*100,2)
-            print([dane[0], dane[1], dane[2],direct, indirect, wydajnosc, produktywnosc])
-            lista_pracownik.append([dane[0], dane[1], dane[2], wydajnosc, produktywnosc])
 
+            wynik = 0
+            if produktywnosc > results_progi[0][6]:
+                wynik = results_progi[0][7]
+            elif produktywnosc > results_progi[0][4]:
+                wynik = results_progi[0][5]
+            elif produktywnosc > results_progi[0][2]:
+                wynik = results_progi[0][3]
 
-        #suma_kwot = sum(round(float(wiersz[15]), 2) for wiersz in lista)
-        #self.ui.lab_sumaPracownicy.setText(str(suma_kwot))
+            wsp = 0
+            wynik_n = wynik
+            if dane[3] > int(float(prog50)):
+                wsp = 2
+                wynik_n = 0.0
+            if dane[3] <= int(float(prog50)) and dane[3] > (int(float(prog100)) - int(float(prog75))):
+                wsp = 1
+                wynik_n = wynik / 2
+            #print('dane[3]:', dane[3], 'wsp:', wsp, 'wynik:', wynik, 'wynik_n:', wynik_n)
+
+            print([dane[0], dane[1], dane[2],direct, indirect, wydajnosc, produktywnosc,wynik, wsp, wynik_n])
+            lista_pracownik.append([dane[0], dane[1], dane[2], wydajnosc, produktywnosc,wynik, wsp, wynik_n])
+
+        print(lista_pracownik)
+        suma_kwot = sum(round(float(wiersz[7]), 2) for wiersz in lista_pracownik)
+        self.ui.lab_sumaPomoc.setText(str(suma_kwot))
 
         if not results:
             self.clear_table_wsparcie()
             self.naglowki_tabeli_wsparcie()
+            self.clear_table_wsparcie_pracownik()
+            self.naglowki_tabeli_wsparcie_pracownik()
         else:
             self.naglowki_tabeli_wsparcie()
             self.pokaz_dane_wsparcie(lista)
+            self.naglowki_tabeli_wsparcie_pracownik()
+            self.pokaz_dane_wsparcie_pracownik(lista_pracownik)
 
     def pokaz_dane_wsparcie(self, rows):
         # Column count
@@ -513,7 +545,332 @@ class MainWindow_wyliczeniaForm(QWidget):
         self.ui.tab_wyliczenia_pomoc.clearContents()
         self.ui.tab_wyliczenia_pomoc.setRowCount(0)
 
+    def pokaz_dane_wsparcie_pracownik(self, rows):
+        # Column count
+        if int(len(rows[0])) > 0:
+            self.ui.tab_dane_pomoc.setColumnCount(int(len(rows[0])))
+
+        # Row count
+        self.ui.tab_dane_pomoc.setRowCount(int(len(rows)))
+
+        wiersz = 0
+        for wynik in rows:
+            self.ui.tab_dane_pomoc.setItem(wiersz, 0, QTableWidgetItem(str(wynik[0])))
+            self.ui.tab_dane_pomoc.setItem(wiersz, 1, QTableWidgetItem(str(wynik[1])))
+            self.ui.tab_dane_pomoc.setItem(wiersz, 2, QTableWidgetItem(str(wynik[2])))
+            self.ui.tab_dane_pomoc.setItem(wiersz, 3, QTableWidgetItem(str(wynik[3])))
+            self.ui.tab_dane_pomoc.setItem(wiersz, 4, QTableWidgetItem(str(wynik[4])))
+            self.ui.tab_dane_pomoc.setItem(wiersz, 5, QTableWidgetItem(str(wynik[5])))
+            self.ui.tab_dane_pomoc.setItem(wiersz, 6, QTableWidgetItem(str(wynik[6])))
+            self.ui.tab_dane_pomoc.setItem(wiersz, 7, QTableWidgetItem(str(wynik[7])))
+            wiersz += 1
+
+        self.ui.tab_dane_pomoc.horizontalHeader().setStretchLastSection(True)
+        self.ui.tab_dane_pomoc.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pomoc.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pomoc.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pomoc.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pomoc.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pomoc.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pomoc.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_pomoc.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
+
+    def naglowki_tabeli_wsparcie_pracownik(self):
+        self.ui.tab_dane_pomoc.setColumnCount(8)  # Zmień na liczbę kolumn w twojej tabeli
+        self.ui.tab_dane_pomoc.setRowCount(0)  # Ustawienie liczby wierszy na 0
+        self.ui.tab_dane_pomoc.setHorizontalHeaderLabels([
+            'Nr akt',
+            'Kod',
+            'Imię i nazwisko',
+            'Wydajność',
+            'Produktywność',
+            'Premia_prod',
+            'Chorował',
+            'Premia'
+        ])
+
+    def clear_table_wsparcie_pracownik(self):
+        # Wyczyść zawartość tabeli
+        self.ui.tab_dane_pomoc.clearContents()
+        self.ui.tab_dane_pomoc.setRowCount(0)
+
 # = LIDERZY =========================================================================================================================================================
+
+    def licz_liderzy(self):
+        miesiac = dodatki.data_miesiac_dzis()
+        select_data = '''
+                        select 
+                            gr.nazwa 
+                            ,l.nazwa 
+                            ,( select sum(d.Direct_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) as direct
+                            ,( select sum(d.Indirect_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) as indirect
+                            ,ROUND(((( select sum(d.Direct_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )/(( select sum(d.Direct_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) + ( select sum(d.Indirect_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )))*100),2) as 'Direct %'
+                            ,ROUND(((( select sum(d.Indirect_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )/(( select sum(d.Direct_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) + ( select sum(d.Indirect_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )))*100),2) as 'Indirect %'
+                            ,rt.Pl_total_time 
+                            ,rt.Rep_total_time 
+                            ,((rt.Pl_total_time/rt.Rep_total_time)*100) as 'Wydajnosc'
+                            ,ROUND(((( select sum(d.Direct_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )/(( select sum(d.Direct_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) + ( select sum(d.Indirect_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )))*((rt.Pl_total_time/rt.Rep_total_time))*100),2) as 'Produktywnosc'
+                            ,i.nr_akt 
+                            ,jp.ppm 
+                            ,jp.reklamacje 
+                        from 
+                            gniazda_robocze gr 
+                                left join gniazdo_linia gl on gl.id_gniazdo = gr.id 
+                                    left join linie l on l.id = gl.id_linia 
+                                        left join raportowanie_total rt on rt.Work_center = l.nazwa
+                                left join linia_gniazdo lg on lg.id_grupa = gr.id 
+                                    left join instruktor i on i.id = lg.id_lider 
+		                        left join jakosc_prod jp on jp.grupa_robocza = gr.nazwa 
+                        where 
+                            gr.aktywna = 1
+                            and gl.aktywny = 1
+                            and l.aktywne = 1
+                            and rt.miesiac = '{0}'
+	                        and jp.miesiac = '{0}'
+                        group by 
+                            gr.nazwa 
+                            ,l.nazwa 
+                        '''.format(miesiac)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, select_data)
+        connection.close()
+
+
+        select_data_progi = "select * from progi_prod pp where pp.id_ranga = 2 and pp.aktywny = 1"
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results_progi = db.read_query(connection, select_data_progi)
+        connection.close()
+
+        select_data_q_progi = "select * from progi_jakosc pj where pj.aktywny = 1 and id_ranga = 2"
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results_q_progi = db.read_query(connection, select_data_q_progi)
+        connection.close()
+
+        prog100 = self.ui.lab_pracujacychNieobecnosci.text()
+        prog75 = self.ui.lab_pracujacych075Nieobecnosci.text()
+        prog50 = self.ui.lab_pracujacych050Nieobecnosci.text()
+
+        lista = []
+        for dane in results:
+            #print([dane[0], dane[1], dane[2], dane[3], dane[4], dane[5], dane[6], dane[7], dane[8]])
+            lista.append([dane[1], dane[2], dane[3], dane[4], dane[5], dane[6], dane[7], dane[8], dane[9]])
+
+        lista2 = []
+        for dane in results:
+            # print([dane[0], dane[1], dane[2], dane[3], dane[4], dane[5], dane[6], dane[7], dane[8]])
+            lista2.append([dane[0], dane[2], dane[3], dane[6], dane[7]])
+
+        suma_direct = {}
+        suma_indirect = {}
+        suma_planowany = {}
+        suma_raportowany = {}
+
+        # Iterujemy po liście
+        for wiersz in lista2:
+            klucz = wiersz[0]  # Wartość z pierwszej kolumny
+            wartosc = wiersz[1]  # Wartość z trzeciej kolumny
+
+            if klucz in suma_direct:
+                suma_direct[klucz] += wartosc
+            else:
+                suma_direct[klucz] = wartosc
+        for wiersz in lista2:
+            klucz = wiersz[0]  # Wartość z pierwszej kolumny
+            wartosc = wiersz[2]  # Wartość z trzeciej kolumny
+
+            if klucz in suma_indirect:
+                suma_indirect[klucz] += wartosc
+            else:
+                suma_indirect[klucz] = wartosc
+        for wiersz in lista2:
+            klucz = wiersz[0]  # Wartość z pierwszej kolumny
+            wartosc = wiersz[3]  # Wartość z trzeciej kolumny
+
+            if klucz in suma_planowany:
+                suma_planowany[klucz] += wartosc
+            else:
+                suma_planowany[klucz] = wartosc
+        for wiersz in lista2:
+            klucz = wiersz[0]  # Wartość z pierwszej kolumny
+            wartosc = wiersz[4]  # Wartość z trzeciej kolumny
+
+            if klucz in suma_raportowany:
+                suma_raportowany[klucz] += wartosc
+            else:
+                suma_raportowany[klucz] = wartosc
+        print(suma_indirect)
+
+        select_data_pracownik = '''
+                                select 
+                                    i.nr_akt 
+                                    ,p.Kod 
+                                    ,CONCAT(i.nazwisko,' ',i.imie) as 'Nazwisko i imie' 
+                                    ,case 
+                                        when (np.krew + np.rodz + np.rehab + np.nn + np.usp) = 0 then np.krew + np.rodz + np.rehab + np.nn + np.usp + np.inne_nieobecn + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz 
+                                        else np.krew + np.rodz + np.rehab + np.nn + np.usp + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz
+                                    end as nieobecnosci
+	                                ,gr.nazwa 
+                                from 
+                                    instruktor i 
+                                        left join pracownicy p on p.Nr_akt = i.nr_akt 
+                                            left join nieobecnosci_prod np on np.nr_akt = p.Nr_akt 
+                                        left join linia_gniazdo lg on lg.id_lider = i.id 
+                                            left join gniazda_robocze gr on gr.id = lg.id_grupa 
+                                where 
+                                    i.id_ranga = 2
+                                    and p.miesiac = '{0}'
+                                group by 
+                                    i.nr_akt 
+                                    ,p.Kod 
+                                '''.format(miesiac)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results_pracownik = db.read_query(connection, select_data_pracownik)
+        connection.close()
+
+        lista_pracownik = []
+        for dane in results_pracownik:
+
+            direct = round(suma_direct[dane[4]] / (suma_direct[dane[4]] + suma_indirect[dane[4]]), 2)
+            indirect = round(suma_indirect[dane[4]] / (suma_direct[dane[4]] + suma_indirect[dane[4]]), 2)
+            wydajnosc = round((suma_planowany[dane[4]] / suma_raportowany[dane[4]]) * 100, 2)
+            produktywnosc = round((direct * (suma_planowany[dane[4]] / suma_raportowany[dane[4]])) * 100, 2)
+
+            wynik = 0
+            if produktywnosc > results_progi[0][6]:
+                wynik = results_progi[0][7]
+            elif produktywnosc > results_progi[0][4]:
+                wynik = results_progi[0][5]
+            elif produktywnosc > results_progi[0][2]:
+                wynik = results_progi[0][3]
+
+            wsp = 0
+            wynik_n = wynik
+            if dane[3] > int(float(prog50)):
+                wsp = 2
+                wynik_n = 0.0
+            if dane[3] <= int(float(prog50)) and dane[3] > (int(float(prog100)) - int(float(prog75))):
+                wsp = 1
+                wynik_n = wynik / 2
+            print('dane[3]:', dane[3], 'wsp:', wsp, 'wynik:', wynik, 'wynik_n:', wynik_n)
+
+            print([dane[0], dane[1], dane[2], direct, indirect, wydajnosc, produktywnosc, wynik, wsp, wynik_n])
+            lista_pracownik.append([dane[0], dane[1], dane[2], wydajnosc, produktywnosc, wynik, wsp, wynik_n])
+
+        print(lista_pracownik)
+        suma_kwot = sum(round(float(wiersz[7]), 2) for wiersz in lista_pracownik)
+        self.ui.lab_sumaLiderzy.setText(str(suma_kwot))
+
+        if not results:
+            self.clear_table_liderzy()
+            self.naglowki_tabeli_liderzy()
+            self.clear_table_liderzy_pracownik()
+            self.naglowki_tabeli_liderzy_pracownik()
+        else:
+            self.naglowki_tabeli_liderzy()
+            self.pokaz_dane_liderzy(lista)
+            self.naglowki_tabeli_liderzy_pracownik()
+            self.pokaz_dane_liderzy_pracownik(lista_pracownik)
+
+    def pokaz_dane_liderzy(self, rows):
+        # Column count
+        if int(len(rows[0])) > 0:
+            self.ui.tab_wyliczenia_liderzy.setColumnCount(int(len(rows[0])))
+
+        # Row count
+        self.ui.tab_wyliczenia_liderzy.setRowCount(int(len(rows)))
+
+        wiersz = 0
+        for wynik in rows:
+            self.ui.tab_wyliczenia_liderzy.setItem(wiersz, 0, QTableWidgetItem(str(wynik[0])))
+            self.ui.tab_wyliczenia_liderzy.setItem(wiersz, 1, QTableWidgetItem(str(wynik[1])))
+            self.ui.tab_wyliczenia_liderzy.setItem(wiersz, 2, QTableWidgetItem(str(wynik[2])))
+            self.ui.tab_wyliczenia_liderzy.setItem(wiersz, 3, QTableWidgetItem(str(wynik[3])))
+            self.ui.tab_wyliczenia_liderzy.setItem(wiersz, 4, QTableWidgetItem(str(wynik[4])))
+            self.ui.tab_wyliczenia_liderzy.setItem(wiersz, 5, QTableWidgetItem(str(wynik[5])))
+            self.ui.tab_wyliczenia_liderzy.setItem(wiersz, 6, QTableWidgetItem(str(wynik[6])))
+            self.ui.tab_wyliczenia_liderzy.setItem(wiersz, 7, QTableWidgetItem(str(wynik[7])))
+            self.ui.tab_wyliczenia_liderzy.setItem(wiersz, 8, QTableWidgetItem(str(wynik[8])))
+            wiersz += 1
+
+        self.ui.tab_wyliczenia_liderzy.horizontalHeader().setStretchLastSection(True)
+        self.ui.tab_wyliczenia_liderzy.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_liderzy.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_liderzy.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_liderzy.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_liderzy.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_liderzy.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_liderzy.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_liderzy.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_liderzy.horizontalHeader().setSectionResizeMode(8, QHeaderView.ResizeToContents)
+
+    def naglowki_tabeli_liderzy(self):
+        self.ui.tab_wyliczenia_liderzy.setColumnCount(9)  # Zmień na liczbę kolumn w twojej tabeli
+        self.ui.tab_wyliczenia_liderzy.setRowCount(0)  # Ustawienie liczby wierszy na 0
+        self.ui.tab_wyliczenia_liderzy.setHorizontalHeaderLabels([
+            'Linia',
+            'Direct',
+            'Indirect',
+            'Direct %',
+            'Indirect %',
+            'Planowany',
+            'Raportowany',
+            'Wydajność',
+            'Produktywność'
+        ])
+
+    def clear_table_liderzy(self):
+        # Wyczyść zawartość tabeli
+        self.ui.tab_wyliczenia_liderzy.clearContents()
+        self.ui.tab_wyliczenia_liderzy.setRowCount(0)
+
+    def pokaz_dane_liderzy_pracownik(self, rows):
+        # Column count
+        if int(len(rows[0])) > 0:
+            self.ui.tab_dane_liderzy.setColumnCount(int(len(rows[0])))
+
+        # Row count
+        self.ui.tab_dane_liderzy.setRowCount(int(len(rows)))
+
+        wiersz = 0
+        for wynik in rows:
+            self.ui.tab_dane_liderzy.setItem(wiersz, 0, QTableWidgetItem(str(wynik[0])))
+            self.ui.tab_dane_liderzy.setItem(wiersz, 1, QTableWidgetItem(str(wynik[1])))
+            self.ui.tab_dane_liderzy.setItem(wiersz, 2, QTableWidgetItem(str(wynik[2])))
+            self.ui.tab_dane_liderzy.setItem(wiersz, 3, QTableWidgetItem(str(wynik[3])))
+            self.ui.tab_dane_liderzy.setItem(wiersz, 4, QTableWidgetItem(str(wynik[4])))
+            self.ui.tab_dane_liderzy.setItem(wiersz, 5, QTableWidgetItem(str(wynik[5])))
+            self.ui.tab_dane_liderzy.setItem(wiersz, 6, QTableWidgetItem(str(wynik[6])))
+            self.ui.tab_dane_liderzy.setItem(wiersz, 7, QTableWidgetItem(str(wynik[7])))
+            wiersz += 1
+
+        self.ui.tab_dane_liderzy.horizontalHeader().setStretchLastSection(True)
+        self.ui.tab_dane_liderzy.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_liderzy.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_liderzy.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_liderzy.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_liderzy.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_liderzy.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_liderzy.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_liderzy.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
+
+    def naglowki_tabeli_liderzy_pracownik(self):
+        self.ui.tab_dane_liderzy.setColumnCount(8)  # Zmień na liczbę kolumn w twojej tabeli
+        self.ui.tab_dane_liderzy.setRowCount(0)  # Ustawienie liczby wierszy na 0
+        self.ui.tab_dane_liderzy.setHorizontalHeaderLabels([
+            'Nr akt',
+            'Kod',
+            'Imię i nazwisko',
+            'Wydajność',
+            'Produktywność',
+            'Premia_prod',
+            'Chorował',
+            'Premia'
+        ])
+
+    def clear_table_liderzy_pracownik(self):
+        # Wyczyść zawartość tabeli
+        self.ui.tab_dane_liderzy.clearContents()
+        self.ui.tab_dane_liderzy.setRowCount(0)
 
 # = INSTRUKTOR ======================================================================================================================================================
 

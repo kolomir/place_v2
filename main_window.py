@@ -15,6 +15,7 @@ from pracownicy import MainWindow_pracownicy
 from direct_prod import MainWindow_direct_prod
 from raportowanie_prod import MainWindow_raportowanie_prod
 from raportowanie_total_prod import MainWindow_raportowanie_total_prod
+from jakosc_prod import MainWindow_jakosc
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -40,6 +41,7 @@ class MainWindow(QMainWindow):
         self.ui.btn_direct.clicked.connect(self.otworz_okno_direct_prod)
         self.ui.btn_zaladuj_raportowanie.clicked.connect(self.otworz_okno_raportowanie_prod)
         self.ui.btn_zaladuj_raportowanie_total.clicked.connect(self.otworz_okno_raportowanie_total_prod)
+        self.ui.btn_zaladuj_jakosc.clicked.connect(self.otworz_okno_jakoscForm)
         self.ui.btn_ustawienia.clicked.connect(self.otworz_okno_ustawieniaMenu)
         self.ui.btn_oblicz.clicked.connect(self.otworz_okno_wyliczeniaForm)
         self.ui.btn_zamknij.clicked.connect(qApp.quit)
@@ -50,12 +52,14 @@ class MainWindow(QMainWindow):
         QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_direct_prod)
         QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_raportowanie_prod)
         QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_raportowanie_total_prod)
+        QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_jakosc_prod)
 
         self.sprawdz_zaladowanie_bledy()
         self.sprawdz_zaladowanie_nieobecnosci()
         self.sprawdz_zaladowanie_pracownicy()
         self.sprawdz_zaladowanie_direct_prod()
         self.sprawdz_zaladowanie_raportowanie_prod()
+        self.sprawdz_zaladowanie_jakosc_prod()
 
     def data_miesiac_dzis(self):
         data_dzis = date.today()
@@ -202,6 +206,10 @@ class MainWindow(QMainWindow):
         self.okno_wyliczeniaForm = MainWindow_wyliczeniaForm()
         self.okno_wyliczeniaForm.show()
 
+    def otworz_okno_jakoscForm(self):
+        self.okno_jakoscForm = MainWindow_jakosc()
+        self.okno_jakoscForm.show()
+
     def sprawdz_zaladowanie_pracownicy(self):
         miestac_roboczy = self.data_miesiac_dzis()
         #print('miesiac', miestac_roboczy)
@@ -278,4 +286,17 @@ class MainWindow(QMainWindow):
             self.ui.lab_dot_raportowanie_total.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_red.svg"))
         else:
             self.ui.lab_dot_raportowanie_total.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_green.svg"))
+        connection.close()
+
+    def sprawdz_zaladowanie_jakosc_prod(self):
+        miestac_roboczy = self.data_miesiac_dzis()
+        #print('miesiac', miestac_roboczy)
+        select_data = "SELECT * FROM `jakosc_prod` WHERE miesiac = '%s';" % (miestac_roboczy)  # (miestac_roboczy)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, select_data)
+
+        if not results:
+            self.ui.lab_dot_jakosc.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_red.svg"))
+        else:
+            self.ui.lab_dot_jakosc.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_green.svg"))
         connection.close()
