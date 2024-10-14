@@ -641,10 +641,17 @@ class MainWindow_wyliczeniaForm(QWidget):
         results_progi = db.read_query(connection, select_data_progi)
         connection.close()
 
-        select_data_q_progi = "select * from progi_jakosc pj where pj.aktywny = 1 and id_ranga = 2"
+        #select_data_q_progi = "select * from progi_jakosc pj where pj.aktywny = 1 and id_ranga = 2"
+        #connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        #results_q_progi = db.read_query(connection, select_data_q_progi)
+        #connection.close()
+
+        select_data_q_kwoty = "select kj.kwota from kwoty_jakosc kj where kj.aktywny = 1 and kj.id_ranga = 2"
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-        results_q_progi = db.read_query(connection, select_data_q_progi)
+        results_q_kwoty = db.read_query(connection, select_data_q_kwoty)
         connection.close()
+
+        kwota_jakosc = results_q_kwoty[0][0]
 
         prog100 = self.ui.lab_pracujacychNieobecnosci.text()
         prog75 = self.ui.lab_pracujacych075Nieobecnosci.text()
@@ -709,13 +716,17 @@ class MainWindow_wyliczeniaForm(QWidget):
                                         when (np.krew + np.rodz + np.rehab + np.nn + np.usp) = 0 then np.krew + np.rodz + np.rehab + np.nn + np.usp + np.inne_nieobecn + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz 
                                         else np.krew + np.rodz + np.rehab + np.nn + np.usp + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz
                                     end as nieobecnosci
+                                    ,gr.id
 	                                ,gr.nazwa 
+	                                ,jp.ppm 
+	                                ,jp.reklamacje 
                                 from 
                                     instruktor i 
                                         left join pracownicy p on p.Nr_akt = i.nr_akt 
                                             left join nieobecnosci_prod np on np.nr_akt = p.Nr_akt 
                                         left join linia_gniazdo lg on lg.id_lider = i.id 
                                             left join gniazda_robocze gr on gr.id = lg.id_grupa 
+			                                    left join jakosc_prod jp on jp.grupa_robocza = gr.nazwa 
                                 where 
                                     i.id_ranga = 2
                                     and p.miesiac = '{0}'
@@ -730,10 +741,10 @@ class MainWindow_wyliczeniaForm(QWidget):
         lista_pracownik = []
         for dane in results_pracownik:
 
-            direct = round(suma_direct[dane[4]] / (suma_direct[dane[4]] + suma_indirect[dane[4]]), 2)
-            indirect = round(suma_indirect[dane[4]] / (suma_direct[dane[4]] + suma_indirect[dane[4]]), 2)
-            wydajnosc = round((suma_planowany[dane[4]] / suma_raportowany[dane[4]]) * 100, 2)
-            produktywnosc = round((direct * (suma_planowany[dane[4]] / suma_raportowany[dane[4]])) * 100, 2)
+            direct = round(suma_direct[dane[5]] / (suma_direct[dane[5]] + suma_indirect[dane[5]]), 2)
+            indirect = round(suma_indirect[dane[5]] / (suma_direct[dane[5]] + suma_indirect[dane[5]]), 2)
+            wydajnosc = round((suma_planowany[dane[5]] / suma_raportowany[dane[5]]) * 100, 2)
+            produktywnosc = round((direct * (suma_planowany[dane[5]] / suma_raportowany[dane[5]])) * 100, 2)
 
             wynik = 0
             if produktywnosc > results_progi[0][6]:
@@ -751,13 +762,45 @@ class MainWindow_wyliczeniaForm(QWidget):
             if dane[3] <= int(float(prog50)) and dane[3] > (int(float(prog100)) - int(float(prog75))):
                 wsp = 1
                 wynik_n = wynik / 2
+
+            wynik_j = 0
+            kwota_j = 0
+            progi_jakosc = self.progi(dane[4])
+            if dane[6] == 0:
+                if dane[7] == 0:
+                    wynik_j = float(wynik_n) + float(kwota_jakosc)
+                    kwota_j = float(kwota_jakosc)
+                elif dane[7] == 1:
+                    wynik_j = float(wynik_n) + (float(kwota_jakosc) * 0.75)
+                    kwota_j = float(kwota_jakosc) * 0.75
+                elif dane[7] == 2:
+                    wynik_j = float(wynik_n) + (float(kwota_jakosc) * 0.5)
+                    kwota_j = float(kwota_jakosc) * 0.5
+                else:
+                    wynik_j = float(wynik_n)
+            else:
+                if dane[7] == 1:
+                    if dane[6] > progi_jakosc[2]:
+                        wynik_j = float(wynik_n)
+                    if dane[6] > progi_jakosc[1] and dane[6] <= progi_jakosc[2]:
+                        wynik_j = float(wynik_n) + (float(kwota_jakosc) * 0.5)
+                        kwota_j = float(kwota_jakosc) * 0.5
+                    if dane[6] > progi_jakosc[0] and dane[6] <= progi_jakosc[1]:
+                        wynik_j = float(wynik_n) + (float(kwota_jakosc) * 0.75)
+                        kwota_j = float(kwota_jakosc) * 0.75
+                    if dane[6] <= progi_jakosc[0]:
+                        wynik_j = float(wynik_n) + float(kwota_jakosc)
+                        kwota_j = float(kwota_jakosc)
+                else:
+                    wynik_j = 0
+
             print('dane[3]:', dane[3], 'wsp:', wsp, 'wynik:', wynik, 'wynik_n:', wynik_n)
 
-            print([dane[0], dane[1], dane[2], direct, indirect, wydajnosc, produktywnosc, wynik, wsp, wynik_n])
-            lista_pracownik.append([dane[0], dane[1], dane[2], wydajnosc, produktywnosc, wynik, wsp, wynik_n])
+            print([dane[0], dane[1], dane[2], direct, indirect, wydajnosc, produktywnosc, wynik, wsp, wynik_n, kwota_j, wynik_j])
+            lista_pracownik.append([dane[0], dane[1], dane[2], wydajnosc, produktywnosc, wynik, wsp, wynik_n, kwota_j, wynik_j])
 
         print(lista_pracownik)
-        suma_kwot = sum(round(float(wiersz[7]), 2) for wiersz in lista_pracownik)
+        suma_kwot = sum(round(float(wiersz[9]), 2) for wiersz in lista_pracownik)
         self.ui.lab_sumaLiderzy.setText(str(suma_kwot))
 
         if not results:
@@ -770,6 +813,19 @@ class MainWindow_wyliczeniaForm(QWidget):
             self.pokaz_dane_liderzy(lista)
             self.naglowki_tabeli_liderzy_pracownik()
             self.pokaz_dane_liderzy_pracownik(lista_pracownik)
+
+    def progi(self, wc_id):
+        select_data_q_progi = "select * from progi_jakosc pj where pj.aktywny = 1 and id_ranga = 2"
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results_q_progi = db.read_query(connection, select_data_q_progi)
+        connection.close()
+
+        for dane in results_q_progi:
+            if dane[2] == wc_id:
+                dol = dane[4]
+                srodek = dane[5]
+                gora = dane[6]
+        return dol, srodek, gora
 
     def pokaz_dane_liderzy(self, rows):
         # Column count
@@ -841,6 +897,8 @@ class MainWindow_wyliczeniaForm(QWidget):
             self.ui.tab_dane_liderzy.setItem(wiersz, 5, QTableWidgetItem(str(wynik[5])))
             self.ui.tab_dane_liderzy.setItem(wiersz, 6, QTableWidgetItem(str(wynik[6])))
             self.ui.tab_dane_liderzy.setItem(wiersz, 7, QTableWidgetItem(str(wynik[7])))
+            self.ui.tab_dane_liderzy.setItem(wiersz, 8, QTableWidgetItem(str(wynik[8])))
+            self.ui.tab_dane_liderzy.setItem(wiersz, 9, QTableWidgetItem(str(wynik[9])))
             wiersz += 1
 
         self.ui.tab_dane_liderzy.horizontalHeader().setStretchLastSection(True)
@@ -852,9 +910,11 @@ class MainWindow_wyliczeniaForm(QWidget):
         self.ui.tab_dane_liderzy.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
         self.ui.tab_dane_liderzy.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeToContents)
         self.ui.tab_dane_liderzy.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_liderzy.horizontalHeader().setSectionResizeMode(8, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_liderzy.horizontalHeader().setSectionResizeMode(9, QHeaderView.ResizeToContents)
 
     def naglowki_tabeli_liderzy_pracownik(self):
-        self.ui.tab_dane_liderzy.setColumnCount(8)  # Zmień na liczbę kolumn w twojej tabeli
+        self.ui.tab_dane_liderzy.setColumnCount(10)  # Zmień na liczbę kolumn w twojej tabeli
         self.ui.tab_dane_liderzy.setRowCount(0)  # Ustawienie liczby wierszy na 0
         self.ui.tab_dane_liderzy.setHorizontalHeaderLabels([
             'Nr akt',
@@ -864,7 +924,9 @@ class MainWindow_wyliczeniaForm(QWidget):
             'Produktywność',
             'Premia_prod',
             'Chorował',
-            'Premia'
+            'Premia',
+            'Dodatek jakość',
+            'Premia Suma'
         ])
 
     def clear_table_liderzy_pracownik(self):
