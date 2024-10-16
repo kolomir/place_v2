@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>301</width>
+    <width>302</width>
     <height>168</height>
    </rect>
   </property>
@@ -168,12 +168,12 @@
           </spacer>
          </item>
          <item>
-          <widget class="QCheckBox" name="check_aktywny">
-           <property name="text">
-            <string>Aktywny</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
+          <widget class="QComboBox" name="combo_zmiana">
+           <property name="minimumSize">
+            <size>
+             <width>100</width>
+             <height>0</height>
+            </size>
            </property>
           </widget>
          </item>
@@ -233,6 +233,16 @@
          <property name="bottomMargin">
           <number>0</number>
          </property>
+         <item>
+          <widget class="QCheckBox" name="check_aktywny">
+           <property name="text">
+            <string>Aktywny</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
          <item>
           <spacer name="horizontalSpacer">
            <property name="orientation">

@@ -10,6 +10,7 @@ class MainWindow_linieDodaj(QWidget):
         self.ui.setupUi(self)
 
         self.ui.btn_zapisz.clicked.connect(self.zapisz)
+        self.combo_lokalizacja()
 
     def sprawdz_pole(self):
         pole_linie = self.ui.text_linia.text().strip()
@@ -20,18 +21,32 @@ class MainWindow_linieDodaj(QWidget):
             return False
         return True
 
+    def combo_lokalizacja(self):
+        query = "SELECT * FROM lokalizacja WHERE aktywny = 1;"
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, query)
+
+        id = 0
+        value = '-----'
+        self.ui.combo_lokalizacja.addItem(value, id)
+
+        for wynik in results:
+            id = wynik[0]
+            value = wynik[1]
+            self.ui.combo_lokalizacja.addItem(value, id)
 
     def zapisz(self):
         if not self.sprawdz_pole():
             return
-#TODO: Nie zapisują się lokalizacje!!
+
         pole_linie = self.ui.text_linia.text().strip()
+        pole_lokalizacja_id = self.ui.combo_lokalizacja.currentData()
         if self.ui.check_aktywny.isChecked():
             aktywny = 1
         else:
             aktywny = 0
         print('aktywny:',aktywny)
-        insert_data = "INSERT INTO linie VALUES (NULL, '%s', '%s', 0);" % (pole_linie, str(aktywny))
+        insert_data = "INSERT INTO linie VALUES (NULL, '%s', '%s', 0, '%s');" % (pole_linie, str(aktywny),pole_lokalizacja_id)
         print(insert_data)
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         db.execute_query(connection, insert_data)

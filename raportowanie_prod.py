@@ -76,6 +76,10 @@ class MainWindow_raportowanie_prod(QWidget):
         for row in sheet.iter_rows(min_row=2, min_col=1, max_col=14, values_only=True):
             #sprawdzamy czy wiersz nie jest pusty (zakładając że pusty wiersz ma wszystkie kolumny o wartosci None i kończy zestawienie)
             if any(cell is not None for cell in row):
+                if len(row[13]) == 4:
+                    zmiana_lit = row[13][3]
+                else:
+                    zmiana_lit = 'inna'
                 wydajnosc = 0
                 if row[6] == '' or row[6] < 0:
                     wydajnosc = 0
@@ -88,7 +92,7 @@ class MainWindow_raportowanie_prod(QWidget):
                 else:
                     wydajnosc = row[6] / row[8]
                 #print(i,[row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],wydajnosc,data_miesiac,teraz])
-                lista_wpisow.append([row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],row[13],wydajnosc,data_miesiac,teraz])
+                lista_wpisow.append([row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],row[13],zmiana_lit,wydajnosc,data_miesiac,teraz])
                 i=i+1
             else:
                 break
@@ -96,7 +100,7 @@ class MainWindow_raportowanie_prod(QWidget):
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
 
         for row in lista_wpisow:
-            insert_data = "INSERT INTO logowanie_zlecen VALUES (NULL,'%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');" % (row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],row[13],row[14],row[15],row[16])
+            insert_data = "INSERT INTO logowanie_zlecen VALUES (NULL,'%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');" % (row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],row[13],row[14],row[15],row[16],row[17])
             db.execute_query(connection, insert_data)
 
         self.wyszukaj_dane()
@@ -133,9 +137,9 @@ class MainWindow_raportowanie_prod(QWidget):
         self.ui.tab_dane.setRowCount(0)
 
     def naglowki_tabeli(self):
-        self.ui.tab_dane.setColumnCount(17)  # Zmień na liczbę kolumn w twojej tabeli
+        self.ui.tab_dane.setColumnCount(18)  # Zmień na liczbę kolumn w twojej tabeli
         self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
-        self.ui.tab_dane.setHorizontalHeaderLabels(['Zlecenie', 'Wiązka', 'Operacja', 'Miesiąc raportu', 'Nr raportu', 'Nr akt', 'Raportowany', 'Raporty All', 'Planowany', 'Planowany All', 'Imie', 'Nazwisko', 'Grupa','Zmiana','Wydajność','Miesiąc', 'Data dodania'])
+        self.ui.tab_dane.setHorizontalHeaderLabels(['Zlecenie', 'Wiązka', 'Operacja', 'Miesiąc raportu', 'Nr raportu', 'Nr akt', 'Raportowany', 'Raporty All', 'Planowany', 'Planowany All', 'Imie', 'Nazwisko', 'Grupa','Zmiana','Zmiana lit','Wydajność','Miesiąc', 'Data dodania'])
 
     def pokaz_dane(self, rows):
         # Column count
@@ -164,6 +168,7 @@ class MainWindow_raportowanie_prod(QWidget):
             self.ui.tab_dane.setItem(wiersz, 14, QTableWidgetItem(str(wynik[15])))
             self.ui.tab_dane.setItem(wiersz, 15, QTableWidgetItem(str(wynik[16])))
             self.ui.tab_dane.setItem(wiersz, 16, QTableWidgetItem(str(wynik[17])))
+            self.ui.tab_dane.setItem(wiersz, 17, QTableWidgetItem(str(wynik[18])))
             wiersz += 1
 
         self.ui.tab_dane.horizontalHeader().setStretchLastSection(True)
@@ -184,3 +189,4 @@ class MainWindow_raportowanie_prod(QWidget):
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(14, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(15, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(16, QHeaderView.ResizeToContents)
+        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(17, QHeaderView.ResizeToContents)

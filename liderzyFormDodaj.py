@@ -11,6 +11,7 @@ class MainWindow_liderzyDodaj(QWidget):
 
         self.ui.btn_zapisz.clicked.connect(self.zapisz)
         self.combo_ranga()
+        self.combo_zmiana()
 
     def combo_ranga(self):
         select_data_ranga = "SELECT * FROM ranga;"
@@ -25,6 +26,12 @@ class MainWindow_liderzyDodaj(QWidget):
             id = wynik[0]
             value = wynik[1]
             self.ui.combo_ranga.addItem(value, id)
+
+    def combo_zmiana(self):
+        self.ui.combo_zmiana.addItem('-----')
+        self.ui.combo_zmiana.addItem('A')
+        self.ui.combo_zmiana.addItem('B')
+        self.ui.combo_zmiana.addItem('C')
 
     def sprawdz_pole(self):
         pole_imie = self.ui.text_imie.text().strip()
@@ -63,9 +70,10 @@ class MainWindow_liderzyDodaj(QWidget):
             aktywny = 1
         else:
             aktywny = 0
-        print('aktywny:', aktywny)
-        insert_data1 = "INSERT INTO instruktor VALUES (NULL, '%s', '%s', '%s', '%s', '%s', 0);" % (pole_nrAkt, pole_imie, pole_nazwisko, str(aktywny), pole_ranga_id)
-        print(insert_data1)
+        pole_zmiana_text = self.ui.combo_zmiana.currentText()
+        #print('aktywny:', aktywny)
+        insert_data1 = "INSERT INTO instruktor VALUES (NULL, '%s', '%s', '%s', '%s', '%s', 0, '%s');" % (pole_nrAkt, pole_imie, pole_nazwisko, str(aktywny), pole_ranga_id, pole_zmiana_text)
+        #print(insert_data1)
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         db.execute_query(connection, insert_data1)
         connection.close()

@@ -1,0 +1,43 @@
+-- ZROBIONE -- Dodać zmianę dla liderów i instruktorów do tabeli instruktor
+
+-- ZROBIONE -- Dodać kolumnę z wydzieloną literą zmiany w tabeli logowanie_zlecen
+
+-- ZROBIONE -- W tabeli linie należy dodać lokalizacje
+
+Można użyć wstępnie do zliczenia dla instruktorów wydajności i produktywności listy generowanej dla pracowników o ile doda się kolumnę ze zmianą. Po podsumowaniu dla zmian powinno się otrzymać wynik dla instruktorów. A potem przypisać dane zgodnie z lokalizacją i zmianą.
+
+
+Poniżej przykład kodu do zliczania z podziałem na zmiany:
+
+            for row in sheet.iter_rows(min_row=2, min_col=1, max_col=14, values_only=True):
+                zmiana_dlugosc = len(row[13])
+                if zmiana_dlugosc == 4:
+                    test = row[13][3]
+                else:
+                    test = 'inna'
+                if any(cell is not None for cell in row):
+                    wydajnosc = 0
+                    if row[6] == '' or row[6] < 0:
+                        wydajnosc = 0
+                    elif row[6] > 0 and row[8] == 0:
+                        wydajnosc = 0
+                    elif row[6] > 0 and row[8] == '':
+                        wydajnosc = 0
+                    elif row[6] == 0:
+                        wydajnosc = 0
+                    else:
+                        wydajnosc = row[6] / row[8]
+                #print([row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11], row[12], row[13]])
+                print([row[0], row[1], row[2], row[5], row[10], row[11], row[12], row[13], test])
+                lista.append([row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11], row[12], row[13],test,wydajnosc])
+            summary = {}
+            for dane in lista:
+                if isinstance(dane[15], (int, float)):  # Sprawdź czy "Grupa" jest liczbą
+                    if dane[14] in summary:
+                        summary[dane[14]] += dane[15]
+                    else:
+                        summary[dane[14]] = dane[15]
+
+            print("Podsumowanie według liter:")
+            for letter, total in summary.items():
+                print(f"Litera: {letter}, Suma Grupa: {total}")

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'linieFormDodaj.ui'
+# Form implementation generated from reading ui file 'Forms\linieFormDodaj.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.10
 #
@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
-        Form.resize(301, 126)
+        Form.resize(301, 139)
         self.gridLayout = QtWidgets.QGridLayout(Form)
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
         self.gridLayout.setSpacing(0)
@@ -56,6 +56,16 @@ class Ui_Form(object):
         self.text_linia.setObjectName("text_linia")
         self.verticalLayout.addWidget(self.text_linia)
         self.verticalLayout_3.addWidget(self.widget_3)
+        self.widget_5 = QtWidgets.QWidget(self.widget)
+        self.widget_5.setObjectName("widget_5")
+        self.verticalLayout_4 = QtWidgets.QVBoxLayout(self.widget_5)
+        self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_4.setSpacing(0)
+        self.verticalLayout_4.setObjectName("verticalLayout_4")
+        self.combo_lokalizacja = QtWidgets.QComboBox(self.widget_5)
+        self.combo_lokalizacja.setObjectName("combo_lokalizacja")
+        self.verticalLayout_4.addWidget(self.combo_lokalizacja)
+        self.verticalLayout_3.addWidget(self.widget_5)
         self.widget_4 = QtWidgets.QWidget(self.widget)
         self.widget_4.setObjectName("widget_4")
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.widget_4)

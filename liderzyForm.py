@@ -20,7 +20,7 @@ class MainWindow_liderzy(QWidget):
         self.wyszukaj_dane()
 
     def wyszukaj_dane(self):
-        select_data = "select i.id, i.nr_akt, i.nazwisko, i.imie, r.ranga, i.aktywny, i.uzyte from instruktor i left join ranga r on r.id = i.id_ranga order by i.nazwisko ASC;"
+        select_data = "select i.id, i.nr_akt, i.nazwisko, i.imie, r.ranga, i.aktywny, i.uzyte, i.zmiana from instruktor i left join ranga r on r.id = i.id_ranga order by i.nazwisko ASC;"
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         results = db.read_query(connection, select_data)
 
@@ -49,6 +49,7 @@ class MainWindow_liderzy(QWidget):
             self.ui.tab_dane.setItem(wiersz, 4, QTableWidgetItem(str(wynik[4])))
             self.ui.tab_dane.setItem(wiersz, 5, QTableWidgetItem(str(wynik[5])))
             self.ui.tab_dane.setItem(wiersz, 6, QTableWidgetItem(str(wynik[6])))
+            self.ui.tab_dane.setItem(wiersz, 7, QTableWidgetItem(str(wynik[7])))
             wiersz += 1
 
         self.ui.tab_dane.horizontalHeader().setStretchLastSection(True)
@@ -58,10 +59,10 @@ class MainWindow_liderzy(QWidget):
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeToContents)
+        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
 
     def naglowki_tabeli(self):
-        self.ui.tab_dane.setColumnCount(7)  # Zmień na liczbę kolumn w twojej tabeli
+        self.ui.tab_dane.setColumnCount(8)  # Zmień na liczbę kolumn w twojej tabeli
         self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
         self.ui.tab_dane.setHorizontalHeaderLabels([
             'ID',
@@ -70,7 +71,8 @@ class MainWindow_liderzy(QWidget):
             'Nr akt',
             'Ranga',
             'Aktywny',
-            'Grupa robocza'
+            'Grupa robocza',
+            'Zmiana'
         ])
 
     def clear_table(self):

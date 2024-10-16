@@ -20,7 +20,7 @@ class MainWindow_linie(QWidget):
         self.wyszukaj_dane()
 
     def wyszukaj_dane(self):
-        select_data = "SELECT * FROM `linie`;"
+        select_data = "select l.id,l.nazwa,l.aktywne,l.uzyta,lo.lokalizacja from linie l left join lokalizacja lo on lo.id  = l.id_lokalizacja where aktywne = 1;"
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         results = db.read_query(connection, select_data)
 
@@ -46,6 +46,7 @@ class MainWindow_linie(QWidget):
             self.ui.tab_dane.setItem(wiersz, 1, QTableWidgetItem(str(wynik[1])))
             self.ui.tab_dane.setItem(wiersz, 2, QTableWidgetItem(str(wynik[2])))
             self.ui.tab_dane.setItem(wiersz, 3, QTableWidgetItem(str(wynik[3])))
+            self.ui.tab_dane.setItem(wiersz, 4, QTableWidgetItem(str(wynik[4])))
             wiersz += 1
 
         self.ui.tab_dane.horizontalHeader().setStretchLastSection(True)
@@ -53,15 +54,17 @@ class MainWindow_linie(QWidget):
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
 
     def naglowki_tabeli(self):
-        self.ui.tab_dane.setColumnCount(4)  # Zmień na liczbę kolumn w twojej tabeli
+        self.ui.tab_dane.setColumnCount(54)  # Zmień na liczbę kolumn w twojej tabeli
         self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
         self.ui.tab_dane.setHorizontalHeaderLabels([
             'ID',
             'Linie',
             'Aktywny',
-            'Uzyte'
+            'Uzyte',
+            'Lokalizacja'
         ])
 
     def clear_table(self):

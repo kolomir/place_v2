@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'forms\liderzyFormDodaj.ui'
+# Form implementation generated from reading ui file 'Forms\liderzyFormDodaj.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.10
 #
@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
-        Form.resize(301, 168)
+        Form.resize(302, 168)
         self.verticalLayout = QtWidgets.QVBoxLayout(Form)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setSpacing(0)
@@ -66,10 +66,10 @@ class Ui_Form(object):
         self.horizontalLayout.addWidget(self.combo_ranga)
         spacerItem1 = QtWidgets.QSpacerItem(13, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem1)
-        self.check_aktywny = QtWidgets.QCheckBox(self.widget_3)
-        self.check_aktywny.setChecked(True)
-        self.check_aktywny.setObjectName("check_aktywny")
-        self.horizontalLayout.addWidget(self.check_aktywny)
+        self.combo_zmiana = QtWidgets.QComboBox(self.widget_3)
+        self.combo_zmiana.setMinimumSize(QtCore.QSize(100, 0))
+        self.combo_zmiana.setObjectName("combo_zmiana")
+        self.horizontalLayout.addWidget(self.combo_zmiana)
         self.verticalLayout_4.addWidget(self.widget_3)
         self.widget_5 = QtWidgets.QWidget(self.widget)
         self.widget_5.setObjectName("widget_5")
@@ -90,6 +90,10 @@ class Ui_Form(object):
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout_2.setSpacing(0)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.check_aktywny = QtWidgets.QCheckBox(self.widget_4)
+        self.check_aktywny.setChecked(True)
+        self.check_aktywny.setObjectName("check_aktywny")
+        self.horizontalLayout_2.addWidget(self.check_aktywny)
         spacerItem2 = QtWidgets.QSpacerItem(139, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem2)
         self.btn_zapisz = QtWidgets.QPushButton(self.widget_4)
@@ -107,7 +111,7 @@ class Ui_Form(object):
         self.label.setText(_translate("Form", "Instruktorzy/Liderzy - dodawanie"))
         self.label_2.setText(_translate("Form", "v1"))
         self.text_nr_akt.setPlaceholderText(_translate("Form", "Nr akt"))
-        self.check_aktywny.setText(_translate("Form", "Aktywny"))
         self.text_imie.setPlaceholderText(_translate("Form", "Imię "))
         self.text_nazwisko.setPlaceholderText(_translate("Form", "Nazwisko"))
+        self.check_aktywny.setText(_translate("Form", "Aktywny"))
         self.btn_zapisz.setText(_translate("Form", "Zapisz"))
