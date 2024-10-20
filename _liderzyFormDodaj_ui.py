@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Forms\liderzyFormDodaj.ui'
+# Form implementation generated from reading ui file 'forms\liderzyFormDodaj.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.10
 #
@@ -22,8 +22,8 @@ class Ui_Form(object):
         self.widget = QtWidgets.QWidget(Form)
         self.widget.setObjectName("widget")
         self.verticalLayout_4 = QtWidgets.QVBoxLayout(self.widget)
-        self.verticalLayout_4.setContentsMargins(9, 9, 9, 9)
-        self.verticalLayout_4.setSpacing(6)
+        self.verticalLayout_4.setContentsMargins(4, 4, 4, 4)
+        self.verticalLayout_4.setSpacing(2)
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.widget_2 = QtWidgets.QWidget(self.widget)
         self.widget_2.setObjectName("widget_2")

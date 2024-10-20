@@ -16,7 +16,6 @@ class MainWindow_wyliczeniaForm(QWidget):
         self.ui.setupUi(self)
 
         self.ui.btn_przelicz.clicked.connect(self.przeliczenie)
-        self.licz_instruktorzy()
 
     def przeliczenie(self):
         self.licz_nieobecnosci()
@@ -24,6 +23,7 @@ class MainWindow_wyliczeniaForm(QWidget):
         self.licz_pracownicy()
         self.licz_wsparcie()
         self.licz_liderzy()
+        self.licz_instruktorzy()
 
 
 
@@ -58,9 +58,13 @@ class MainWindow_wyliczeniaForm(QWidget):
         dni_robocze_050 = dni_robocze * 0.50
         print('dni_robocze 075:',round(dni_robocze_075,2),' dni_robocze 050:',round(dni_robocze_050,2))
         self.ui.lab_miesiacNieobecnosci.setText('%s-%s' % (miesiac_s,rok))
+        self.ui.lab_miesiacNieobecnosci2.setText('%s-%s' % (miesiac_s,rok))
         self.ui.lab_pracujacychNieobecnosci.setText(str(dni_robocze))
+        self.ui.lab_pracujacychNieobecnosci2.setText(str(dni_robocze))
         self.ui.lab_pracujacych075Nieobecnosci.setText(str(round(dni_robocze_075,2)))
+        self.ui.lab_pracujacych075Nieobecnosci2.setText(str(round(dni_robocze_075,2)))
         self.ui.lab_pracujacych050Nieobecnosci.setText(str(round(dni_robocze_050,2)))
+        self.ui.lab_pracujacych050Nieobecnosci2.setText(str(round(dni_robocze_050,2)))
 
 # = NIEOBECNOŚCI =========================================================================================================================================================
 
@@ -251,6 +255,7 @@ class MainWindow_wyliczeniaForm(QWidget):
 
         suma_kwot = sum(round(float(wiersz[15]), 2) for wiersz in lista)
         self.ui.lab_sumaPracownicy.setText(str(suma_kwot))
+        self.ui.lab_sumaPracownicy2.setText(str(suma_kwot))
 
         if not results:
             self.clear_table_pracownicy()
@@ -483,6 +488,7 @@ class MainWindow_wyliczeniaForm(QWidget):
         print(lista_pracownik)
         suma_kwot = sum(round(float(wiersz[7]), 2) for wiersz in lista_pracownik)
         self.ui.lab_sumaPomoc.setText(str(suma_kwot))
+        self.ui.lab_sumaPomoc2.setText(str(suma_kwot))
 
         if not results:
             self.clear_table_wsparcie()
@@ -732,6 +738,7 @@ class MainWindow_wyliczeniaForm(QWidget):
                                 where 
                                     i.id_ranga = 2
                                     and p.miesiac = '{0}'
+                                    and jp.miesiac = '{0}'
                                 group by 
                                     i.nr_akt 
                                     ,p.Kod 
@@ -804,6 +811,7 @@ class MainWindow_wyliczeniaForm(QWidget):
         print(lista_pracownik)
         suma_kwot = sum(round(float(wiersz[9]), 2) for wiersz in lista_pracownik)
         self.ui.lab_sumaLiderzy.setText(str(suma_kwot))
+        self.ui.lab_sumaLiderzy2.setText(str(suma_kwot))
 
         if not results:
             self.clear_table_liderzy()
@@ -827,6 +835,33 @@ class MainWindow_wyliczeniaForm(QWidget):
                 dol = dane[4]
                 srodek = dane[5]
                 gora = dane[6]
+        return dol, srodek, gora
+
+    def progi_inst(self, local):
+        select_data_q_progi = '''
+                                select 
+                                pj.id
+                                ,l.lokalizacja 
+                                ,pj.id_ranga 
+                                ,pj.pulap1 
+                                ,pj.pulap2
+                                ,pj.pulap3 
+                                from 
+                                progi_jakosc pj 
+                                left join lokalizacja l on l.id = pj.id_lokalizacja 
+                                where 
+                                l.aktywny = 1 and pj.aktywny = 1 and id_ranga = 1
+                                '''
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results_q_progi = db.read_query(connection, select_data_q_progi)
+        connection.close()
+
+
+        for dane in results_q_progi:
+            if dane[1] == local:
+                dol = dane[3]
+                srodek = dane[4]
+                gora = dane[5]
         return dol, srodek, gora
 
     def pokaz_dane_liderzy(self, rows):
@@ -974,12 +1009,9 @@ class MainWindow_wyliczeniaForm(QWidget):
         results = db.read_query(connection, select_data)
         connection.close()
 
-        select_data_instr = '''
+        select_data_ilosc = '''
                                 select 
-                                    i.nr_akt
-                                    ,CONCAT(i.nazwisko,' ',i.imie) as 'Nazwisko i imie' 
-                                    ,l.lokalizacja 
-                                    ,i.zmiana 
+                                    l.lokalizacja , count(l.lokalizacja) 
                                 from 
                                     instruktor i 
                                         left join linia_gniazdo lg on lg.id_lider = i.id 
@@ -987,16 +1019,75 @@ class MainWindow_wyliczeniaForm(QWidget):
                                 where 
                                     i.aktywny = 1
                                     and i.id_ranga = 1
-                                order by 
-                                    l.lokalizacja,i.zmiana 
+                                GROUP by 
+                                    l.lokalizacja 
                                 '''
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-        results_instr = db.read_query(connection, select_data_instr)
+        results_ilosc = db.read_query(connection, select_data_ilosc)
         connection.close()
 
-        data = []
+        select_data_instruktor = '''
+                                select 
+                                    i.nr_akt
+                                    ,CONCAT(i.nazwisko,' ',i.imie) as 'Nazwisko i imie' 
+                                    ,l.lokalizacja 
+                                    ,i.zmiana 
+                                    ,p.Kod 
+                                    ,case
+                                        when np.nr_akt > 5999 then np.razem 
+                                        else 
+                                            case 
+                                                when (np.krew + np.rodz + np.rehab + np.nn + np.usp) = 0 then np.krew + np.rodz + np.rehab + np.nn + np.usp + np.inne_nieobecn + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz 
+                                                else np.krew + np.rodz + np.rehab + np.nn + np.usp + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz
+                                            end
+                                    end as nieobecnosci
+                                    ,jp.ppm 
+                                    ,jp.reklamacje 
+                                from 
+                                    instruktor i 
+                                        left join linia_gniazdo lg on lg.id_lider = i.id 
+                                            left join lokalizacja l on l.id = lg.id_lokalizacja 
+                                                left join jakosc_prod jp on jp.grupa_robocza = l.lokalizacja 
+                                        left join pracownicy p on p.Nr_akt = i.nr_akt 
+                                        left join nieobecnosci_prod np on np.nr_akt = i.nr_akt 
+                                where 
+                                    i.aktywny = 1
+                                    and i.id_ranga = 1
+                                    and jp.miesiac = '{0}'
+                                group by 
+                                    i.nr_akt
+                                    ,l.lokalizacja 
+                                    ,i.zmiana 
+                                    ,p.Kod 
+                                order by 
+                                    l.lokalizacja,i.zmiana 
+                                '''.format(miesiac)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results_instruktor = db.read_query(connection, select_data_instruktor)
+        connection.close()
+
+        select_data_progi = "select * from progi_prod pp where pp.id_ranga = 1 and pp.aktywny = 1"
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results_progi = db.read_query(connection, select_data_progi)
+        connection.close()
+
+        select_data_q_kwoty = "select kj.kwota from kwoty_jakosc kj where kj.aktywny = 1 and kj.id_ranga = 1"
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results_q_kwoty = db.read_query(connection, select_data_q_kwoty)
+        connection.close()
+
+        kwota_jakosc = results_q_kwoty[0][0]
+
+        prog100 = self.ui.lab_pracujacychNieobecnosci.text()
+        prog75 = self.ui.lab_pracujacych075Nieobecnosci.text()
+        prog50 = self.ui.lab_pracujacych050Nieobecnosci.text()
+
+        ile_czaplinek = results_ilosc[1][1]
+        ile_borne = results_ilosc[0][1]
+
+        data_lista = []
         for row in results:
-            data.append({
+            data_lista.append({
                 'NrAkt': row[0],
                 'dział': row[1],
                 'Direct': float(row[2]),
@@ -1012,7 +1103,7 @@ class MainWindow_wyliczeniaForm(QWidget):
 
         grouped_data = {}
 
-        for row in data:
+        for row in data_lista:
             key = (row['lokalizacja'], row['zmianaLit'])  # Klucz to kombinacja lokalizacji i zmiany
             if key not in grouped_data:
                 grouped_data[key] = {
@@ -1030,35 +1121,641 @@ class MainWindow_wyliczeniaForm(QWidget):
                 grouped_data[key]['wydajnosc'] += row['wydajnosc']
                 grouped_data[key]['produktywnosc'] += row['produktywnosc']
         lista = []
-        # Wyświetlenie wyników
         for key, values in grouped_data.items():
             lokalizacja, zmianaLit = key
-            lista.append([lokalizacja,zmianaLit,values['Direct'],values['Indirect'],values['raportowany'],values['planowany'],values['wydajnosc'],values['produktywnosc']])
+            wyd = round((values['planowany']/values['raportowany'])*100,2)
+            prod = round((values['Direct']/(values['Direct']+values['Indirect']))*wyd,2)
+            lista.append([lokalizacja,zmianaLit,values['Direct'],values['Indirect'],values['raportowany'],values['planowany'],wyd,prod])
+            #lista.append([lokalizacja,zmianaLit,values['Direct'],values['Indirect'],values['raportowany'],values['planowany'],values['wydajnosc'],values['produktywnosc']])
 
-        polaczone_dane = []
+        print('===========================================')
+        for test in lista:
+            print(test)
+        print('===========================================')
 
-        # Iteracja przez listę 1 i 2
-        for elem1 in results_instr:
-            for elem2 in lista:
-                # Sprawdzanie czy lokalizacja i zmianaLit są takie same
-                if elem1[0] == elem2[2] and elem1[1] == elem2[3]:
-                    # Tworzenie nowego połączonego rekordu
-                    polaczone_dane.append(elem1 + elem2)
+        # Inicjalizacja sum dla grup
+        sum_grupy_czaplinek = {'A': [0] * 6, 'B': [0] * 6, 'C': [0] * 6}
+        sum_inna_czaplinek = [0] * 6
+        sum_grupy_borne_sulinowo = {'A': [0] * 6, 'B': [0] * 6, 'C': [0] * 6}
+        sum_inna_borne_sulinowo = [0] * 6
 
-        # Wyświetlenie połączonych danych
-        for record in polaczone_dane:
-            print(record)
-#TODO: nie połączyły się jeszcze dane - poprawić to!
+        lista_zminy = []
+        lista_instruktor = []
 
-        print(lista)
-        print('--------------------------------')
-        print('--------------------------------')
+        # Sumowanie z podziałem na lokalizacje i grupy
+        for row in lista:
+            if row[0] == 'Czaplinek':
+                if row[1] in sum_grupy_czaplinek:
+                    self.dodaj_do_sumy(sum_grupy_czaplinek[row[1]], row)
+                elif row[1] == 'inna':
+                    self.dodaj_do_sumy(sum_inna_czaplinek, row)
+            elif row[0] == 'Borne Sulinowo':
+                if row[1] in sum_grupy_borne_sulinowo:
+                    self.dodaj_do_sumy(sum_grupy_borne_sulinowo[row[1]], row)
+                elif row[1] == 'inna':
+                    self.dodaj_do_sumy(sum_inna_borne_sulinowo, row)
 
-        print(polaczone_dane)
+        # Przypisywanie wartości z grupy 'inna' do głównych grup w Czaplinku
+        if ile_czaplinek == 1:
+            # Suma dla wszystkich grup w Czaplinku (A + B + C + inna -> A)
+            for i in range(6):
+                sum_grupy_czaplinek['A'][i] += sum_grupy_czaplinek['B'][i] + sum_grupy_czaplinek['C'][i] + sum_inna_czaplinek[i]
+            sum_grupy_czaplinek['A'].insert(0,'Czaplinek')
+            sum_grupy_czaplinek['A'].insert(1,'A')
+            lista_zminy.append(sum_grupy_czaplinek['A'])
+            dane_direct = round(sum_grupy_czaplinek['A'][2], 2)
+            dane_indirect = round(sum_grupy_czaplinek['A'][3],2)
+            dane_raportowany = round(sum_grupy_czaplinek['A'][4],2)
+            dane_planowany = round(sum_grupy_czaplinek['A'][5],2)
+            for dane_czaplinek in results_instruktor:
+                if dane_czaplinek[2] == 'Czaplinek' and dane_czaplinek[3] == 'A':
+                    lokalizacje = dane_czaplinek[2]
+                    nrAkt = dane_czaplinek[0]
+                    kod = dane_czaplinek[4]
+                    instruktor = dane_czaplinek[1]
+                    chorowal = dane_czaplinek[5]
+                    ppm = dane_czaplinek[6]
+                    reklamacje = dane_czaplinek[7]
+                    dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
+                    dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                    lista_instruktor.append(
+                        [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
+                         reklamacje])
+            # Zerujemy inne grupy, bo wszystko zostało przypisane do A
+            sum_grupy_czaplinek['B'] = [0] * 6
+            sum_grupy_czaplinek['C'] = [0] * 6
+        elif ile_czaplinek == 2:
+            # Podział sum z grupy 'C' i 'inna' na grupy A i B
+            for i in range(len(sum_inna_czaplinek)):
+                suma_dzielona = sum_grupy_czaplinek['C'][i] + sum_inna_czaplinek[i]
+                sum_grupy_czaplinek['A'][i] += suma_dzielona / 2
+                sum_grupy_czaplinek['B'][i] += suma_dzielona / 2
+            sum_grupy_czaplinek['A'].insert(0,'Czaplinek')
+            sum_grupy_czaplinek['A'].insert(1,'A')
+            sum_grupy_czaplinek['B'].insert(0,'Czaplinek')
+            sum_grupy_czaplinek['B'].insert(1,'B')
+            lista_zminy.append(sum_grupy_czaplinek['A'])
+            lista_zminy.append(sum_grupy_czaplinek['B'])
+            dane_direct = round(sum_grupy_czaplinek['A'][2], 2)
+            dane_indirect = round(sum_grupy_czaplinek['A'][3],2)
+            dane_raportowany = round(sum_grupy_czaplinek['A'][4],2)
+            dane_planowany = round(sum_grupy_czaplinek['A'][5],2)
+            for dane_czaplinek in results_instruktor:
+                if dane_czaplinek[2] == 'Czaplinek' and dane_czaplinek[3] == 'A':
+                    lokalizacje = dane_czaplinek[2]
+                    nrAkt = dane_czaplinek[0]
+                    kod = dane_czaplinek[4]
+                    instruktor = dane_czaplinek[1]
+                    chorowal = dane_czaplinek[5]
+                    ppm = dane_czaplinek[6]
+                    reklamacje = dane_czaplinek[7]
+                    dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
+                    dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                    lista_instruktor.append(
+                        [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
+                         reklamacje])
+            dane_direct = round(sum_grupy_czaplinek['B'][2], 2)
+            dane_indirect = round(sum_grupy_czaplinek['B'][3],2)
+            dane_raportowany = round(sum_grupy_czaplinek['B'][4],2)
+            dane_planowany = round(sum_grupy_czaplinek['B'][5],2)
+            for dane_czaplinek in results_instruktor:
+                if dane_czaplinek[2] == 'Czaplinek' and dane_czaplinek[3] == 'B':
+                    lokalizacje = dane_czaplinek[2]
+                    nrAkt = dane_czaplinek[0]
+                    kod = dane_czaplinek[4]
+                    instruktor = dane_czaplinek[1]
+                    chorowal = dane_czaplinek[5]
+                    ppm = dane_czaplinek[6]
+                    reklamacje = dane_czaplinek[7]
+                    dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
+                    dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                    lista_instruktor.append(
+                        [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
+                         reklamacje])
+        elif ile_czaplinek == 3:
+            # Podział grupy 'inna' na grupy A, B i C
+            for i in range(len(sum_inna_czaplinek)):
+                sum_grupy_czaplinek['A'][i] += sum_inna_czaplinek[i] / 3
+                sum_grupy_czaplinek['B'][i] += sum_inna_czaplinek[i] / 3
+                sum_grupy_czaplinek['C'][i] += sum_inna_czaplinek[i] / 3
+            sum_grupy_czaplinek['A'].insert(0,'Czaplinek')
+            sum_grupy_czaplinek['A'].insert(1,'A')
+            sum_grupy_czaplinek['B'].insert(0,'Czaplinek')
+            sum_grupy_czaplinek['B'].insert(1,'B')
+            sum_grupy_czaplinek['C'].insert(0,'Czaplinek')
+            sum_grupy_czaplinek['C'].insert(1,'C')
+            lista_zminy.append(sum_grupy_czaplinek['A'])
+            lista_zminy.append(sum_grupy_czaplinek['B'])
+            lista_zminy.append(sum_grupy_czaplinek['C'])
+            dane_direct = round(sum_grupy_czaplinek['A'][2], 2)
+            dane_indirect = round(sum_grupy_czaplinek['A'][3],2)
+            dane_raportowany = round(sum_grupy_czaplinek['A'][4],2)
+            dane_planowany = round(sum_grupy_czaplinek['A'][5],2)
+            for dane_czaplinek in results_instruktor:
+                if dane_czaplinek[2] == 'Czaplinek' and dane_czaplinek[3] == 'A':
+                    lokalizacje = dane_czaplinek[2]
+                    nrAkt = dane_czaplinek[0]
+                    kod = dane_czaplinek[4]
+                    instruktor = dane_czaplinek[1]
+                    chorowal = dane_czaplinek[5]
+                    ppm = dane_czaplinek[6]
+                    reklamacje = dane_czaplinek[7]
+                    dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
+                    dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                    lista_instruktor.append(
+                        [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
+                         reklamacje])
+            dane_direct = round(sum_grupy_czaplinek['B'][2], 2)
+            dane_indirect = round(sum_grupy_czaplinek['B'][3],2)
+            dane_raportowany = round(sum_grupy_czaplinek['B'][4],2)
+            dane_planowany = round(sum_grupy_czaplinek['B'][5],2)
+            for dane_czaplinek in results_instruktor:
+                if dane_czaplinek[2] == 'Czaplinek' and dane_czaplinek[3] == 'B':
+                    lokalizacje = dane_czaplinek[2]
+                    nrAkt = dane_czaplinek[0]
+                    kod = dane_czaplinek[4]
+                    instruktor = dane_czaplinek[1]
+                    chorowal = dane_czaplinek[5]
+                    ppm = dane_czaplinek[6]
+                    reklamacje = dane_czaplinek[7]
+                    dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
+                    dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                    lista_instruktor.append(
+                        [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
+                         reklamacje])
+            dane_direct = round(sum_grupy_czaplinek['C'][2], 2)
+            dane_indirect = round(sum_grupy_czaplinek['C'][3],2)
+            dane_raportowany = round(sum_grupy_czaplinek['C'][4],2)
+            dane_planowany = round(sum_grupy_czaplinek['C'][5],2)
+            for dane_czaplinek in results_instruktor:
+                if dane_czaplinek[2] == 'Czaplinek' and dane_czaplinek[3] == 'C':
+                    lokalizacje = dane_czaplinek[2]
+                    nrAkt = dane_czaplinek[0]
+                    kod = dane_czaplinek[4]
+                    instruktor = dane_czaplinek[1]
+                    chorowal = dane_czaplinek[5]
+                    ppm = dane_czaplinek[6]
+                    reklamacje = dane_czaplinek[7]
+                    dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
+                    dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                    lista_instruktor.append(
+                        [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
+                         reklamacje])
 
-        print('--------------------------------')
-        print('--------------------------------')
+        # Przypisywanie wartości z grupy 'inna' do głównych grup w Borne Sulinowo
+        if ile_borne == 1:
+            # Suma dla wszystkich grup w Borne Sulinowo (A + B + C + inna -> A)
+            for i in range(6):
+                sum_grupy_borne_sulinowo['A'][i] += sum_grupy_borne_sulinowo['B'][i] + sum_grupy_borne_sulinowo['C'][i] + sum_inna_borne_sulinowo[i]
+            sum_grupy_borne_sulinowo['A'].insert(0,'Borne Sulinowo')
+            sum_grupy_borne_sulinowo['A'].insert(1,'A')
+            lista_zminy.append(sum_grupy_borne_sulinowo['A'])
+            dane_direct = round(sum_grupy_borne_sulinowo['A'][2], 2)
+            dane_indirect = round(sum_grupy_borne_sulinowo['A'][3],2)
+            dane_raportowany = round(sum_grupy_borne_sulinowo['A'][4],2)
+            dane_planowany = round(sum_grupy_borne_sulinowo['A'][5],2)
+            for dane_czaplinek in results_instruktor:
+                if dane_czaplinek[2] == 'Borne Sulinowo' and dane_czaplinek[3] == 'A':
+                    lokalizacje = dane_czaplinek[2]
+                    nrAkt = dane_czaplinek[0]
+                    kod = dane_czaplinek[4]
+                    instruktor = dane_czaplinek[1]
+                    chorowal = dane_czaplinek[5]
+                    ppm = dane_czaplinek[6]
+                    reklamacje = dane_czaplinek[7]
+                    dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
+                    dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                    lista_instruktor.append(
+                        [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
+                         reklamacje])
+            # Zerujemy inne grupy, bo wszystko zostało przypisane do A
+            sum_grupy_borne_sulinowo['B'] = [0] * 6
+            sum_grupy_borne_sulinowo['C'] = [0] * 6
+        elif ile_borne == 2:
+            # Podział sum z grupy 'C' i 'inna' na grupy A i B
+            for i in range(len(sum_inna_borne_sulinowo)):
+                suma_dzielona = sum_grupy_borne_sulinowo['C'][i] + sum_inna_borne_sulinowo[i]
+                sum_grupy_borne_sulinowo['A'][i] += suma_dzielona / 2
+                sum_grupy_borne_sulinowo['B'][i] += suma_dzielona / 2
+            sum_grupy_borne_sulinowo['A'].insert(0,'Borne Sulinowo')
+            sum_grupy_borne_sulinowo['A'].insert(1,'A')
+            sum_grupy_borne_sulinowo['B'].insert(0,'Borne Sulinowo')
+            sum_grupy_borne_sulinowo['B'].insert(1,'B')
+            lista_zminy.append(sum_grupy_borne_sulinowo['A'])
+            lista_zminy.append(sum_grupy_borne_sulinowo['B'])
+            dane_direct = round(sum_grupy_borne_sulinowo['A'][2], 2)
+            dane_indirect = round(sum_grupy_borne_sulinowo['A'][3],2)
+            dane_raportowany = round(sum_grupy_borne_sulinowo['A'][4],2)
+            dane_planowany = round(sum_grupy_borne_sulinowo['A'][5],2)
+            for dane_czaplinek in results_instruktor:
+                if dane_czaplinek[2] == 'Borne Sulinowo' and dane_czaplinek[3] == 'A':
+                    lokalizacje = dane_czaplinek[2]
+                    nrAkt = dane_czaplinek[0]
+                    kod = dane_czaplinek[4]
+                    instruktor = dane_czaplinek[1]
+                    chorowal = dane_czaplinek[5]
+                    ppm = dane_czaplinek[6]
+                    reklamacje = dane_czaplinek[7]
+                    dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
+                    dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                    lista_instruktor.append(
+                        [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
+                         reklamacje])
+            dane_direct = round(sum_grupy_borne_sulinowo['B'][2], 2)
+            dane_indirect = round(sum_grupy_borne_sulinowo['B'][3],2)
+            dane_raportowany = round(sum_grupy_borne_sulinowo['B'][4],2)
+            dane_planowany = round(sum_grupy_borne_sulinowo['B'][5],2)
+            for dane_czaplinek in results_instruktor:
+                if dane_czaplinek[2] == 'Borne Sulinowo' and dane_czaplinek[3] == 'B':
+                    lokalizacje = dane_czaplinek[2]
+                    nrAkt = dane_czaplinek[0]
+                    kod = dane_czaplinek[4]
+                    instruktor = dane_czaplinek[1]
+                    chorowal = dane_czaplinek[5]
+                    ppm = dane_czaplinek[6]
+                    reklamacje = dane_czaplinek[7]
+                    dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
+                    dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                    lista_instruktor.append(
+                        [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
+                         reklamacje])
+        elif ile_borne == 3:
+            # Podział grupy 'inna' na grupy A, B i C
+            for i in range(len(sum_inna_borne_sulinowo)):
+                sum_grupy_borne_sulinowo['A'][i] += sum_inna_borne_sulinowo[i] / 3
+                sum_grupy_borne_sulinowo['B'][i] += sum_inna_borne_sulinowo[i] / 3
+                sum_grupy_borne_sulinowo['C'][i] += sum_inna_borne_sulinowo[i] / 3
+            sum_grupy_borne_sulinowo['A'].insert(0,'Borne Sulinowo')
+            sum_grupy_borne_sulinowo['A'].insert(1,'A')
+            sum_grupy_borne_sulinowo['B'].insert(0,'Borne Sulinowo')
+            sum_grupy_borne_sulinowo['B'].insert(1,'B')
+            sum_grupy_borne_sulinowo['C'].insert(0,'Borne Sulinowo')
+            sum_grupy_borne_sulinowo['C'].insert(1,'C')
+            lista_zminy.append(sum_grupy_borne_sulinowo['A'])
+            lista_zminy.append(sum_grupy_borne_sulinowo['B'])
+            lista_zminy.append(sum_grupy_borne_sulinowo['C'])
+            dane_direct = round(sum_grupy_borne_sulinowo['A'][2], 2)
+            dane_indirect = round(sum_grupy_borne_sulinowo['A'][3],2)
+            dane_raportowany = round(sum_grupy_borne_sulinowo['A'][4],2)
+            dane_planowany = round(sum_grupy_borne_sulinowo['A'][5],2)
+            for dane_czaplinek in results_instruktor:
+                if dane_czaplinek[2] == 'Borne Sulinowo' and dane_czaplinek[3] == 'A':
+                    lokalizacje = dane_czaplinek[2]
+                    nrAkt = dane_czaplinek[0]
+                    kod = dane_czaplinek[4]
+                    instruktor = dane_czaplinek[1]
+                    chorowal = dane_czaplinek[5]
+                    ppm = dane_czaplinek[6]
+                    reklamacje = dane_czaplinek[7]
+                    dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
+                    dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                    lista_instruktor.append(
+                        [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
+                         reklamacje])
+            dane_direct = round(sum_grupy_borne_sulinowo['B'][2], 2)
+            dane_indirect = round(sum_grupy_borne_sulinowo['B'][3],2)
+            dane_raportowany = round(sum_grupy_borne_sulinowo['B'][4],2)
+            dane_planowany = round(sum_grupy_borne_sulinowo['B'][5],2)
+            for dane_czaplinek in results_instruktor:
+                if dane_czaplinek[2] == 'Borne Sulinowo' and dane_czaplinek[3] == 'B':
+                    lokalizacje = dane_czaplinek[2]
+                    nrAkt = dane_czaplinek[0]
+                    kod = dane_czaplinek[4]
+                    instruktor = dane_czaplinek[1]
+                    chorowal = dane_czaplinek[5]
+                    ppm = dane_czaplinek[6]
+                    reklamacje = dane_czaplinek[7]
+                    dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
+                    dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                    lista_instruktor.append(
+                        [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
+                         reklamacje])
+            dane_direct = round(sum_grupy_borne_sulinowo['C'][2], 2)
+            dane_indirect = round(sum_grupy_borne_sulinowo['C'][3],2)
+            dane_raportowany = round(sum_grupy_borne_sulinowo['C'][4],2)
+            dane_planowany = round(sum_grupy_borne_sulinowo['C'][5],2)
+            for dane_czaplinek in results_instruktor:
+                if dane_czaplinek[2] == 'Borne Sulinowo' and dane_czaplinek[3] == 'C':
+                    lokalizacje = dane_czaplinek[2]
+                    nrAkt = dane_czaplinek[0]
+                    kod = dane_czaplinek[4]
+                    instruktor = dane_czaplinek[1]
+                    chorowal = dane_czaplinek[5]
+                    ppm = dane_czaplinek[6]
+                    reklamacje = dane_czaplinek[7]
+                    dane_wydajnosc = round((dane_planowany/dane_raportowany)*100,2)
+                    dane_produktywnosc = round(((dane_direct/(dane_direct+dane_indirect))*dane_wydajnosc),2)
+                    lista_instruktor.append([nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm, reklamacje])
+
+        lista_instruktor_prem = []
+        for dane in lista_instruktor:
+            wynik = 0
+            if dane[4] > results_progi[0][6]:
+                wynik = results_progi[0][7]
+            elif dane[4] > results_progi[0][4]:
+                wynik = results_progi[0][5]
+            elif dane[4] > results_progi[0][2]:
+                wynik = results_progi[0][3]
+
+            wsp = 0
+            wynik_n = wynik
+            if dane[5] > int(float(prog50)):
+                wsp = 2
+                wynik_n = 0.0
+            if dane[5] <= int(float(prog50)) and dane[5] > (int(float(prog100)) - int(float(prog75))):
+                wsp = 1
+                wynik_n = wynik / 2
+
+            wynik_j = 0
+            kwota_j = 0
+            progi_jakosc = self.progi_inst(dane[6])
+            if dane[8] == 1:
+                if dane[7] > progi_jakosc[2]:
+                    wynik_j = float(wynik_n)
+                if dane[7] > progi_jakosc[1] and dane[7] <= progi_jakosc[2]:
+                    wynik_j = float(wynik_n) + (float(kwota_jakosc) * 0.5)
+                    kwota_j = float(kwota_jakosc) * 0.5
+                if dane[7] > progi_jakosc[0] and dane[7] <= progi_jakosc[1]:
+                    wynik_j = float(wynik_n) + (float(kwota_jakosc) * 0.75)
+                    kwota_j = float(kwota_jakosc) * 0.75
+                if dane[7] <= progi_jakosc[0]:
+                    wynik_j = float(wynik_n) + float(kwota_jakosc)
+                    kwota_j = float(kwota_jakosc)
+            else:
+                wynik_j = 0
+
+            lista_instruktor_prem.append([dane[0],dane[1],dane[2],dane[3],dane[4],wynik,dane[5],wynik_n,kwota_j,wynik_j])
 
 
-        print(results_instr[1][2],' | ',results_instr[1][3])
-        print(lista[1][2],' | ',lista[1][3])
+        print('---------------------------------------')
+        print('lista_zmian')
+        for test in lista_zminy:
+            print(test)
+        print('---------------------------------------')
+
+        # Wyświetlanie wyników
+        print("Suma dla Czaplinka (A):", sum_grupy_czaplinek['A'])
+        print("Suma dla Czaplinka (B):", sum_grupy_czaplinek['B'])
+        if ile_czaplinek == 3:
+            print("Suma dla Czaplinka (C):", sum_grupy_czaplinek['C'])
+
+        print("Suma dla Borne Sulinowo (A):", sum_grupy_borne_sulinowo['A'])
+        print("Suma dla Borne Sulinowo (B):", sum_grupy_borne_sulinowo['B'])
+        if ile_borne == 3:
+            print("Suma dla Borne Sulinowo (C):", sum_grupy_borne_sulinowo['C'])
+
+        #lista_instruktor = []
+        print('=Czaplinek=============================================================')
+        dane_direct = round(sum_grupy_czaplinek['A'][2],2)
+        dane_indirect = round(sum_grupy_czaplinek['A'][3],2)
+        dane_raportowany = round(sum_grupy_czaplinek['A'][4],2)
+        dane_planowany = round(sum_grupy_czaplinek['A'][5],2)
+        print('dane_direct:',dane_direct)
+        print('dane_indirect:',dane_indirect)
+        print('dane_raportowany:',dane_raportowany)
+        print('dane_planowany:',dane_planowany)
+        dane_wydajnosc = round((dane_planowany/dane_raportowany)*100,2)
+        print('dane_wydajnosc:',dane_wydajnosc)
+        dane_produktywnosc = round(((dane_direct/(dane_direct+dane_indirect))*dane_wydajnosc),2)
+        print('dane_produktywnosc:',dane_produktywnosc)
+
+        for dane_czaplinek in results_instruktor:
+            if dane_czaplinek[2] == 'Czaplinek' and dane_czaplinek[3] == 'A':
+                nrAkt = dane_czaplinek[0]
+                kod = dane_czaplinek[4]
+                instruktor = dane_czaplinek[1]
+                chorowal = dane_czaplinek[5]
+                #lista_instruktor.append([nrAkt,kod,instruktor,dane_wydajnosc,dane_produktywnosc,0,chorowal,0,0,0])
+                print('JEST w Czaplinek1')
+            if dane_czaplinek[2] == 'Czaplinek' and dane_czaplinek[3] == 'B':
+                nrAkt = dane_czaplinek[0]
+                kod = dane_czaplinek[4]
+                instruktor = dane_czaplinek[1]
+                chorowal = dane_czaplinek[5]
+                #lista_instruktor.append([nrAkt,kod,instruktor,dane_wydajnosc,dane_produktywnosc,0,chorowal,0,0,0])
+                print('JEST w Czaplinek2')
+            if dane_czaplinek[2] == 'Czaplinek' and dane_czaplinek[3] == 'C':
+                nrAkt = dane_czaplinek[0]
+                kod = dane_czaplinek[4]
+                instruktor = dane_czaplinek[1]
+                chorowal = dane_czaplinek[5]
+                #lista_instruktor.append([nrAkt,kod,instruktor,dane_wydajnosc,dane_produktywnosc,0,chorowal,0,0,0])
+                print('JEST w Czaplinek3')
+
+
+        print('=======================================================================')
+        print('=Borne Sulinowo========================================================')
+        dane_direct = round(sum_grupy_borne_sulinowo['A'][2], 2)
+        dane_indirect = round(sum_grupy_borne_sulinowo['A'][3], 2)
+        dane_raportowany = round(sum_grupy_borne_sulinowo['A'][4], 2)
+        dane_planowany = round(sum_grupy_borne_sulinowo['A'][5], 2)
+        print('dane_direct:', dane_direct)
+        print('dane_indirect:', dane_indirect)
+        print('dane_raportowany:', dane_raportowany)
+        print('dane_planowany:', dane_planowany)
+        dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
+        print('dane_wydajnosc:', dane_wydajnosc)
+        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+        print('dane_produktywnosc:', dane_produktywnosc)
+
+        for dane_borne in results_instruktor:
+            if dane_borne[2] == 'Borne Sulinowo' and dane_czaplinek[3] == 'A':
+                nrAkt = dane_czaplinek[0]
+                kod = dane_czaplinek[4]
+                instruktor = dane_czaplinek[1]
+                chorowal = dane_czaplinek[5]
+                #lista_instruktor.append([nrAkt,kod,instruktor,dane_wydajnosc,dane_produktywnosc,0,chorowal,0,0,0])
+                print('JEST w Borne Sulinowo1')
+            if dane_borne[2] == 'Borne Sulinowo' and dane_czaplinek[3] == 'B':
+                nrAkt = dane_czaplinek[0]
+                kod = dane_czaplinek[4]
+                instruktor = dane_czaplinek[1]
+                chorowal = dane_czaplinek[5]
+                #lista_instruktor.append([nrAkt,kod,instruktor,dane_wydajnosc,dane_produktywnosc,0,chorowal,0,0,0])
+                print('JEST w Borne Sulinowo2')
+            if dane_borne[2] == 'Borne Sulinowo' and dane_czaplinek[3] == 'C':
+                nrAkt = dane_czaplinek[0]
+                kod = dane_czaplinek[4]
+                instruktor = dane_czaplinek[1]
+                chorowal = dane_czaplinek[5]
+                #lista_instruktor.append([nrAkt,kod,instruktor,dane_wydajnosc,dane_produktywnosc,0,chorowal,0,0,0])
+                print('JEST w Borne Sulinowo3')
+        print('=======================================================================')
+
+        suma_kwot = sum(round(float(wiersz[9]), 2) for wiersz in lista_instruktor_prem)
+        print('suma_kwot:',suma_kwot)
+        self.ui.lab_sumaInstruktorzy.setText(str(suma_kwot))
+        self.ui.lab_sumaInstruktorzy2.setText(str(suma_kwot))
+
+        if not results:
+            self.clear_table_all_instruktorzy()
+            self.naglowki_tabeli_all_instruktorzy()
+            self.clear_table_zmiany_instruktorzy()
+            self.naglowki_tabeli_zmiany_instruktorzy()
+            self.clear_table_instruktorzy()
+            self.naglowki_tabeli_instruktorzy()
+        else:
+            self.naglowki_tabeli_all_instruktorzy()
+            self.pokaz_dane_all_instruktorzy(lista)
+            self.naglowki_tabeli_zmiany_instruktorzy()
+            self.pokaz_dane_zmiany_instruktorzy(lista_zminy)
+            self.naglowki_tabeli_instruktorzy()
+            self.pokaz_dane_instruktorzy(lista_instruktor_prem)
+
+    def pokaz_dane_all_instruktorzy(self, rows):
+        # Column count
+        if int(len(rows[0])) > 0:
+            self.ui.tab_wyliczenia_all_instruktorzy.setColumnCount(int(len(rows[0])))
+
+        # Row count
+        self.ui.tab_wyliczenia_all_instruktorzy.setRowCount(int(len(rows)))
+
+        wiersz = 0
+        for wynik in rows:
+            self.ui.tab_wyliczenia_all_instruktorzy.setItem(wiersz, 0, QTableWidgetItem(str(wynik[0])))
+            self.ui.tab_wyliczenia_all_instruktorzy.setItem(wiersz, 1, QTableWidgetItem(str(wynik[1])))
+            self.ui.tab_wyliczenia_all_instruktorzy.setItem(wiersz, 2, QTableWidgetItem(str(wynik[2])))
+            self.ui.tab_wyliczenia_all_instruktorzy.setItem(wiersz, 3, QTableWidgetItem(str(wynik[3])))
+            self.ui.tab_wyliczenia_all_instruktorzy.setItem(wiersz, 4, QTableWidgetItem(str(wynik[4])))
+            self.ui.tab_wyliczenia_all_instruktorzy.setItem(wiersz, 5, QTableWidgetItem(str(wynik[5])))
+            self.ui.tab_wyliczenia_all_instruktorzy.setItem(wiersz, 6, QTableWidgetItem(str(wynik[6])))
+            self.ui.tab_wyliczenia_all_instruktorzy.setItem(wiersz, 7, QTableWidgetItem(str(wynik[7])))
+            wiersz += 1
+
+        self.ui.tab_wyliczenia_all_instruktorzy.horizontalHeader().setStretchLastSection(True)
+        self.ui.tab_wyliczenia_all_instruktorzy.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_all_instruktorzy.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_all_instruktorzy.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_all_instruktorzy.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_all_instruktorzy.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_all_instruktorzy.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_all_instruktorzy.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_all_instruktorzy.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
+
+    def naglowki_tabeli_all_instruktorzy(self):
+        self.ui.tab_wyliczenia_all_instruktorzy.setColumnCount(8)  # Zmień na liczbę kolumn w twojej tabeli
+        self.ui.tab_wyliczenia_all_instruktorzy.setRowCount(0)  # Ustawienie liczby wierszy na 0
+        self.ui.tab_wyliczenia_all_instruktorzy.setHorizontalHeaderLabels([
+            'Lokalizacja',
+            'Zmiana',
+            'Direct',
+            'Indirect',
+            'raportowany',
+            'planowany',
+            'wydajnosc',
+            'produktywnosc'
+        ])
+
+    def clear_table_all_instruktorzy(self):
+        # Wyczyść zawartość tabeli
+        self.ui.tab_wyliczenia_all_instruktorzy.clearContents()
+        self.ui.tab_wyliczenia_all_instruktorzy.setRowCount(0)
+
+    def pokaz_dane_zmiany_instruktorzy(self, rows):
+        # Column count
+        if int(len(rows[0])) > 0:
+            self.ui.tab_wyliczenia_zmiany_instruktorzy.setColumnCount(int(len(rows[0])))
+
+        # Row count
+        self.ui.tab_wyliczenia_zmiany_instruktorzy.setRowCount(int(len(rows)))
+
+        wiersz = 0
+        for wynik in rows:
+            self.ui.tab_wyliczenia_zmiany_instruktorzy.setItem(wiersz, 0, QTableWidgetItem(str(wynik[0])))
+            self.ui.tab_wyliczenia_zmiany_instruktorzy.setItem(wiersz, 1, QTableWidgetItem(str(wynik[1])))
+            self.ui.tab_wyliczenia_zmiany_instruktorzy.setItem(wiersz, 2, QTableWidgetItem(str(wynik[2])))
+            self.ui.tab_wyliczenia_zmiany_instruktorzy.setItem(wiersz, 3, QTableWidgetItem(str(wynik[3])))
+            self.ui.tab_wyliczenia_zmiany_instruktorzy.setItem(wiersz, 4, QTableWidgetItem(str(wynik[4])))
+            self.ui.tab_wyliczenia_zmiany_instruktorzy.setItem(wiersz, 5, QTableWidgetItem(str(wynik[5])))
+            self.ui.tab_wyliczenia_zmiany_instruktorzy.setItem(wiersz, 6, QTableWidgetItem(str(wynik[6])))
+            self.ui.tab_wyliczenia_zmiany_instruktorzy.setItem(wiersz, 7, QTableWidgetItem(str(wynik[7])))
+            wiersz += 1
+
+        self.ui.tab_wyliczenia_zmiany_instruktorzy.horizontalHeader().setStretchLastSection(True)
+        self.ui.tab_wyliczenia_zmiany_instruktorzy.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_zmiany_instruktorzy.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_zmiany_instruktorzy.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_zmiany_instruktorzy.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_zmiany_instruktorzy.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_zmiany_instruktorzy.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_zmiany_instruktorzy.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeToContents)
+        self.ui.tab_wyliczenia_zmiany_instruktorzy.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
+
+    def naglowki_tabeli_zmiany_instruktorzy(self):
+        self.ui.tab_wyliczenia_zmiany_instruktorzy.setColumnCount(8)  # Zmień na liczbę kolumn w twojej tabeli
+        self.ui.tab_wyliczenia_zmiany_instruktorzy.setRowCount(0)  # Ustawienie liczby wierszy na 0
+        self.ui.tab_wyliczenia_zmiany_instruktorzy.setHorizontalHeaderLabels([
+            'Lokalizacja',
+            'Zmiana',
+            'Direct',
+            'Indirect',
+            'raportowany',
+            'planowany',
+            'wydajnosc',
+            'produktywnosc'
+        ])
+
+    def clear_table_zmiany_instruktorzy(self):
+        # Wyczyść zawartość tabeli
+        self.ui.tab_wyliczenia_zmiany_instruktorzy.clearContents()
+        self.ui.tab_wyliczenia_zmiany_instruktorzy.setRowCount(0)
+
+    def pokaz_dane_instruktorzy(self, rows):
+        # Column count
+        if int(len(rows[0])) > 0:
+            self.ui.tab_dane_instruktorzy.setColumnCount(int(len(rows[0])))
+
+        # Row count
+        self.ui.tab_dane_instruktorzy.setRowCount(int(len(rows)))
+
+        wiersz = 0
+        for wynik in rows:
+            self.ui.tab_dane_instruktorzy.setItem(wiersz, 0, QTableWidgetItem(str(wynik[0])))
+            self.ui.tab_dane_instruktorzy.setItem(wiersz, 1, QTableWidgetItem(str(wynik[1])))
+            self.ui.tab_dane_instruktorzy.setItem(wiersz, 2, QTableWidgetItem(str(wynik[2])))
+            self.ui.tab_dane_instruktorzy.setItem(wiersz, 3, QTableWidgetItem(str(wynik[3])))
+            self.ui.tab_dane_instruktorzy.setItem(wiersz, 4, QTableWidgetItem(str(wynik[4])))
+            self.ui.tab_dane_instruktorzy.setItem(wiersz, 5, QTableWidgetItem(str(wynik[5])))
+            self.ui.tab_dane_instruktorzy.setItem(wiersz, 6, QTableWidgetItem(str(wynik[6])))
+            self.ui.tab_dane_instruktorzy.setItem(wiersz, 7, QTableWidgetItem(str(wynik[7])))
+            self.ui.tab_dane_instruktorzy.setItem(wiersz, 8, QTableWidgetItem(str(wynik[8])))
+            self.ui.tab_dane_instruktorzy.setItem(wiersz, 9, QTableWidgetItem(str(wynik[9])))
+            wiersz += 1
+
+        self.ui.tab_dane_instruktorzy.horizontalHeader().setStretchLastSection(True)
+        self.ui.tab_dane_instruktorzy.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_instruktorzy.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_instruktorzy.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_instruktorzy.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_instruktorzy.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_instruktorzy.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_instruktorzy.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_instruktorzy.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_instruktorzy.horizontalHeader().setSectionResizeMode(8, QHeaderView.ResizeToContents)
+        self.ui.tab_dane_instruktorzy.horizontalHeader().setSectionResizeMode(9, QHeaderView.ResizeToContents)
+
+    def naglowki_tabeli_instruktorzy(self):
+        self.ui.tab_dane_instruktorzy.setColumnCount(10)  # Zmień na liczbę kolumn w twojej tabeli
+        self.ui.tab_dane_instruktorzy.setRowCount(0)  # Ustawienie liczby wierszy na 0
+        self.ui.tab_dane_instruktorzy.setHorizontalHeaderLabels([
+            'Nr akt',
+            'Kod',
+            'Imię i nazwisko',
+            'Wydajność',
+            'Produktywność',
+            'Premia_prod',
+            'Chorował',
+            'Premia',
+            'Dodatek jakość',
+            'Premia Suma'
+        ])
+
+    def clear_table_instruktorzy(self):
+        # Wyczyść zawartość tabeli
+        self.ui.tab_dane_instruktorzy.clearContents()
+        self.ui.tab_dane_instruktorzy.setRowCount(0)
+
+    # Funkcja dodawania wartości kolumn
+    def dodaj_do_sumy(self, suma, row):
+        for i in range(2, len(row)):
+            suma[i - 2] += row[i]
