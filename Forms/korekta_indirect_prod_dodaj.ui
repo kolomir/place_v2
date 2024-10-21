@@ -142,6 +142,9 @@
            <property name="placeholderText">
             <string>Czas do korekcji (1,5)</string>
            </property>
+           <property name="clearButtonEnabled">
+            <bool>false</bool>
+           </property>
           </widget>
          </item>
         </layout>

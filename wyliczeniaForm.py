@@ -148,7 +148,8 @@ class MainWindow_wyliczeniaForm(QWidget):
 
     def licz_pracownicy(self):
         miesiac = dodatki.data_miesiac_dzis()
-        select_data = '''select 
+        select_data = '''
+                        select 
                             d.Nr_akt 
                             ,case 
                                 when p.Kod is null then 0
@@ -156,12 +157,27 @@ class MainWindow_wyliczeniaForm(QWidget):
                             end as Kod
                             ,d.Nazwisko_i_imie 
                             ,d.dzial 
-                            ,d.Direct_ 
-                            ,d.Indirect_ 
+                            ,case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+                                else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end as Direct_  -- dane zawierają wartości czasowe a nie procentowe
+                            ,case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
+                                else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end as Indirect_  -- dane zawierają wartości czasowe a nie procentowe
                             ,ROUND(COALESCE(SUM(lz.reported), 0), 2) AS 'raportowany'
                             ,ROUND(COALESCE(SUM(lz.planned), 0), 2) AS 'planowany'
-                            ,ROUND(SUM(lz.planned) / SUM(lz.reported), 2) AS 'wydajnosci'
-                            ,ROUND(d.Direct_ * COALESCE(SUM(lz.planned) / NULLIF(SUM(lz.reported), 0), 0), 2) AS 'produktywnosc'
+                            ,ROUND((SUM(lz.planned) / SUM(lz.reported)) * 100, 2)  AS 'wydajnosci'
+                            ,ROUND(((case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+                                else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end / (case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+                                else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end + case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
+                                else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end)) * COALESCE(SUM(lz.planned) / NULLIF(SUM(lz.reported), 0), 0)) * 100, 2) AS 'produktywnosc' -- produktywność wyliczona za pomocą liczbowych wartości DW i IW wraz z wprowadzonymi korektami
                             ,case
                                 when np.nr_akt > 5999 then np.razem 
                                 else 
@@ -179,21 +195,21 @@ class MainWindow_wyliczeniaForm(QWidget):
                                 join logowanie_zlecen lz on d.Nr_akt = lz.nr_akt 
                                 left join nieobecnosci_prod np on np.nr_akt  = d.Nr_akt 
                                 left join bledy_prod bp on bp.nr_akt = d.Nr_akt 
-		                        left join pracownicy p on p.Nr_akt = d.Nr_akt 
+                                left join pracownicy p on p.Nr_akt = d.Nr_akt 
                         where 
                             d.dzial not in ('2030', '1-210', '4001', '4002', '4003', '4004', '4005', '4006', '4007', '4008', '4009', '4010', '401', '2-305')
-                            and d.miesiac = '%s'
-                            and lz.miesiac = '%s'
-	                        and p.miesiac = '%s'
+                            and d.miesiac = '{0}'
+                            and lz.miesiac = '{0}'
+                            and p.miesiac = '{0}'
                         group by 
                             d.Nr_akt 
                             ,d.Nazwisko_i_imie 
                             ,d.dzial 
                             ,d.Direct_work 
-                            ,d.Direct_ 
+                            -- ,d.Direct_ 
                             ,d.Indirect_work
-                            ,d.Indirect_ 
-                        ''' % (miesiac,miesiac,miesiac)
+                            -- ,d.Indirect_ 
+                        '''.format(miesiac)
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         results = db.read_query(connection, select_data)
         connection.close()
@@ -344,14 +360,47 @@ class MainWindow_wyliczeniaForm(QWidget):
         select_data = '''
                         select 
                             l.nazwa 
-                            ,( select sum(d.Direct_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) as direct
-                            ,( select sum(d.Indirect_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) as indirect
-                            ,ROUND(((( select sum(d.Direct_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )/(( select sum(d.Direct_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) + ( select sum(d.Indirect_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )))*100),2) as 'Direct %'
-                            ,ROUND(((( select sum(d.Indirect_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )/(( select sum(d.Direct_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) + ( select sum(d.Indirect_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )))*100),2) as 'Indirect %'
+                            ,( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+                                else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) as direct
+                            ,( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
+                                else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) as indirect
+                            ,ROUND(((( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+                                else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )/(( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+                                else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) + ( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
+                                else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )))*100),2) as 'Direct %'
+                            ,ROUND(((( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
+                                else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )/(( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+                                else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) + ( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
+                                else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )))*100),2) as 'Indirect %'
                             ,rt.Pl_total_time 
                             ,rt.Rep_total_time 
                             ,ROUND(((rt.Pl_total_time/rt.Rep_total_time)*100),2) as 'Wydajnosc'
-                            ,ROUND(((( select sum(d.Direct_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )/(( select sum(d.Direct_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) + ( select sum(d.Indirect_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )))*((rt.Pl_total_time/rt.Rep_total_time))*100),2) as 'Produktywnosc'
+                            ,ROUND(((( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+                                else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )/(( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+                                else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) + ( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
+                                else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )))*((rt.Pl_total_time/rt.Rep_total_time))*100),2) as 'Produktywnosc'
                             ,i.nr_akt
                         from 
                             wsparcie_produkcji wp 
@@ -610,14 +659,47 @@ class MainWindow_wyliczeniaForm(QWidget):
                         select 
                             gr.nazwa 
                             ,l.nazwa 
-                            ,( select sum(d.Direct_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) as direct
-                            ,( select sum(d.Indirect_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) as indirect
-                            ,ROUND(((( select sum(d.Direct_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )/(( select sum(d.Direct_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) + ( select sum(d.Indirect_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )))*100),2) as 'Direct %'
-                            ,ROUND(((( select sum(d.Indirect_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )/(( select sum(d.Direct_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) + ( select sum(d.Indirect_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )))*100),2) as 'Indirect %'
+                            ,( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+                                else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) as direct
+                            ,( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
+                                else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) as indirect
+                            ,ROUND(((( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+                                else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )/(( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+                                else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) + ( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
+                                else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )))*100),2) as 'Direct %'
+                            ,ROUND(((( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
+                                else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )/(( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+                                else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) + ( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
+                                else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )))*100),2) as 'Indirect %'
                             ,rt.Pl_total_time 
                             ,rt.Rep_total_time 
                             ,((rt.Pl_total_time/rt.Rep_total_time)*100) as 'Wydajnosc'
-                            ,ROUND(((( select sum(d.Direct_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )/(( select sum(d.Direct_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) + ( select sum(d.Indirect_work) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )))*((rt.Pl_total_time/rt.Rep_total_time))*100),2) as 'Produktywnosc'
+                            ,ROUND(((( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+                                else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )/(( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+                                else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) + ( select sum(case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
+                                else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )))*((rt.Pl_total_time/rt.Rep_total_time))*100),2) as 'Produktywnosc'
                             ,i.nr_akt 
                             ,jp.ppm 
                             ,jp.reklamacje 
@@ -628,13 +710,13 @@ class MainWindow_wyliczeniaForm(QWidget):
                                         left join raportowanie_total rt on rt.Work_center = l.nazwa
                                 left join linia_gniazdo lg on lg.id_grupa = gr.id 
                                     left join instruktor i on i.id = lg.id_lider 
-		                        left join jakosc_prod jp on jp.grupa_robocza = gr.nazwa 
+                                left join jakosc_prod jp on jp.grupa_robocza = gr.nazwa 
                         where 
                             gr.aktywna = 1
                             and gl.aktywny = 1
                             and l.aktywne = 1
                             and rt.miesiac = '{0}'
-	                        and jp.miesiac = '{0}'
+                            and jp.miesiac = '{0}'
                         group by 
                             gr.nazwa 
                             ,l.nazwa 
@@ -979,12 +1061,39 @@ class MainWindow_wyliczeniaForm(QWidget):
                         select 
                             d.Nr_akt 
                             ,d.dzial 
-                            ,d.Direct_ 
-                            ,d.Indirect_ 
+                            ,case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+                                else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end as Direct_  -- dane zawierają wartości czasowe a nie procentowe 
+                            ,case 
+                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
+                                else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                            end as Indirect_  -- dane zawierają wartości czasowe a nie procentowe
                             ,ROUND(COALESCE(SUM(lz.reported), 0), 2) AS 'raportowany'
                             ,ROUND(COALESCE(SUM(lz.planned), 0), 2) AS 'planowany'
-                            ,ROUND(SUM(lz.planned) / SUM(lz.reported), 2) AS 'wydajnosci'
-                            ,ROUND(d.Direct_ * COALESCE(SUM(lz.planned) / NULLIF(SUM(lz.reported), 0), 0), 2) AS 'produktywnosc'
+                            ,ROUND((SUM(lz.planned) / SUM(lz.reported) * 100), 2) AS 'wydajnosci'
+                            ,case 
+                                when ROUND(((case 
+                                        when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+                                        else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                                    end / (case 
+                                        when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+                                        else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                                    end + case 
+                                        when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
+                                        else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                                    end)) * COALESCE(SUM(lz.planned) / NULLIF(SUM(lz.reported), 0), 0)) * 100, 2) is null then 0
+                                else ROUND(((case 
+                                        when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+                                        else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                                    end / (case 
+                                        when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+                                        else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                                    end + case 
+                                        when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
+                                        else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+                                    end)) * COALESCE(SUM(lz.planned) / NULLIF(SUM(lz.reported), 0), 0)) * 100, 2) -- produktywność wyliczona za pomocą liczbowych wartości DW i IW wraz z wprowadzonymi korektami
+                            end AS 'produktywnosc' 
                             ,lz.zmiana 
                             ,lz.zmiana_lit 
                             ,lo.lokalizacja 
@@ -995,16 +1104,16 @@ class MainWindow_wyliczeniaForm(QWidget):
                                     left join lokalizacja lo on lo.id = l.id_lokalizacja 
                         where 
                             d.dzial not in ('2030', '1-210', '4001', '4002', '4003', '4004', '4005', '4006', '4007', '4008', '4009', '4010', '401', '2-305')
-                            and d.miesiac = '%s'
-                            and lz.miesiac = '%s'
+                            and d.miesiac = '{0}'
+                            and lz.miesiac = '{0}'
                         group by 
                             d.Nr_akt 
                             ,d.dzial 
                             ,d.Direct_work 
-                            ,d.Direct_ 
+                            -- ,d.Direct_ 
                             ,d.Indirect_work
-                            ,d.Indirect_ 
-                        ''' % (miesiac, miesiac)
+                            -- ,d.Indirect_  
+                        '''.format(miesiac)
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         results = db.read_query(connection, select_data)
         connection.close()
