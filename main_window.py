@@ -17,6 +17,7 @@ from raportowanie_prod import MainWindow_raportowanie_prod
 from raportowanie_total_prod import MainWindow_raportowanie_total_prod
 from jakosc_prod import MainWindow_jakosc
 from korekta_indirect_prod import MainWindow_korekta_indirect_prod
+from ustawieniaMenu_mag import MainWindow_ustawienia_mag
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -48,6 +49,7 @@ class MainWindow(QMainWindow):
         self.ui.btn_ustawienia.clicked.connect(self.otworz_okno_ustawieniaMenu)
         self.ui.btn_oblicz.clicked.connect(self.otworz_okno_wyliczeniaForm)
         self.ui.btn_zamknij.clicked.connect(qApp.quit)
+        self.ui.btn_ustawienia_mag.clicked.connect(self.otworz_okno_ustawieniaMenu_mag)
 
         QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_pracownicy)
         QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_bledy)
@@ -159,6 +161,7 @@ class MainWindow(QMainWindow):
                 self.ui.lab_kpi_magazyn.setEnabled(False)
                 self.ui.btn_ustawienia.setEnabled(False)
                 self.ui.btn_ustawienia_mag.setEnabled(False)
+                self.ui.btn_ustawienia_mag.setEnabled(False)
 
             if self.dostep == '3':
                 print('Dostep 3:', self.dostep)
@@ -174,6 +177,7 @@ class MainWindow(QMainWindow):
                 self.ui.lab_bledy_magazyn.setEnabled(False)
                 self.ui.btn_kpi_magazyn.setEnabled(False)
                 self.ui.lab_kpi_magazyn.setEnabled(False)
+                self.ui.btn_ustawienia_mag.setEnabled(False)
                 self.ui.btn_ustawienia_mag.setEnabled(False)
 
             if self.dostep == '4':
@@ -315,6 +319,10 @@ class MainWindow(QMainWindow):
     def otworz_okno_korektaIW(self):
         self.okno_korekta_indirect_prod = MainWindow_korekta_indirect_prod()
         self.okno_korekta_indirect_prod.show()
+
+    def otworz_okno_ustawieniaMenu_mag(self):
+        self.otworz_ustawieniaMenu_mag = MainWindow_ustawienia_mag()
+        self.otworz_ustawieniaMenu_mag.show()
 
     def sprawdz_zaladowanie_pracownicy(self):
         miestac_roboczy = self.data_miesiac_dzis()
