@@ -145,7 +145,7 @@
           </spacer>
          </item>
          <item>
-          <widget class="QComboBox" name="combo_ranga">
+          <widget class="QComboBox" name="combo_grupa">
            <property name="minimumSize">
             <size>
              <width>100</width>

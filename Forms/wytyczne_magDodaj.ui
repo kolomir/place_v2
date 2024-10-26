@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>301</width>
-    <height>139</height>
+    <width>304</width>
+    <height>213</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,23 +15,38 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <property name="leftMargin">
-    <number>0</number>
+    <number>4</number>
    </property>
    <property name="topMargin">
-    <number>0</number>
+    <number>4</number>
    </property>
    <property name="rightMargin">
-    <number>0</number>
+    <number>4</number>
    </property>
    <property name="bottomMargin">
-    <number>0</number>
+    <number>4</number>
    </property>
    <property name="spacing">
-    <number>0</number>
+    <number>2</number>
    </property>
    <item row="0" column="0">
     <widget class="QWidget" name="widget" native="true">
-     <layout class="QVBoxLayout" name="verticalLayout_3">
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <property name="spacing">
+       <number>0</number>
+      </property>
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
       <item>
        <widget class="QWidget" name="widget_2" native="true">
         <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -86,27 +101,30 @@
        </widget>
       </item>
       <item>
-       <widget class="QWidget" name="widget_3" native="true">
-        <layout class="QVBoxLayout" name="verticalLayout">
+       <widget class="QWidget" name="widget_5" native="true">
+        <layout class="QHBoxLayout" name="horizontalLayout">
          <property name="spacing">
-          <number>0</number>
+          <number>2</number>
          </property>
          <property name="leftMargin">
-          <number>0</number>
+          <number>4</number>
          </property>
          <property name="topMargin">
-          <number>0</number>
+          <number>4</number>
          </property>
          <property name="rightMargin">
-          <number>0</number>
+          <number>4</number>
          </property>
          <property name="bottomMargin">
-          <number>0</number>
+          <number>4</number>
          </property>
          <item>
-          <widget class="QLineEdit" name="text_linia">
+          <widget class="QComboBox" name="combo_grupa"/>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="text_kwota">
            <property name="placeholderText">
-            <string>Nr linii</string>
+            <string>Kwota bazowa</string>
            </property>
           </widget>
          </item>
@@ -114,46 +132,148 @@
        </widget>
       </item>
       <item>
-       <widget class="QWidget" name="widget_5" native="true">
-        <layout class="QVBoxLayout" name="verticalLayout_4">
+       <widget class="QWidget" name="widget_3" native="true">
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
          <property name="spacing">
-          <number>0</number>
+          <number>2</number>
          </property>
          <property name="leftMargin">
-          <number>0</number>
+          <number>4</number>
          </property>
          <property name="topMargin">
-          <number>0</number>
+          <number>4</number>
          </property>
          <property name="rightMargin">
-          <number>0</number>
+          <number>4</number>
          </property>
          <property name="bottomMargin">
-          <number>0</number>
+          <number>4</number>
          </property>
          <item>
-          <widget class="QComboBox" name="combo_lokalizacja"/>
+          <widget class="QLineEdit" name="text_nazwa_1">
+           <property name="placeholderText">
+            <string>Nazwa KPI</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="widget_6" native="true">
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <property name="spacing">
+          <number>2</number>
+         </property>
+         <property name="leftMargin">
+          <number>4</number>
+         </property>
+         <property name="topMargin">
+          <number>4</number>
+         </property>
+         <property name="rightMargin">
+          <number>4</number>
+         </property>
+         <property name="bottomMargin">
+          <number>4</number>
+         </property>
+         <item>
+          <widget class="QLineEdit" name="text_target_1">
+           <property name="placeholderText">
+            <string>Target</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="text_jednostka_1">
+           <property name="placeholderText">
+            <string>Jednostka</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="widget_7" native="true">
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <property name="spacing">
+          <number>2</number>
+         </property>
+         <property name="leftMargin">
+          <number>4</number>
+         </property>
+         <property name="topMargin">
+          <number>4</number>
+         </property>
+         <property name="rightMargin">
+          <number>4</number>
+         </property>
+         <property name="bottomMargin">
+          <number>4</number>
+         </property>
+         <item>
+          <widget class="QLineEdit" name="text_nazwa_2">
+           <property name="placeholderText">
+            <string>Nazwa KPI dodatkowego</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="widget_8" native="true">
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
+         <property name="spacing">
+          <number>2</number>
+         </property>
+         <property name="leftMargin">
+          <number>4</number>
+         </property>
+         <property name="topMargin">
+          <number>4</number>
+         </property>
+         <property name="rightMargin">
+          <number>4</number>
+         </property>
+         <property name="bottomMargin">
+          <number>4</number>
+         </property>
+         <item>
+          <widget class="QLineEdit" name="text_target_2">
+           <property name="placeholderText">
+            <string>Target</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="text_jednostka_2">
+           <property name="placeholderText">
+            <string>Jednostka</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
       </item>
       <item>
        <widget class="QWidget" name="widget_4" native="true">
-        <layout class="QHBoxLayout" name="horizontalLayout">
+        <layout class="QHBoxLayout" name="horizontalLayout_6">
          <property name="spacing">
-          <number>0</number>
+          <number>2</number>
          </property>
          <property name="leftMargin">
-          <number>0</number>
+          <number>4</number>
          </property>
          <property name="topMargin">
-          <number>0</number>
+          <number>4</number>
          </property>
          <property name="rightMargin">
-          <number>0</number>
+          <number>4</number>
          </property>
          <property name="bottomMargin">
-          <number>0</number>
+          <number>4</number>
          </property>
          <item>
           <widget class="QCheckBox" name="check_aktywny">

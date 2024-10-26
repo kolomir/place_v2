@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>301</width>
-    <height>126</height>
+    <height>121</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -32,6 +32,21 @@
    <item row="0" column="0">
     <widget class="QWidget" name="widget" native="true">
      <layout class="QVBoxLayout" name="verticalLayout_3">
+      <property name="spacing">
+       <number>4</number>
+      </property>
+      <property name="leftMargin">
+       <number>4</number>
+      </property>
+      <property name="topMargin">
+       <number>4</number>
+      </property>
+      <property name="rightMargin">
+       <number>4</number>
+      </property>
+      <property name="bottomMargin">
+       <number>4</number>
+      </property>
       <item>
        <widget class="QWidget" name="widget_2" native="true">
         <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -104,11 +119,35 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="QLineEdit" name="text_linia">
+          <widget class="QLineEdit" name="text_grupa">
            <property name="placeholderText">
-            <string>Lokalizacja</string>
+            <string>Grupa</string>
            </property>
           </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="widget_5" native="true">
+        <layout class="QVBoxLayout" name="verticalLayout_4">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QComboBox" name="combo_lokalizacja"/>
          </item>
         </layout>
        </widget>
