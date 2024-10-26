@@ -18,6 +18,7 @@ from raportowanie_total_prod import MainWindow_raportowanie_total_prod
 from jakosc_prod import MainWindow_jakosc
 from korekta_indirect_prod import MainWindow_korekta_indirect_prod
 from ustawieniaMenu_mag import MainWindow_ustawienia_mag
+from bledy_mag import MainWindow_bledy_mag
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -50,6 +51,7 @@ class MainWindow(QMainWindow):
         self.ui.btn_oblicz.clicked.connect(self.otworz_okno_wyliczeniaForm)
         self.ui.btn_zamknij.clicked.connect(qApp.quit)
         self.ui.btn_ustawienia_mag.clicked.connect(self.otworz_okno_ustawieniaMenu_mag)
+        self.ui.btn_bledy_magazyn.clicked.connect(self.otworz_okno_bledy_mag)
 
         QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_pracownicy)
         QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_bledy)
@@ -59,6 +61,7 @@ class MainWindow(QMainWindow):
         QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_raportowanie_total_prod)
         QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_jakosc_prod)
         QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_korekta_indirect_prod)
+        QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_bledy_mag)
 
         self.sprawdz_zaladowanie_bledy()
         self.sprawdz_zaladowanie_nieobecnosci()
@@ -67,6 +70,7 @@ class MainWindow(QMainWindow):
         self.sprawdz_zaladowanie_raportowanie_prod()
         self.sprawdz_zaladowanie_jakosc_prod()
         self.sprawdz_zaladowanie_korekta_indirect_prod()
+        self.sprawdz_zaladowanie_bledy_mag()
 
     def data_miesiac_dzis(self):
         data_dzis = date.today()
@@ -220,6 +224,13 @@ class MainWindow(QMainWindow):
             self.ui.lab_korekta.setEnabled(False)
             self.ui.btn_oblicz.setEnabled(False)
 
+            self.ui.btn_bledy_magazyn.setEnabled(False)
+            self.ui.lab_bledy_magazyn.setEnabled(False)
+            self.ui.btn_kpi_magazyn.setEnabled(False)
+            self.ui.lab_kpi_magazyn.setEnabled(False)
+            self.ui.btn_ustawienia.setEnabled(False)
+            self.ui.btn_ustawienia_mag.setEnabled(False)
+
 
     def otwarty_miesiac(self):
         miestac_roboczy = self.data_miesiac_dzis()
@@ -324,6 +335,10 @@ class MainWindow(QMainWindow):
         self.otworz_ustawieniaMenu_mag = MainWindow_ustawienia_mag()
         self.otworz_ustawieniaMenu_mag.show()
 
+    def otworz_okno_bledy_mag(self):
+        self.okno_bledy_mag = MainWindow_bledy_mag()
+        self.okno_bledy_mag.show()
+
     def sprawdz_zaladowanie_pracownicy(self):
         miestac_roboczy = self.data_miesiac_dzis()
         #print('miesiac', miestac_roboczy)
@@ -426,4 +441,17 @@ class MainWindow(QMainWindow):
             self.ui.lab_dot_korekta.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_red.svg"))
         else:
             self.ui.lab_dot_korekta.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_green.svg"))
+        connection.close()
+
+    def sprawdz_zaladowanie_bledy_mag(self):
+        miestac_roboczy = self.data_miesiac_dzis()
+        #print('miesiac', miestac_roboczy)
+        select_data = "SELECT * FROM `bledy_mag` WHERE miesiac = '%s';" % (miestac_roboczy)  # (miestac_roboczy)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, select_data)
+
+        if not results:
+            self.ui.lab_dot_bledy_magazyn.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_red.svg"))
+        else:
+            self.ui.lab_dot_bledy_magazyn.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_green.svg"))
         connection.close()
