@@ -94,7 +94,7 @@
          </font>
         </property>
         <property name="currentIndex">
-         <number>4</number>
+         <number>6</number>
         </property>
         <widget class="QWidget" name="tab_nieobecnosci">
          <attribute name="title">
@@ -442,7 +442,7 @@
               <number>0</number>
              </property>
              <item>
-              <widget class="QTableWidget" name="tab_dane_pracownicy"/>
+              <widget class="QTableWidget" name="tab_dane_przyjecia"/>
              </item>
              <item>
               <widget class="QWidget" name="widget_10" native="true">
@@ -468,7 +468,7 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QLabel" name="lab_sumaPracownicy">
+                 <widget class="QLabel" name="lab_sumaPrzyjecia">
                   <property name="font">
                    <font>
                     <weight>75</weight>
@@ -582,10 +582,7 @@
                  <number>0</number>
                 </property>
                 <item>
-                 <widget class="QTableWidget" name="tab_wyliczenia_pomoc"/>
-                </item>
-                <item>
-                 <widget class="QTableWidget" name="tab_dane_pomoc"/>
+                 <widget class="QTableWidget" name="tab_dane_transport_bs"/>
                 </item>
                </layout>
               </widget>
@@ -614,7 +611,7 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QLabel" name="lab_sumaPomoc">
+                 <widget class="QLabel" name="lab_sumaTransport_BS">
                   <property name="font">
                    <font>
                     <weight>75</weight>
@@ -728,10 +725,7 @@
                  <number>0</number>
                 </property>
                 <item>
-                 <widget class="QTableWidget" name="tab_wyliczenia_liderzy"/>
-                </item>
-                <item>
-                 <widget class="QTableWidget" name="tab_dane_liderzy"/>
+                 <widget class="QTableWidget" name="tab_dane_transport_Cz"/>
                 </item>
                </layout>
               </widget>
@@ -760,7 +754,7 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QLabel" name="lab_sumaLiderzy">
+                 <widget class="QLabel" name="lab_sumaTransport_Cz">
                   <property name="font">
                    <font>
                     <weight>75</weight>
@@ -888,17 +882,11 @@
                    <property name="bottomMargin">
                     <number>0</number>
                    </property>
-                   <item>
-                    <widget class="QTableWidget" name="tab_wyliczenia_all_instruktorzy"/>
-                   </item>
-                   <item>
-                    <widget class="QTableWidget" name="tab_wyliczenia_zmiany_instruktorzy"/>
-                   </item>
                   </layout>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QTableWidget" name="tab_dane_instruktorzy"/>
+                 <widget class="QTableWidget" name="tab_dane_wysylka"/>
                 </item>
                </layout>
               </widget>
@@ -927,7 +915,7 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QLabel" name="lab_sumaInstruktorzy">
+                 <widget class="QLabel" name="lab_sumaWysylka">
                   <property name="font">
                    <font>
                     <weight>75</weight>
@@ -1019,21 +1007,6 @@
                 <enum>QFrame::Raised</enum>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_17">
-                <property name="spacing">
-                 <number>0</number>
-                </property>
-                <property name="leftMargin">
-                 <number>0</number>
-                </property>
-                <property name="topMargin">
-                 <number>0</number>
-                </property>
-                <property name="rightMargin">
-                 <number>0</number>
-                </property>
-                <property name="bottomMargin">
-                 <number>0</number>
-                </property>
                 <item>
                  <widget class="QWidget" name="widget_21" native="true">
                   <layout class="QHBoxLayout" name="horizontalLayout_16">
@@ -1099,7 +1072,7 @@
                    <item>
                     <widget class="QLabel" name="label_21">
                      <property name="text">
-                      <string>Pomoc</string>
+                      <string>Przyjęcia</string>
                      </property>
                     </widget>
                    </item>
@@ -1124,7 +1097,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QLabel" name="lab_sumaPomoc2">
+                    <widget class="QLabel" name="lab_sumaPrzyjecia2">
                      <property name="font">
                       <font>
                        <weight>75</weight>
@@ -1152,7 +1125,7 @@
                    <item>
                     <widget class="QLabel" name="label_37">
                      <property name="text">
-                      <string>Liderzy</string>
+                      <string>Transport BS</string>
                      </property>
                     </widget>
                    </item>
@@ -1177,7 +1150,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QLabel" name="lab_sumaLiderzy2">
+                    <widget class="QLabel" name="lab_sumaTransport_BS2">
                      <property name="font">
                       <font>
                        <weight>75</weight>
@@ -1205,7 +1178,7 @@
                    <item>
                     <widget class="QLabel" name="label_38">
                      <property name="text">
-                      <string>Instruktorzy</string>
+                      <string>Transport Cz</string>
                      </property>
                     </widget>
                    </item>
@@ -1230,7 +1203,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QLabel" name="lab_sumaInstruktorzy2">
+                    <widget class="QLabel" name="lab_sumaTransport_Cz2">
                      <property name="font">
                       <font>
                        <weight>75</weight>
@@ -1244,6 +1217,59 @@
                    </item>
                    <item>
                     <widget class="QLabel" name="label_32">
+                     <property name="text">
+                      <string>zł</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QWidget" name="widget_34" native="true">
+                  <layout class="QHBoxLayout" name="horizontalLayout_23">
+                   <item>
+                    <widget class="QLabel" name="label_6">
+                     <property name="text">
+                      <string>Wysyłka</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="horizontalSpacer_20">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>408</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="label_11">
+                     <property name="text">
+                      <string>Suma:</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="lab_sumaWysylka2">
+                     <property name="font">
+                      <font>
+                       <weight>75</weight>
+                       <bold>true</bold>
+                      </font>
+                     </property>
+                     <property name="text">
+                      <string>0,00</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="label_17">
                      <property name="text">
                       <string>zł</string>
                      </property>

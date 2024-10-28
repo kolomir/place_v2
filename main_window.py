@@ -20,6 +20,7 @@ from korekta_indirect_prod import MainWindow_korekta_indirect_prod
 from ustawieniaMenu_mag import MainWindow_ustawienia_mag
 from bledy_mag import MainWindow_bledy_mag
 from kpi_mag import MainWindow_kpi_mag
+from wyliczeniaForm_mag import MainWindow_wyliczeniaForm_mag
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -54,6 +55,7 @@ class MainWindow(QMainWindow):
         self.ui.btn_ustawienia_mag.clicked.connect(self.otworz_okno_ustawieniaMenu_mag)
         self.ui.btn_bledy_magazyn.clicked.connect(self.otworz_okno_bledy_mag)
         self.ui.btn_kpi_magazyn.clicked.connect(self.otworz_okno_kpi_mag)
+        self.ui.btn_oblicz_magazyn.clicked.connect(self.otworz_okno_wyliczeniaForm_mag)
 
         QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_pracownicy)
         QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_bledy)
@@ -127,6 +129,7 @@ class MainWindow(QMainWindow):
             self.ui.lab_kpi_magazyn.setEnabled(True)
             self.ui.btn_ustawienia.setEnabled(True)
             self.ui.btn_ustawienia_mag.setEnabled(True)
+            self.ui.btn_oblicz_magazyn.setEnabled(True)
 
 
             if self.dostep == '1':
@@ -170,6 +173,7 @@ class MainWindow(QMainWindow):
                 self.ui.btn_ustawienia.setEnabled(False)
                 self.ui.btn_ustawienia_mag.setEnabled(False)
                 self.ui.btn_ustawienia_mag.setEnabled(False)
+                self.ui.btn_oblicz_magazyn.setEnabled(False)
 
             if self.dostep == '3':
                 print('Dostep 3:', self.dostep)
@@ -187,6 +191,7 @@ class MainWindow(QMainWindow):
                 self.ui.lab_kpi_magazyn.setEnabled(False)
                 self.ui.btn_ustawienia_mag.setEnabled(False)
                 self.ui.btn_ustawienia_mag.setEnabled(False)
+                self.ui.btn_oblicz_magazyn.setEnabled(False)
 
             if self.dostep == '4':
                 print('Dostep 4:', self.dostep)
@@ -234,6 +239,7 @@ class MainWindow(QMainWindow):
             self.ui.lab_kpi_magazyn.setEnabled(False)
             self.ui.btn_ustawienia.setEnabled(False)
             self.ui.btn_ustawienia_mag.setEnabled(False)
+            self.ui.btn_oblicz_magazyn.setEnabled(False)
 
 
     def otwarty_miesiac(self):
@@ -346,6 +352,10 @@ class MainWindow(QMainWindow):
     def otworz_okno_kpi_mag(self):
         self.okno_kpi_mag = MainWindow_kpi_mag()
         self.okno_kpi_mag.show()
+
+    def otworz_okno_wyliczeniaForm_mag(self):
+        self.okno_wyliczeniaForm_mag = MainWindow_wyliczeniaForm_mag()
+        self.okno_wyliczeniaForm_mag.show()
 
     def sprawdz_zaladowanie_pracownicy(self):
         miestac_roboczy = self.data_miesiac_dzis()
