@@ -94,7 +94,7 @@
          </font>
         </property>
         <property name="currentIndex">
-         <number>6</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="tab_nieobecnosci">
          <attribute name="title">
@@ -348,7 +348,7 @@
            <widget class="QWidget" name="widget_6" native="true">
             <layout class="QVBoxLayout" name="verticalLayout_5">
              <property name="spacing">
-              <number>0</number>
+              <number>6</number>
              </property>
              <property name="leftMargin">
               <number>0</number>
@@ -363,7 +363,10 @@
               <number>0</number>
              </property>
              <item>
-              <widget class="QTableWidget" name="tab_dane_produktywnosc"/>
+              <widget class="QTableWidget" name="tab_wyliczenia_wydania"/>
+             </item>
+             <item>
+              <widget class="QTableWidget" name="tab_dane_wydania"/>
              </item>
              <item>
               <widget class="QWidget" name="widget_7" native="true">
@@ -382,16 +385,29 @@
                  </spacer>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="btn_przeliczProduktywnosc">
+                 <widget class="QLabel" name="label_14">
                   <property name="text">
-                   <string>Przelicz</string>
+                   <string>Suma:</string>
                   </property>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="btn_zapiszProduktywnosc">
+                 <widget class="QLabel" name="lab_sumaWydania">
+                  <property name="font">
+                   <font>
+                    <weight>75</weight>
+                    <bold>true</bold>
+                   </font>
+                  </property>
                   <property name="text">
-                   <string>Zapisz</string>
+                   <string>0,00</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_25">
+                  <property name="text">
+                   <string>zł</string>
                   </property>
                  </widget>
                 </item>
@@ -1013,7 +1029,7 @@
                    <item>
                     <widget class="QLabel" name="label_23">
                      <property name="text">
-                      <string>Pracownicy</string>
+                      <string>Wydania</string>
                      </property>
                     </widget>
                    </item>
@@ -1038,7 +1054,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QLabel" name="lab_sumaPracownicy2">
+                    <widget class="QLabel" name="lab_sumaWydania2">
                      <property name="font">
                       <font>
                        <weight>75</weight>
