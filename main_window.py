@@ -21,6 +21,7 @@ from ustawieniaMenu_mag import MainWindow_ustawienia_mag
 from bledy_mag import MainWindow_bledy_mag
 from kpi_mag import MainWindow_kpi_mag
 from wyliczeniaForm_mag import MainWindow_wyliczeniaForm_mag
+from raporty import MainWindow_raporty
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -56,6 +57,7 @@ class MainWindow(QMainWindow):
         self.ui.btn_bledy_magazyn.clicked.connect(self.otworz_okno_bledy_mag)
         self.ui.btn_kpi_magazyn.clicked.connect(self.otworz_okno_kpi_mag)
         self.ui.btn_oblicz_magazyn.clicked.connect(self.otworz_okno_wyliczeniaForm_mag)
+        self.ui.btn_raporty.clicked.connect(self.otworz_okno_raporty)
 
         QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_pracownicy)
         QApplication.instance().focusChanged.connect(self.sprawdz_zaladowanie_bledy)
@@ -356,6 +358,10 @@ class MainWindow(QMainWindow):
     def otworz_okno_wyliczeniaForm_mag(self):
         self.okno_wyliczeniaForm_mag = MainWindow_wyliczeniaForm_mag()
         self.okno_wyliczeniaForm_mag.show()
+
+    def otworz_okno_raporty(self):
+        self.okno_raporty = MainWindow_raporty()
+        self.okno_raporty.show()
 
     def sprawdz_zaladowanie_pracownicy(self):
         miestac_roboczy = self.data_miesiac_dzis()

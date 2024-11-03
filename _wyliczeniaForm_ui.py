@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Forms\wyliczeniaForm.ui'
+# Form implementation generated from reading ui file 'forms\wyliczeniaForm.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.10
 #
@@ -644,7 +644,7 @@ class Ui_Form(object):
         self.verticalLayout_6.addWidget(self.widget)
 
         self.retranslateUi(Form)
-        self.tabWidget.setCurrentIndex(5)
+        self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(Form)
 
     def retranslateUi(self, Form):

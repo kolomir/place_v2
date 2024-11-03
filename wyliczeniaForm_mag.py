@@ -16,6 +16,13 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
         self.ui.setupUi(self)
 
         self.ui.btn_przelicz.clicked.connect(self.przeliczenie)
+        self.ui.btn_zapisz.clicked.connect(self.zapis_dane_pracownicy)
+
+        self.lista_pracownik_wydania = []
+        self.lista_pracownik_przyjecia = []
+        self.lista_pracownik_transport_bs = []
+        self.lista_pracownik_transport_cz = []
+        self.lista_pracownik_wysylka = []
 
     def przeliczenie(self):
         self.licz_nieobecnosci()
@@ -392,8 +399,6 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
         kwota_produkt = results_wytyczne[2][8]
 
 
-        lista_pracownik = []
-
         for dane in results_pracownik:
             blad_zew = blad_wew = prod_zmian = suma = 0.0
             prod_prem = iw_prem = 0
@@ -433,10 +438,10 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                 wynik_n = suma / 2
 
             #print(dane[0], dane[1], dane[2], blad_zew, blad_wew, '---', prod_zmian, suma, '---', wsp, wynik_n)
-            lista_pracownik.append([dane[0], dane[1], dane[2], blad_zew, blad_wew, prod_zmian, suma, wsp, wynik_n])
+            self.lista_pracownik_wydania.append([dane[0], dane[1], dane[2], blad_zew, blad_wew, prod_zmian, suma, wsp, wynik_n])
 
 
-        suma_kwot = sum(round(float(wiersz[8]), 2) for wiersz in lista_pracownik)
+        suma_kwot = sum(round(float(wiersz[8]), 2) for wiersz in self.lista_pracownik_wydania)
         self.ui.lab_sumaWydania.setText(str(suma_kwot))
         self.ui.lab_sumaWydania2.setText(str(suma_kwot))
 
@@ -449,7 +454,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
             self.naglowki_tabeli_wydania()
             self.pokaz_dane_wydania(lista)
             self.naglowki_tabeli_dane_wydania()
-            self.pokaz_dane_dane_wydania(lista_pracownik)
+            self.pokaz_dane_dane_wydania(self.lista_pracownik_wydania)
 
     def pokaz_dane_wydania(self, rows):
         # Column count
@@ -615,7 +620,6 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
         if dp_dane >= target_dp_init:
             prem_dp = int(kwota_dp_init)
 
-        lista_pracownik = []
         for dane in results:
             for blad in results_bledy:
                 if dane[0] == blad[1]:
@@ -642,9 +646,9 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                 wynik_n = suma_prem / 2
 
             #print(dane[0],dane[1],dane[2],prem_dp,prem_blad,suma_prem,wsp,wynik_n)
-            lista_pracownik.append([dane[0],dane[4],dane[1],dane[2],prem_dp,prem_blad,suma_prem,wsp,wynik_n])
+            self.lista_pracownik_przyjecia.append([dane[0],dane[4],dane[1],dane[2],prem_dp,prem_blad,suma_prem,wsp,wynik_n])
 
-            suma_kwot = sum(round(float(wiersz[8]), 2) for wiersz in lista_pracownik)
+            suma_kwot = sum(round(float(wiersz[8]), 2) for wiersz in self.lista_pracownik_przyjecia)
             self.ui.lab_sumaPrzyjecia.setText(str(suma_kwot))
             self.ui.lab_sumaPrzyjecia2.setText(str(suma_kwot))
 
@@ -653,7 +657,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                 self.naglowki_tabeli_przyjecia()
             else:
                 self.naglowki_tabeli_przyjecia()
-                self.pokaz_dane_przyjecia(lista_pracownik)
+                self.pokaz_dane_przyjecia(self.lista_pracownik_przyjecia)
 
     def pokaz_dane_przyjecia(self, rows):
         # Column count
@@ -772,7 +776,6 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
         if zgodnosc_dane >= target_zgodnosc:
             prem_zgodnosc = int(kwota_zgodnosc)
 
-        lista_pracownik = []
         for dane in results:
             for blad in results_bledy:
                 if dane[0] == blad[1]:
@@ -799,9 +802,9 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                 wynik_n = suma_prem / 2
 
             #print(dane[0],dane[1],dane[2],prem_dp,prem_blad,suma_prem,wsp,wynik_n)
-            lista_pracownik.append([dane[0],dane[4],dane[1],dane[2],prem_dp,prem_blad,prem_zgodnosc,suma_prem,wsp,wynik_n])
+            self.lista_pracownik_transport_bs.append([dane[0],dane[4],dane[1],dane[2],prem_dp,prem_blad,prem_zgodnosc,suma_prem,wsp,wynik_n])
 
-            suma_kwot = sum(round(float(wiersz[9]), 2) for wiersz in lista_pracownik)
+            suma_kwot = sum(round(float(wiersz[9]), 2) for wiersz in self.lista_pracownik_transport_bs)
             self.ui.lab_sumaTransport_BS.setText(str(suma_kwot))
             self.ui.lab_sumaTransport_BS2.setText(str(suma_kwot))
 
@@ -810,7 +813,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                 self.naglowki_tabeli_transport_bs()
             else:
                 self.naglowki_tabeli_transport_bs()
-                self.pokaz_dane_transport_bs(lista_pracownik)
+                self.pokaz_dane_transport_bs(self.lista_pracownik_transport_bs)
 
     def pokaz_dane_transport_bs(self, rows):
         # Column count
@@ -940,7 +943,6 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
         if raportowanie_dane <= target_raportowanie:
             prem_raportowanie = int(kwota_raportowanie)
 
-        lista_pracownik = []
         for dane in results:
             suma_prem = prem_dp + prem_zgodnosc + prem_zapasy + prem_raportowanie
 
@@ -954,9 +956,9 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                 wynik_n = suma_prem / 2
 
             #print(dane[0],dane[1],dane[2],prem_dp,prem_blad,suma_prem,wsp,wynik_n)
-            lista_pracownik.append([dane[0],dane[4],dane[1],dane[2],prem_dp,prem_zgodnosc,prem_zapasy,prem_raportowanie,suma_prem,wsp,wynik_n])
+            self.lista_pracownik_transport_cz.append([dane[0],dane[4],dane[1],dane[2],prem_dp,prem_zgodnosc,prem_zapasy,prem_raportowanie,suma_prem,wsp,wynik_n])
 
-            suma_kwot = sum(round(float(wiersz[10]), 2) for wiersz in lista_pracownik)
+            suma_kwot = sum(round(float(wiersz[10]), 2) for wiersz in self.lista_pracownik_transport_cz)
             self.ui.lab_sumaTransport_Cz.setText(str(suma_kwot))
             self.ui.lab_sumaTransport_Cz2.setText(str(suma_kwot))
 
@@ -965,7 +967,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                 self.naglowki_tabeli_transport_cz()
             else:
                 self.naglowki_tabeli_transport_cz()
-                self.pokaz_dane_transport_cz(lista_pracownik)
+                self.pokaz_dane_transport_cz(self.lista_pracownik_transport_cz)
 
     def pokaz_dane_transport_cz(self, rows):
         # Column count
@@ -1086,7 +1088,6 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
         if delivery >= target_delivery:
             prem_delivery = int(kwota_delivery)
 
-        lista_pracownik = []
         for dane in results:
             for blad in results_bledy:
                 if dane[0] == blad[1]:
@@ -1109,9 +1110,9 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                 wynik_n = suma_prem / 2
 
             #print(dane[0],dane[1],dane[2],prem_dp,prem_blad,suma_prem,wsp,wynik_n)
-            lista_pracownik.append([dane[0],dane[4],dane[1],dane[2],prem_delivery,prem_blad,suma_prem,wsp,wynik_n])
+            self.lista_pracownik_wysylka.append([dane[0],dane[4],dane[1],dane[2],prem_delivery,prem_blad,suma_prem,wsp,wynik_n])
 
-            suma_kwot = sum(round(float(wiersz[8]), 2) for wiersz in lista_pracownik)
+            suma_kwot = sum(round(float(wiersz[8]), 2) for wiersz in self.lista_pracownik_wysylka)
             self.ui.lab_sumaWysylka.setText(str(suma_kwot))
             self.ui.lab_sumaWysylka2.setText(str(suma_kwot))
 
@@ -1120,7 +1121,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                 self.naglowki_tabeli_wysylka()
             else:
                 self.naglowki_tabeli_wysylka()
-                self.pokaz_dane_wysylka(lista_pracownik)
+                self.pokaz_dane_wysylka(self.lista_pracownik_wysylka)
 
     def pokaz_dane_wysylka(self, rows):
         # Column count
@@ -1173,3 +1174,80 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
         # Wyczyść zawartość tabeli
         self.ui.tab_dane_wysylka.clearContents()
         self.ui.tab_dane_wysylka.setRowCount(0)
+
+    def zapis_dane_pracownicy(self):
+        data_miesiac = str(dodatki.data_miesiac_dzis())
+        teraz = datetime.today()
+
+        select_data_eksport = "SELECT * FROM eksport_danych ed WHERE ed.miesiac = '{0}' and ed.dzial = 'mag'".format(data_miesiac)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        result_eksport = db.read_query(connection, select_data_eksport)
+
+        lista_place = []
+
+        if result_eksport:
+            QMessageBox.critical(self, 'Error', 'Zestawienie do eksportu dla pracowników magazynu jest już dodane.!')
+        else:
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+
+            for dane_place in self.lista_pracownik_wydania:
+                nr_akt = dane_place[0]  # nr akt
+                kod = dane_place[1]  # kod
+                imie_i_nazwisko = dane_place[2]  # Imie i nazwisko
+                kwota = dane_place[8]  # kwota
+                opis = 'wydania'
+                dzial = 'mag'
+
+                if kwota > 0:
+                    lista_place.append([nr_akt, kod, imie_i_nazwisko, kwota, opis, dzial, data_miesiac, teraz])
+
+            for dane_place in self.lista_pracownik_przyjecia:
+                nr_akt = dane_place[0]  # nr akt
+                kod = dane_place[1]  # kod
+                imie_i_nazwisko = dane_place[2]  # Imie i nazwisko
+                kwota = dane_place[8]  # kwota
+                opis = 'przyjecia'
+                dzial = 'mag'
+
+                if kwota > 0:
+                    lista_place.append([nr_akt, kod, imie_i_nazwisko, kwota, opis, dzial, data_miesiac, teraz])
+
+            for dane_place in self.lista_pracownik_transport_bs:
+                nr_akt = dane_place[0]  # nr akt
+                kod = dane_place[1]  # kod
+                imie_i_nazwisko = dane_place[2]  # Imie i nazwisko
+                kwota = dane_place[9]  # kwota
+                opis = 'transport_bs'
+                dzial = 'mag'
+
+                if kwota > 0:
+                    lista_place.append([nr_akt, kod, imie_i_nazwisko, kwota, opis, dzial, data_miesiac, teraz])
+
+            for dane_place in self.lista_pracownik_transport_cz:
+                nr_akt = dane_place[0]  # nr akt
+                kod = dane_place[1]  # kod
+                imie_i_nazwisko = dane_place[2]  # Imie i nazwisko
+                kwota = dane_place[10]  # kwota
+                opis = 'transport_cz'
+                dzial = 'mag'
+
+                if kwota > 0:
+                    lista_place.append([nr_akt, kod, imie_i_nazwisko, kwota, opis, dzial, data_miesiac, teraz])
+
+            for dane_place in self.lista_pracownik_wysylka:
+                nr_akt = dane_place[0]  # nr akt
+                kod = dane_place[1]  # kod
+                imie_i_nazwisko = dane_place[2]  # Imie i nazwisko
+                kwota = dane_place[8]  # kwota
+                opis = 'wysylka'
+                dzial = 'mag'
+
+                if kwota > 0:
+                    lista_place.append([nr_akt, kod, imie_i_nazwisko, kwota, opis, dzial, data_miesiac, teraz])
+
+            for test in lista_place:
+                #print(test[0],test[1],test[2],test[3],test[4],test[5],test[6],test[7])
+                insert_data = "INSERT INTO eksport_danych VALUES (NULL,'%s','%s','%s','%s','%s','%s','%s','%s');" % (test[0], test[1], test[2], test[3], test[4], test[5], test[6], test[7])
+                db.execute_query(connection, insert_data)
+
+            connection.close()

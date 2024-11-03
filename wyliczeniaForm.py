@@ -16,6 +16,12 @@ class MainWindow_wyliczeniaForm(QWidget):
         self.ui.setupUi(self)
 
         self.ui.btn_przelicz.clicked.connect(self.przeliczenie)
+        self.ui.btn_zapisz.clicked.connect(self.zapis_dane_pracownicy)
+
+        self.lista = []
+        self.lista_pracownik_wsparcia = []
+        self.lista_pracownik_lider = []
+        self.lista_instruktor_prem = []
 
     def przeliczenie(self):
         self.licz_nieobecnosci()
@@ -223,7 +229,7 @@ class MainWindow_wyliczeniaForm(QWidget):
         prog75 = self.ui.lab_pracujacych075Nieobecnosci.text()
         prog50 = self.ui.lab_pracujacych050Nieobecnosci.text()
 
-        lista = []
+        
         prog = 96.00
 
         for dane in results:
@@ -267,9 +273,9 @@ class MainWindow_wyliczeniaForm(QWidget):
 
 
             #print([dane[0], dane[1], dane[2], dane[3], dane[4], dane[5], dane[6], dane[7], dane[8], dane[9], wynik, dane[10], wsp, wynik_n, dane[11], wynik_b])
-            lista.append([dane[0], dane[1], dane[2], dane[3], dane[4], dane[5], dane[6], dane[7], dane[8], dane[9], wynik, dane[10], wsp, wynik_n, dane[11], wynik_b])
+            self.lista.append([dane[0], dane[1], dane[2], dane[3], dane[4], dane[5], dane[6], dane[7], dane[8], dane[9], wynik, dane[10], wsp, wynik_n, dane[11], wynik_b])
 
-        suma_kwot = sum(round(float(wiersz[15]), 2) for wiersz in lista)
+        suma_kwot = sum(round(float(wiersz[15]), 2) for wiersz in self.lista)
         self.ui.lab_sumaPracownicy.setText(str(suma_kwot))
         self.ui.lab_sumaPracownicy2.setText(str(suma_kwot))
 
@@ -278,7 +284,7 @@ class MainWindow_wyliczeniaForm(QWidget):
             self.naglowki_tabeli_pracownicy()
         else:
             self.naglowki_tabeli_pracownicy()
-            self.pokaz_dane_pracownicy(lista)
+            self.pokaz_dane_pracownicy(self.lista)
 
     def pokaz_dane_pracownicy(self, rows):
         # Column count
@@ -504,7 +510,7 @@ class MainWindow_wyliczeniaForm(QWidget):
         connection.close()
 
 
-        lista_pracownik = []
+        #self.lista_pracownik_wsparcia = []
         for dane in results_pracownik:
 
 
@@ -531,11 +537,11 @@ class MainWindow_wyliczeniaForm(QWidget):
                 wynik_n = wynik / 2
             #print('dane[3]:', dane[3], 'wsp:', wsp, 'wynik:', wynik, 'wynik_n:', wynik_n)
 
-            print([dane[0], dane[1], dane[2],direct, indirect, wydajnosc, produktywnosc,wynik, wsp, wynik_n])
-            lista_pracownik.append([dane[0], dane[1], dane[2], wydajnosc, produktywnosc,wynik, wsp, wynik_n])
+            #print([dane[0], dane[1], dane[2],direct, indirect, wydajnosc, produktywnosc,wynik, wsp, wynik_n])
+            self.lista_pracownik_wsparcia.append([dane[0], dane[1], dane[2], wydajnosc, produktywnosc,wynik, wsp, wynik_n])
 
-        print(lista_pracownik)
-        suma_kwot = sum(round(float(wiersz[7]), 2) for wiersz in lista_pracownik)
+        #print(lista_pracownik_wsparcia)
+        suma_kwot = sum(round(float(wiersz[7]), 2) for wiersz in self.lista_pracownik_wsparcia)
         self.ui.lab_sumaPomoc.setText(str(suma_kwot))
         self.ui.lab_sumaPomoc2.setText(str(suma_kwot))
 
@@ -548,7 +554,7 @@ class MainWindow_wyliczeniaForm(QWidget):
             self.naglowki_tabeli_wsparcie()
             self.pokaz_dane_wsparcie(lista)
             self.naglowki_tabeli_wsparcie_pracownik()
-            self.pokaz_dane_wsparcie_pracownik(lista_pracownik)
+            self.pokaz_dane_wsparcie_pracownik(self.lista_pracownik_wsparcia)
 
     def pokaz_dane_wsparcie(self, rows):
         # Column count
@@ -829,7 +835,7 @@ class MainWindow_wyliczeniaForm(QWidget):
         results_pracownik = db.read_query(connection, select_data_pracownik)
         connection.close()
 
-        lista_pracownik = []
+
         for dane in results_pracownik:
 
             direct = round(suma_direct[dane[5]] / (suma_direct[dane[5]] + suma_indirect[dane[5]]), 2)
@@ -888,10 +894,10 @@ class MainWindow_wyliczeniaForm(QWidget):
             print('dane[3]:', dane[3], 'wsp:', wsp, 'wynik:', wynik, 'wynik_n:', wynik_n)
 
             print([dane[0], dane[1], dane[2], direct, indirect, wydajnosc, produktywnosc, wynik, wsp, wynik_n, kwota_j, wynik_j])
-            lista_pracownik.append([dane[0], dane[1], dane[2], wydajnosc, produktywnosc, wynik, wsp, wynik_n, kwota_j, wynik_j])
+            self.lista_pracownik_lider.append([dane[0], dane[1], dane[2], wydajnosc, produktywnosc, wynik, wsp, wynik_n, kwota_j, wynik_j])
 
-        print(lista_pracownik)
-        suma_kwot = sum(round(float(wiersz[9]), 2) for wiersz in lista_pracownik)
+        #print(self.lista_pracownik_lider)
+        suma_kwot = sum(round(float(wiersz[9]), 2) for wiersz in self.lista_pracownik_lider)
         self.ui.lab_sumaLiderzy.setText(str(suma_kwot))
         self.ui.lab_sumaLiderzy2.setText(str(suma_kwot))
 
@@ -904,7 +910,7 @@ class MainWindow_wyliczeniaForm(QWidget):
             self.naglowki_tabeli_liderzy()
             self.pokaz_dane_liderzy(lista)
             self.naglowki_tabeli_liderzy_pracownik()
-            self.pokaz_dane_liderzy_pracownik(lista_pracownik)
+            self.pokaz_dane_liderzy_pracownik(self.lista_pracownik_lider)
 
     def progi(self, wc_id):
         select_data_q_progi = "select * from progi_jakosc pj where pj.aktywny = 1 and id_ranga = 2"
@@ -1237,10 +1243,10 @@ class MainWindow_wyliczeniaForm(QWidget):
             lista.append([lokalizacja,zmianaLit,values['Direct'],values['Indirect'],values['raportowany'],values['planowany'],wyd,prod])
             #lista.append([lokalizacja,zmianaLit,values['Direct'],values['Indirect'],values['raportowany'],values['planowany'],values['wydajnosc'],values['produktywnosc']])
 
-        print('===========================================')
-        for test in lista:
-            print(test)
-        print('===========================================')
+        #print('===========================================')
+        #for test in lista:
+        #    print(test)
+        #print('===========================================')
 
         # Inicjalizacja sum dla grup
         sum_grupy_czaplinek = {'A': [0] * 6, 'B': [0] * 6, 'C': [0] * 6}
@@ -1556,7 +1562,7 @@ class MainWindow_wyliczeniaForm(QWidget):
                     dane_produktywnosc = round(((dane_direct/(dane_direct+dane_indirect))*dane_wydajnosc),2)
                     lista_instruktor.append([nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm, reklamacje])
 
-        lista_instruktor_prem = []
+
         for dane in lista_instruktor:
             wynik = 0
             if dane[4] > results_progi[0][6]:
@@ -1593,7 +1599,7 @@ class MainWindow_wyliczeniaForm(QWidget):
             else:
                 wynik_j = 0
 
-            lista_instruktor_prem.append([dane[0],dane[1],dane[2],dane[3],dane[4],wynik,dane[5],wynik_n,kwota_j,wynik_j])
+            self.lista_instruktor_prem.append([dane[0],dane[1],dane[2],dane[3],dane[4],wynik,dane[5],wynik_n,kwota_j,wynik_j])
 
 
         print('---------------------------------------')
@@ -1691,7 +1697,7 @@ class MainWindow_wyliczeniaForm(QWidget):
                 print('JEST w Borne Sulinowo3')
         print('=======================================================================')
 
-        suma_kwot = sum(round(float(wiersz[9]), 2) for wiersz in lista_instruktor_prem)
+        suma_kwot = sum(round(float(wiersz[9]), 2) for wiersz in self.lista_instruktor_prem)
         print('suma_kwot:',suma_kwot)
         self.ui.lab_sumaInstruktorzy.setText(str(suma_kwot))
         self.ui.lab_sumaInstruktorzy2.setText(str(suma_kwot))
@@ -1709,7 +1715,7 @@ class MainWindow_wyliczeniaForm(QWidget):
             self.naglowki_tabeli_zmiany_instruktorzy()
             self.pokaz_dane_zmiany_instruktorzy(lista_zminy)
             self.naglowki_tabeli_instruktorzy()
-            self.pokaz_dane_instruktorzy(lista_instruktor_prem)
+            self.pokaz_dane_instruktorzy(self.lista_instruktor_prem)
 
     def pokaz_dane_all_instruktorzy(self, rows):
         # Column count
@@ -1868,3 +1874,88 @@ class MainWindow_wyliczeniaForm(QWidget):
     def dodaj_do_sumy(self, suma, row):
         for i in range(2, len(row)):
             suma[i - 2] += row[i]
+
+    def zapis_dane_pracownicy(self):
+        data_miesiac = str(dodatki.data_miesiac_dzis())
+        teraz = datetime.today()
+        select_data = "SELECT * FROM zestawienia_prod zp WHERE zp.miesiac = '{0}'".format(data_miesiac)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        result = db.read_query(connection, select_data)
+        select_data_eksport = "SELECT * FROM eksport_danych ed WHERE ed.miesiac = '{0}' and ed.dzial = 'prod'".format(data_miesiac)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        result_eksport = db.read_query(connection, select_data_eksport)
+
+        lista_place = []
+
+        if result:
+            QMessageBox.critical(self, 'Error', 'Zestawienie dla pracowników zostało już dodane!')
+        else:
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+
+            for dane in self.lista:
+                if dane[4] == 0 and dane[5] == 0:
+                    direct = 0
+                    indirect = 0
+                else:
+                    direct = round(dane[4]/(dane[4]+dane[5]), 2)
+                    indirect = round(dane[5]/(dane[4]+dane[5]), 2)
+                print(dane[0], dane[2], dane[3], direct, indirect, dane[8], dane[9], dane[11], dane[14], data_miesiac, teraz)
+                insert_data = "INSERT INTO zestawienia_prod VALUES (NULL,'%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');" % (dane[0], dane[2], dane[3], direct, indirect, dane[8], dane[9], dane[11], dane[14], data_miesiac, teraz)
+                db.execute_query(connection, insert_data)
+            connection.close()
+
+        if result_eksport:
+            QMessageBox.critical(self, 'Error', 'Zestawienie do eksportu dla pracowników produkcji jest już dodane.!')
+        else:
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+
+            for dane_place in self.lista:
+                nr_akt = dane_place[0] #nr akt
+                kod = dane_place[1] #kod
+                imie_i_nazwisko = dane_place[2] #Imie i nazwisko
+                kwota = dane_place[15] #kwota
+                opis = 'produkcja'
+                dzial = 'prod'
+
+                if kwota > 0:
+                    lista_place.append([nr_akt, kod, imie_i_nazwisko, kwota, opis, dzial, data_miesiac, teraz])
+
+            for dane_wsparcie in self.lista_pracownik_wsparcia:
+                nr_akt = dane_wsparcie[0] #nr akt
+                kod = dane_wsparcie[1] #kod
+                imie_i_nazwisko = dane_wsparcie[2] #Imie i nazwisko
+                kwota = dane_wsparcie[7] #kwota
+                opis = 'wsparcie'
+                dzial = 'prod'
+
+                if dane_wsparcie[7] > 0:
+                    lista_place.append([nr_akt, kod, imie_i_nazwisko, kwota, opis, dzial, data_miesiac, teraz])
+
+            for dane_lider in self.lista_pracownik_lider:
+                nr_akt = dane_lider[0] #nr akt
+                kod = dane_lider[1] #kod
+                imie_i_nazwisko = dane_lider[2] #Imie i nazwisko
+                kwota = dane_lider[9] #kwota
+                opis = 'lider'
+                dzial = 'prod'
+
+                if kwota > 0:
+                    lista_place.append([nr_akt, kod, imie_i_nazwisko, kwota, opis, dzial, data_miesiac, teraz])
+
+            for dane_instruktor in self.lista_instruktor_prem:
+                nr_akt = dane_instruktor[0] #nr akt
+                kod = dane_instruktor[1] #kod
+                imie_i_nazwisko = dane_instruktor[2] #Imie i nazwisko
+                kwota = dane_instruktor[9] #kwota
+                opis = 'instruktor'
+                dzial = 'prod'
+
+                if kwota > 0:
+                    lista_place.append([nr_akt, kod, imie_i_nazwisko, kwota, opis, dzial, data_miesiac, teraz])
+
+            for test in lista_place:
+                #print(test[0],test[1],test[2],test[3],test[4],test[5],test[6],test[7])
+                insert_data = "INSERT INTO eksport_danych VALUES (NULL,'%s','%s','%s','%s','%s','%s','%s','%s');" % (test[0],test[1],test[2],test[3],test[4],test[5],test[6],test[7])
+                db.execute_query(connection, insert_data)
+
+            connection.close()
