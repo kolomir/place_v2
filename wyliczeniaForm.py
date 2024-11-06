@@ -876,7 +876,7 @@ class MainWindow_wyliczeniaForm(QWidget):
                 else:
                     wynik_j = float(wynik_n)
             else:
-                if dane[7] == 1:
+                if dane[7] == 0:
                     if dane[6] > progi_jakosc[2]:
                         wynik_j = float(wynik_n)
                     if dane[6] > progi_jakosc[1] and dane[6] <= progi_jakosc[2]:
@@ -1112,6 +1112,7 @@ class MainWindow_wyliczeniaForm(QWidget):
                             d.dzial not in ('2030', '1-210', '4001', '4002', '4003', '4004', '4005', '4006', '4007', '4008', '4009', '4010', '401', '2-305')
                             and d.miesiac = '{0}'
                             and lz.miesiac = '{0}'
+                            and d.dzial not in (101)
                         group by 
                             d.Nr_akt 
                             ,d.dzial 
@@ -1162,13 +1163,12 @@ class MainWindow_wyliczeniaForm(QWidget):
                                     instruktor i 
                                         left join linia_gniazdo lg on lg.id_lider = i.id 
                                             left join lokalizacja l on l.id = lg.id_lokalizacja 
-                                                left join jakosc_prod jp on jp.grupa_robocza = l.lokalizacja 
+                                                left join jakosc_prod jp on jp.grupa_robocza = l.lokalizacja and jp.miesiac = '{0}'
                                         left join pracownicy p on p.Nr_akt = i.nr_akt 
                                         left join nieobecnosci_prod np on np.nr_akt = i.nr_akt 
                                 where 
                                     i.aktywny = 1
                                     and i.id_ranga = 1
-                                    and jp.miesiac = '{0}'
                                 group by 
                                     i.nr_akt
                                     ,l.lokalizacja 
@@ -1584,7 +1584,7 @@ class MainWindow_wyliczeniaForm(QWidget):
             wynik_j = 0
             kwota_j = 0
             progi_jakosc = self.progi_inst(dane[6])
-            if dane[8] == 1:
+            if dane[8] == 0:
                 if dane[7] > progi_jakosc[2]:
                     wynik_j = float(wynik_n)
                 if dane[7] > progi_jakosc[1] and dane[7] <= progi_jakosc[2]:

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'bledy_prod.ui'
+# Form implementation generated from reading ui file 'forms\bledy_prod.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.10
 #
@@ -22,6 +22,8 @@ class Ui_Form(object):
         self.widget = QtWidgets.QWidget(Form)
         self.widget.setObjectName("widget")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.widget)
+        self.verticalLayout_3.setContentsMargins(4, 4, 4, 4)
+        self.verticalLayout_3.setSpacing(2)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
         self.widget_2 = QtWidgets.QWidget(self.widget)
         self.widget_2.setObjectName("widget_2")
@@ -50,10 +52,9 @@ class Ui_Form(object):
         self.widget_3 = QtWidgets.QWidget(self.widget_4)
         self.widget_3.setObjectName("widget_3")
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.widget_3)
+        self.horizontalLayout.setContentsMargins(4, 4, 4, 4)
+        self.horizontalLayout.setSpacing(2)
         self.horizontalLayout.setObjectName("horizontalLayout")
-        self.label_3 = QtWidgets.QLabel(self.widget_3)
-        self.label_3.setObjectName("label_3")
-        self.horizontalLayout.addWidget(self.label_3)
         self.ed_sciezka_dane = QtWidgets.QLineEdit(self.widget_3)
         self.ed_sciezka_dane.setObjectName("ed_sciezka_dane")
         self.horizontalLayout.addWidget(self.ed_sciezka_dane)
@@ -61,9 +62,25 @@ class Ui_Form(object):
         self.btn_przegladaj.setObjectName("btn_przegladaj")
         self.horizontalLayout.addWidget(self.btn_przegladaj)
         self.verticalLayout_2.addWidget(self.widget_3)
-        self.btn_importuj = QtWidgets.QPushButton(self.widget_4)
+        self.widget_5 = QtWidgets.QWidget(self.widget_4)
+        self.widget_5.setObjectName("widget_5")
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.widget_5)
+        self.horizontalLayout_2.setContentsMargins(4, 4, 4, 4)
+        self.horizontalLayout_2.setSpacing(2)
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.btn_importuj = QtWidgets.QPushButton(self.widget_5)
         self.btn_importuj.setObjectName("btn_importuj")
-        self.verticalLayout_2.addWidget(self.btn_importuj)
+        self.horizontalLayout_2.addWidget(self.btn_importuj)
+        self.btn_szablon = QtWidgets.QPushButton(self.widget_5)
+        self.btn_szablon.setMinimumSize(QtCore.QSize(25, 25))
+        self.btn_szablon.setMaximumSize(QtCore.QSize(25, 25))
+        self.btn_szablon.setText("")
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(":/icon/img/svg_icons/layout.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.btn_szablon.setIcon(icon)
+        self.btn_szablon.setObjectName("btn_szablon")
+        self.horizontalLayout_2.addWidget(self.btn_szablon)
+        self.verticalLayout_2.addWidget(self.widget_5)
         self.verticalLayout_3.addWidget(self.widget_4)
         self.line = QtWidgets.QFrame(self.widget)
         self.line.setFrameShape(QtWidgets.QFrame.HLine)
@@ -84,7 +101,8 @@ class Ui_Form(object):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
         self.label.setText(_translate("Form", "Błędy produkcji"))
-        self.label_2.setText(_translate("Form", "v1"))
-        self.label_3.setText(_translate("Form", "Ścieżka do pliku"))
-        self.btn_przegladaj.setText(_translate("Form", "Przeglądaj"))
+        self.label_2.setText(_translate("Form", "v1.1"))
+        self.ed_sciezka_dane.setPlaceholderText(_translate("Form", "Wpisz ścieżkę do pliku lub wybierz..."))
+        self.btn_przegladaj.setText(_translate("Form", "Wybierz plik"))
         self.btn_importuj.setText(_translate("Form", "Importuj"))
+import icon_rc

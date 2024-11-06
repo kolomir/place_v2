@@ -25,11 +25,11 @@ class MainWindow_nieobecnosci(QWidget):
         self.plik_obco = self.config['sciezki']['plik_obcokrajowcy']
         #------------------------------------------------------------------
         # - domyślna ścieżka dla pliku -----------------
-        domyslny = f"{self.folder_bledy}"
-        self.ui.ed_sciezka_dane.setText(domyslny)
+        #domyslny = f"{self.folder_bledy}"
+        #self.ui.ed_sciezka_dane.setText(domyslny)
         # -----------------------------------------------
 
-        self.ui.btn_przegladaj.clicked.connect(self.przycisk_sciezka)
+        self.ui.btn_przegladaj.clicked.connect(self.open_file_dialog)
         self.ui.btn_importuj.clicked.connect(self.czytaj_dane)
         self.ui.btn_importuj_obco.clicked.connect(self.czytaj_dane_obco)
         self.wyszukaj_dane()
@@ -48,13 +48,18 @@ class MainWindow_nieobecnosci(QWidget):
             return False
         return True
 
-    def przycisk_sciezka(self):
+    def open_file_dialog(self):
+        # Otwieranie dialogu wyboru pliku
         options = QFileDialog.Options()
-        default_directory = self.folder_bledy
-        folder = QFileDialog.getExistingDirectory(self, 'Wybierz folder...', default_directory, options=options)
-        folder = folder.replace("/", "\\")
-        print(folder)
-        self.ui.ed_sciezka_dane.setText(folder)
+        file_path, _ = QFileDialog.getOpenFileName(self, "Wybierz plik Excel", "", "Pliki tekstowe (*.xlsx);;Wszystkie pliki (*)", options=options)
+        if file_path:
+            self.ui.ed_sciezka_dane.setText(file_path)  # Ustawienie ścieżki w polu tekstowym
+
+    def load_from_path(self):
+        # Wczytanie pliku z ręcznie wpisanej ścieżki
+        file_path = self.ui.ed_sciezka_dane.text()
+        if file_path:
+            self.load_file(file_path)
 
     def licz_dni_wolne(self,dane):
         miestac_roboczy = dodatki.data_miesiac_dzis()
@@ -77,10 +82,13 @@ class MainWindow_nieobecnosci(QWidget):
     def czytaj_dane_obco(self):
         if not self.folder_istnieje():
             return
-        folder = self.ui.ed_sciezka_dane.text().strip()
-        print(f'{folder}\\{self.plik_obco}')
-        wb = openpyxl.load_workbook(os.path.join(f'{folder}\\{self.plik_obco}'))
-        sheet = wb['Sheet']
+        file_path = self.ui.ed_sciezka_dane.text()
+        wb = openpyxl.load_workbook(os.path.join(file_path))
+        sheet = wb.active
+        used_columns = sheet.max_column
+        if used_columns > 3:
+            QMessageBox.critical(self, 'Error', 'Wybrałes zły plik. Ma za dużo wypełnionych kolumn!')
+            return
         teraz = datetime.today()
         data_miesiac = str(dodatki.data_miesiac_dzis())
         print(data_miesiac)
@@ -110,10 +118,13 @@ class MainWindow_nieobecnosci(QWidget):
     def czytaj_dane(self):
         if not self.folder_istnieje():
             return
-        folder = self.ui.ed_sciezka_dane.text().strip()
-        print(f'{folder}\\{self.plik}')
-        wb = openpyxl.load_workbook(os.path.join(f'{folder}\\{self.plik}'))
-        sheet = wb['Sheet']
+        file_path = self.ui.ed_sciezka_dane.text()
+        wb = openpyxl.load_workbook(os.path.join(file_path))
+        sheet = wb.active
+        used_columns = sheet.max_column
+        if used_columns < 25:
+            QMessageBox.critical(self, 'Error', 'Wybrałes zły plik. Ma za mało wypełnionych kolumn!')
+            return
         teraz = datetime.today()
         data_miesiac = str(dodatki.data_miesiac_dzis())
         print(data_miesiac)

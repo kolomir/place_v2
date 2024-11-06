@@ -1,8 +1,11 @@
-from PyQt5.QtWidgets import QWidget, QTableWidgetItem,QHeaderView,QApplication
+from PyQt5.QtWidgets import QWidget, QTableWidgetItem,QHeaderView,QApplication, QFileDialog, QMessageBox
 from PyQt5.QtCore import pyqtSlot, Qt
 
 from _korekta_indirect_prod_ui import Ui_Form
 import db, dodatki
+import openpyxl
+from datetime import date, datetime
+import os
 
 from korekta_indirect_prod_dodaj import MainWindow_korekta_indirect_prod_dodaj
 from linieFormEdytuj import MainWindow_linieEdytuj
@@ -14,8 +17,80 @@ class MainWindow_korekta_indirect_prod(QWidget):
         self.ui.setupUi(self)
 
         self.ui.btn_zapisz.clicked.connect(self.otworz_okno_korekta_indirect_prod_dodaj)
+        self.ui.btn_przegladaj.clicked.connect(self.open_file_dialog)
+        self.ui.btn_importuj.clicked.connect(self.czytaj_dane)
 
         QApplication.instance().focusChanged.connect(self.wyszukaj_dane)
+        self.wyszukaj_dane()
+
+    def folder_istnieje(self):
+        folder = self.ui.ed_sciezka_dane.text().strip()
+        if not folder:
+            QMessageBox.critical(self, 'Error', 'Nie wybrano lokalizacji pliku')
+            self.ui.ed_sciezka_dane.setFocus()
+            return False
+
+        if not os.path.exists(folder):
+            QMessageBox.critical(self, 'Error', 'Folder nie istnieje. Sprawdź lokalizację pliku')
+            self.ui.ed_sciezka_dane.setFocus()
+            return False
+        return True
+
+    def open_file_dialog(self):
+        # Otwieranie dialogu wyboru pliku
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getOpenFileName(self, "Wybierz plik Excel", "","Pliki tekstowe (*.xlsx);;Wszystkie pliki (*)", options=options)
+        if file_path:
+            self.ui.ed_sciezka_dane.setText(file_path)  # Ustawienie ścieżki w polu tekstowym
+
+    def load_from_path(self):
+        # Wczytanie pliku z ręcznie wpisanej ścieżki
+        file_path = self.ui.ed_sciezka_dane.text()
+        if file_path:
+            self.load_file(file_path)
+
+    def czytaj_dane(self):
+        if not self.folder_istnieje():
+            return
+        file_path = self.ui.ed_sciezka_dane.text()
+        wb = openpyxl.load_workbook(os.path.join(file_path))
+        sheet = wb.active
+        teraz = datetime.today()
+        data_miesiac = str(dodatki.data_miesiac_dzis())
+        print(data_miesiac)
+
+        query = '''
+                        select 
+                            d.Nr_akt 
+                            ,d.Nazwisko_i_imie 
+                        from 
+                            direct d 
+                        where 
+                            miesiac = '{0}'
+                        '''.format(data_miesiac)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, query)
+        connection.close()
+
+        lista_wpisow = []
+
+        # czytamy wszystkie kolumny i wiersze ze wskazanego pliku
+        for row in sheet.iter_rows(min_row=2, min_col=1, max_col=3, values_only=True):
+            # sprawdzamy czy wiersz nie jest pusty (zakładając że pusty wiersz ma wszystkie kolumny o wartosci None i kończy zestawienie)
+            if any(cell is not None for cell in row):
+                for dane in results:
+                    if int(dane[0]) == row[0]:
+                        pracownik = dane[1]
+                lista_wpisow.append([row[0], pracownik, row[1], row[2], data_miesiac, teraz])
+            else:
+                break
+
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+
+        for row in lista_wpisow:
+            insert_data = "INSERT INTO korekta_indirect VALUES (NULL,'%s','%s','%s','%s','%s','%s');" % (row[0], row[1], row[2], row[3], row[4], row[5])
+            db.execute_query(connection, insert_data)
+
         self.wyszukaj_dane()
 
     def wyszukaj_dane(self):

@@ -167,6 +167,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                                     where 
                                         d.miesiac = '{0}'
                                         and d.dzial = '101'
+                                        and pm.zmiana is not null
                                     group by 
                                         pm.zmiana
                                 '''.format(miesiac)
@@ -1050,7 +1051,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                                     left join nieobecnosci_prod np on np.nr_akt = pm.Nr_akt 
 		                            left join pracownicy p on p.Nr_akt = pm.nr_akt 
                             where 
-                            gm.id = 4
+                            gm.id = 5
                             and pm.aktywny = 1
                             and np.miesiac = '{0}'
                             and p.miesiac = '{0}'
