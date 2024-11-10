@@ -29,6 +29,7 @@ class MainWindow_bledy(QWidget):
 
         self.ui.btn_przegladaj.clicked.connect(self.open_file_dialog)
         self.ui.btn_importuj.clicked.connect(self.czytaj_dane)
+        self.ui.btn_szablon.clicked.connect(self.szablon)
         self.wyszukaj_dane()
 
     def data_miesiac_dzis(self):
@@ -141,3 +142,33 @@ class MainWindow_bledy(QWidget):
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+
+    def szablon(self):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+
+        headers = ["lp","nr prac.","imię i nazwisko","Suma z błędów"]
+        ws.append(headers)
+
+        # Ustawianie szerokości kolumn
+        ws.column_dimensions['A'].width = 5  # Kolumna 'lp'
+        ws.column_dimensions['B'].width = 8  # Kolumna 'nr pracownika'
+        ws.column_dimensions['C'].width = 30  # Kolumna 'IMIĘ i NAZWISKO'
+        ws.column_dimensions['D'].width = 7  # Kolumna 'Suma z błędów'
+
+        domyslna_nazwa = 'szablon_bledy.xlsx'
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getSaveFileName(
+            None,
+            "Zapisz plik",
+            domyslna_nazwa,  # Domyślna nazwa pliku
+            "Pliki Excel (*.xlsx);;Wszystkie pliki (*)",
+            options=options
+        )
+
+        # Sprawdzanie, czy użytkownik wybrał plik
+        if file_path:
+            wb.save(file_path)
+            print(f"Plik zapisano: {file_path}")
+        else:
+            print("Zapis pliku anulowany")

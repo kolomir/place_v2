@@ -1,74 +1,64 @@
-from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QVBoxLayout, QPushButton, QTextEdit, QLineEdit
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QHBoxLayout, QVBoxLayout
+from PyQt5.QtGui import QPixmap
 import sys
-import openpyxl
 
 
-class TextFileLoader(QWidget):
-    def __init__(self):
+class ImageViewer(QWidget):
+    def __init__(self, image_paths):
         super().__init__()
-        self.initUI()
 
-    def initUI(self):
-        # Ustawienie layoutu i elementów interfejsu
-        layout = QVBoxLayout()
+        # Lista ścieżek do obrazów
+        self.image_paths = image_paths
+        self.current_image_index = 0  # indeks aktualnego obrazu
 
-        self.path_edit = QLineEdit(self)
-        self.path_edit.setPlaceholderText("Wpisz ścieżkę do pliku lub wybierz...")
+        # Ustawienia okna
+        self.setWindowTitle("Przeglądarka obrazów")
+        self.setGeometry(100, 100, 800, 600)
 
-        self.button = QPushButton("Wybierz plik", self)
-        self.button.clicked.connect(self.open_file_dialog)
+        # Inicjalizacja QLabel do wyświetlania obrazu
+        self.image_label = QLabel(self)
+        self.image_label.setAlignment(Qt.AlignCenter)
+        self.update_image()
 
-        self.text_edit = QTextEdit(self)
-        self.text_edit.setReadOnly(True)
+        # Przyciski do przewijania obrazów
+        self.prev_button = QPushButton("<", self)
+        self.prev_button.clicked.connect(self.show_previous_image)
 
-        layout.addWidget(self.path_edit)
-        layout.addWidget(self.button)
-        layout.addWidget(self.text_edit)
+        self.next_button = QPushButton(">", self)
+        self.next_button.clicked.connect(self.show_next_image)
 
-        self.setLayout(layout)
-        self.setWindowTitle("Ładowanie pliku tekstowego")
-        self.setGeometry(100, 100, 600, 400)
+        # Układ poziomy z przyciskami po bokach QLabel
+        h_layout = QHBoxLayout()
+        h_layout.addWidget(self.prev_button)
+        h_layout.addWidget(self.image_label)
+        h_layout.addWidget(self.next_button)
 
-        # Obsługa ręcznie wpisanej ścieżki
-        self.path_edit.returnPressed.connect(self.load_from_path)
+        # Układ główny widgetu
+        main_layout = QVBoxLayout()
+        main_layout.addLayout(h_layout)
 
-    def open_file_dialog(self):
-        # Otwieranie dialogu wyboru pliku
-        options = QFileDialog.Options()
-        file_path, _ = QFileDialog.getOpenFileName(self, "Wybierz plik tekstowy", "", "Pliki tekstowe (*.xlsx);;Wszystkie pliki (*)", options=options)
+        self.setLayout(main_layout)
 
-        if file_path:
-            self.path_edit.setText(file_path)  # Ustawienie ścieżki w polu tekstowym
-            self.plik(file_path)
+    def update_image(self):
+        # Wczytuje obraz do QLabel na podstawie aktualnego indeksu
+        pixmap = QPixmap(self.image_paths[self.current_image_index])
+        self.image_label.setPixmap(pixmap)
+        self.image_label.setScaledContents(True)
 
-    def load_from_path(self):
-        # Wczytanie pliku z ręcznie wpisanej ścieżki
-        file_path = self.path_edit.text()
-        if file_path:
-            self.plik(file_path)
+    def show_next_image(self):
+        # Przechodzi do następnego obrazu
+        self.current_image_index = (self.current_image_index + 1) % len(self.image_paths)
+        self.update_image()
 
-    def plik(self, file_path):
-        workbook = openpyxl.load_workbook(file_path)
-        sheet = workbook.active
-        sheet_name = sheet.title
-        print("Nazwa arkusza:", sheet_name)
-
-        # Oblicz liczbę użytych kolumn
-        used_columns = sheet.max_column
-        print("Liczba użytych kolumn:", used_columns)
-
-    def load_file(self, file_path):
-        # Ładowanie zawartości pliku i wyświetlanie w QTextEdit
-        try:
-            with open(file_path, 'r', encoding='utf-8') as file:
-                content = file.read()
-                self.text_edit.setText(content)
-        except Exception as e:
-            self.text_edit.setText(f"Nie udało się załadować pliku: {e}")
+    def show_previous_image(self):
+        # Przechodzi do poprzedniego obrazu
+        self.current_image_index = (self.current_image_index - 1) % len(self.image_paths)
+        self.update_image()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication(sys.argv)
-    loader = TextFileLoader()
-    loader.show()
+    image_paths = ["obraz1.jpg", "obraz2.jpg", "obraz3.jpg"]  # Lista ścieżek do obrazów
+    viewer = ImageViewer(image_paths)
+    viewer.show()
     sys.exit(app.exec_())

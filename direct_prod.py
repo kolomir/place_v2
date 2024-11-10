@@ -4,8 +4,11 @@ import openpyxl
 from datetime import date, datetime
 import os
 
+from plik_pomoc_direct import MainWindow_pomoc_direct
 from _direct_prod_ui import Ui_Form
 import db, dodatki
+
+from plik_pomoc_direct import MainWindow_pomoc_direct
 
 class MainWindow_direct_prod(QWidget):
     def __init__(self):
@@ -27,6 +30,7 @@ class MainWindow_direct_prod(QWidget):
 
         self.ui.btn_przegladaj.clicked.connect(self.open_file_dialog)
         self.ui.btn_importuj.clicked.connect(self.czytaj_dane)
+        self.ui.btn_foto.clicked.connect(self.otworz_okno_plik_pomoc_direct)
         self.wyszukaj_dane()
 
     def data_miesiac_dzis(self):
@@ -167,3 +171,7 @@ class MainWindow_direct_prod(QWidget):
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(10, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(11, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(12, QHeaderView.ResizeToContents)
+
+    def otworz_okno_plik_pomoc_direct(self):
+        self.okno_plik_pomoc_direct = MainWindow_pomoc_direct()
+        self.okno_plik_pomoc_direct.show()

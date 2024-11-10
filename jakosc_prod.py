@@ -30,6 +30,7 @@ class MainWindow_jakosc(QWidget):
 
         self.ui.btn_przegladaj.clicked.connect(self.open_file_dialog)
         self.ui.btn_importuj.clicked.connect(self.czytaj_dane)
+        self.ui.btn_szablon.clicked.connect(self.szablon)
         self.wyszukaj_dane()
 
     def data_miesiac_dzis(self):
@@ -151,3 +152,60 @@ class MainWindow_jakosc(QWidget):
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
+
+    def szablon(self):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+
+        headers = ["Grupa","Grupa robocza","PPM","Reklamacje"]
+        ws.append(headers)
+
+        line1 = ["lider","3011","",""]
+        line2 = ["lider","3012","",""]
+        line3 = ["lider","3013 + 3015","",""]
+        line4 = ["lider","3014","",""]
+        line5 = ["lider","3016 + 3019","",""]
+        line6 = ["lider","3018","",""]
+        line7 = ["lider","3031+3032","",""]
+        line8 = ["lider","Montaż","",""]
+        line9 = ["lider","Zakuwanie","",""]
+        line10 = ["lider","Maszyny","",""]
+        line11 = ["instruktor","Czaplinek","",""]
+        line12 = ["instruktor","Borne","",""]
+
+        ws.append(line1)
+        ws.append(line2)
+        ws.append(line3)
+        ws.append(line4)
+        ws.append(line5)
+        ws.append(line6)
+        ws.append(line7)
+        ws.append(line8)
+        ws.append(line9)
+        ws.append(line10)
+        ws.append(line11)
+        ws.append(line12)
+
+
+        # Ustawianie szerokości kolumn
+        ws.column_dimensions['A'].width = 15  # Grupa
+        ws.column_dimensions['B'].width = 15  # Grupa robocza
+        ws.column_dimensions['C'].width = 10  # PPM
+        ws.column_dimensions['D'].width = 7  # Reklamacje
+
+        domyslna_nazwa = 'jakosc.xlsx'
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getSaveFileName(
+            None,
+            "Zapisz plik",
+            domyslna_nazwa,  # Domyślna nazwa pliku
+            "Pliki Excel (*.xlsx);;Wszystkie pliki (*)",
+            options=options
+        )
+
+        # Sprawdzanie, czy użytkownik wybrał plik
+        if file_path:
+            wb.save(file_path)
+            print(f"Plik zapisano: {file_path}")
+        else:
+            print("Zapis pliku anulowany")

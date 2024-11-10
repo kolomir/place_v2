@@ -1,0 +1,10 @@
+<RCC>
+  <qresource prefix="pomoc">
+    <file>img/pomoc/follow up 1.png</file>
+    <file>img/pomoc/follow up 2.png</file>
+    <file>img/pomoc/fp1 1.png</file>
+    <file>img/pomoc/fp1 2.png</file>
+    <file>img/pomoc/recording statistic 1.png</file>
+    <file>img/pomoc/recording statistic 2.png</file>
+  </qresource>
+</RCC>

@@ -4,6 +4,7 @@ import openpyxl
 from datetime import date, datetime
 import os
 
+from plik_pomoc_pracownicy import MainWindow_pomoc_pracownicy
 from _pracownicy_ui import Ui_Form
 import db, dodatki
 
@@ -27,6 +28,7 @@ class MainWindow_pracownicy(QWidget):
 
         self.ui.btn_przegladaj.clicked.connect(self.open_file_dialog)
         self.ui.btn_importuj.clicked.connect(self.czytaj_dane)
+        self.ui.btn_pomoc.clicked.connect(self.otworz_okno_plik_pomoc_pracownicy)
         self.wyszukaj_dane()
 
     def data_miesiac_dzis(self):
@@ -143,3 +145,7 @@ class MainWindow_pracownicy(QWidget):
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
+
+    def otworz_okno_plik_pomoc_pracownicy(self):
+        self.okno_plik_pomoc_pracownicy = MainWindow_pomoc_pracownicy()
+        self.okno_plik_pomoc_pracownicy.show()

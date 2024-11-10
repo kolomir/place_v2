@@ -19,6 +19,7 @@ class MainWindow_korekta_indirect_prod(QWidget):
         self.ui.btn_zapisz.clicked.connect(self.otworz_okno_korekta_indirect_prod_dodaj)
         self.ui.btn_przegladaj.clicked.connect(self.open_file_dialog)
         self.ui.btn_importuj.clicked.connect(self.czytaj_dane)
+        self.ui.btn_szablon.clicked.connect(self.szablon)
 
         QApplication.instance().focusChanged.connect(self.wyszukaj_dane)
         self.wyszukaj_dane()
@@ -166,3 +167,32 @@ class MainWindow_korekta_indirect_prod(QWidget):
     def otworz_okno_korekta_indirect_prod_dodaj(self):
         self.okno_korekta_indirect_prod_dodaj = MainWindow_korekta_indirect_prod_dodaj()
         self.okno_korekta_indirect_prod_dodaj.show()
+
+    def szablon(self):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+
+        headers = ["nr prac.","czas","opis"]
+        ws.append(headers)
+
+        # Ustawianie szerokości kolumn
+        ws.column_dimensions['A'].width = 5  # Kolumna 'lp'
+        ws.column_dimensions['B'].width = 10  # Kolumna 'nr pracownika'
+        ws.column_dimensions['C'].width = 65  # Kolumna 'IMIĘ i NAZWISKO'
+
+        domyslna_nazwa = 'korekta_direct.xlsx'
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getSaveFileName(
+            None,
+            "Zapisz plik",
+            domyslna_nazwa,  # Domyślna nazwa pliku
+            "Pliki Excel (*.xlsx);;Wszystkie pliki (*)",
+            options=options
+        )
+
+        # Sprawdzanie, czy użytkownik wybrał plik
+        if file_path:
+            wb.save(file_path)
+            print(f"Plik zapisano: {file_path}")
+        else:
+            print("Zapis pliku anulowany")

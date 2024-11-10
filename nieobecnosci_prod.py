@@ -6,6 +6,7 @@ import os
 from datetime import date, datetime
 import calendar
 
+from plik_pomoc_nieobecnosci import MainWindow_pomoc_nieobecnosci
 from _nieobecnosci_prod_ui import Ui_Form
 import db, dodatki
 
@@ -32,6 +33,8 @@ class MainWindow_nieobecnosci(QWidget):
         self.ui.btn_przegladaj.clicked.connect(self.open_file_dialog)
         self.ui.btn_importuj.clicked.connect(self.czytaj_dane)
         self.ui.btn_importuj_obco.clicked.connect(self.czytaj_dane_obco)
+        self.ui.btn_szablon_p.clicked.connect(self.otworz_okno_plik_pomoc_nieobecnosci)
+        self.ui.btn_szablon_o.clicked.connect(self.szablon_obco)
         self.wyszukaj_dane()
 
 
@@ -263,3 +266,36 @@ class MainWindow_nieobecnosci(QWidget):
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(19, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(20, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(21, QHeaderView.ResizeToContents)
+
+    def otworz_okno_plik_pomoc_nieobecnosci(self):
+        self.okno_plik_pomoc_nieobecnosci = MainWindow_pomoc_nieobecnosci()
+        self.okno_plik_pomoc_nieobecnosci.show()
+
+    def szablon_obco(self):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+
+        headers = ["nr_akt","Nazwisko i imie","dni w pracy"]
+        ws.append(headers)
+
+        # Ustawianie szerokości kolumn
+        ws.column_dimensions['A'].width = 8  # Kolumna 'nr pracownika'
+        ws.column_dimensions['B'].width = 30  # Kolumna 'IMIĘ i NAZWISKO'
+        ws.column_dimensions['C'].width = 7  # Kolumna 'Suma z błędów'
+
+        domyslna_nazwa = 'nieobecnosci_obcokrajowcow.xlsx'
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getSaveFileName(
+            None,
+            "Zapisz plik",
+            domyslna_nazwa,  # Domyślna nazwa pliku
+            "Pliki Excel (*.xlsx);;Wszystkie pliki (*)",
+            options=options
+        )
+
+        # Sprawdzanie, czy użytkownik wybrał plik
+        if file_path:
+            wb.save(file_path)
+            print(f"Plik zapisano: {file_path}")
+        else:
+            print("Zapis pliku anulowany")

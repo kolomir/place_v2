@@ -4,6 +4,7 @@ import openpyxl
 from datetime import date, datetime
 import os
 
+from plik_pomoc_raportowanie_total_prod import MainWindow_pomoc_raportowanie_total_prod
 from _raportowanie_total_prod_ui import Ui_Form
 import db, dodatki
 
@@ -27,6 +28,7 @@ class MainWindow_raportowanie_total_prod(QWidget):
 
         self.ui.btn_przegladaj.clicked.connect(self.open_file_dialog)
         self.ui.btn_importuj.clicked.connect(self.czytaj_dane)
+        self.ui.btn_foto.clicked.connect(self.otworz_okno_plik_pomoc_raportowanie_total_prod)
         self.wyszukaj_dane()
 
     def data_miesiac_dzis(self):
@@ -164,3 +166,7 @@ class MainWindow_raportowanie_total_prod(QWidget):
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(8, QHeaderView.ResizeToContents)
         self.ui.tab_dane.horizontalHeader().setSectionResizeMode(9, QHeaderView.ResizeToContents)
+
+    def otworz_okno_plik_pomoc_raportowanie_total_prod(self):
+        self.okno_plik_pomoc_raportowanie_prod = MainWindow_pomoc_raportowanie_total_prod()
+        self.okno_plik_pomoc_raportowanie_prod.show()
