@@ -1,7 +1,8 @@
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QFileDialog
 from PyQt5 import QtGui
 
 import openpyxl
+from openpyxl.styles import Alignment
 from datetime import date, datetime, timedelta
 
 from _raporty_ui import Ui_Form
@@ -69,14 +70,22 @@ class MainWindow_raporty(QWidget):
         wb = openpyxl.Workbook()
         ws = wb.active
 
-        pierwszy = pierwszy_dzien_biezacego_miesiaca.strftime("%d.%m.%Y")
-        ostatni = ostatni_dzien_biezacego_miesiaca.strftime("%d.%m.%Y")
+        pierwszy = pierwszy_dzien_poprzedniego_miesiaca.strftime("%d.%m.%Y")
+        ostatni = ostatni_dzien_poprzedniego_miesiaca.strftime("%d.%m.%Y")
         print(pierwszy)
         print(ostatni)
         print(pierwszy_dzien_poprzedniego_miesiaca.strftime("%d.%m.%Y"))
         print(ostatni_dzien_poprzedniego_miesiaca.strftime("%d.%m.%Y"))
 
         headers = ["Pracownik:Class", "Pracownik:Kod", "Last.Okres.Od", "Last.Okres.Do", "Last.Element:Nazwa", "Last.Podstawa"]
+
+        # Ustawianie szerokości kolumn
+        ws.column_dimensions['A'].width = 16  # Kolumna 'Pracownik:Class'
+        ws.column_dimensions['B'].width = 15  # Kolumna 'Pracownik:Kod'
+        ws.column_dimensions['C'].width = 14  # Kolumna 'Last.Okres.Od'
+        ws.column_dimensions['D'].width = 14  # Kolumna 'Last.Okres.Do'
+        ws.column_dimensions['E'].width = 20  # Kolumna 'Last.Element:Nazwa'
+        ws.column_dimensions['F'].width = 14  # Kolumna 'Last.Podstawa'
 
         lista_eksport = []
         lista_eksport.append(headers)
@@ -92,8 +101,25 @@ class MainWindow_raporty(QWidget):
             new_row = list(row)
             ws.append(new_row)
 
-        output_file = "output.xlsx"
-        wb.save(output_file)
+        domyslna_nazwa = 'eksport_Enova.xlsx'
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getSaveFileName(
+            None,
+            "Zapisz plik",
+            domyslna_nazwa,  # Domyślna nazwa pliku
+            "Pliki Excel (*.xlsx);;Wszystkie pliki (*)",
+            options=options
+        )
+
+        # Sprawdzanie, czy użytkownik wybrał plik
+        if file_path:
+            wb.save(file_path)
+            print(f"Plik zapisano: {file_path}")
+        else:
+            print("Zapis pliku anulowany")
+
+        #output_file = "output.xlsx"
+        #wb.save(output_file)
 
     def raport_zestawienie(self):
         data_miesiac = str(dodatki.data_miesiac_dzis())
@@ -111,18 +137,65 @@ class MainWindow_raporty(QWidget):
 
         headers = ["Nazwisko i Imię", "Nr akt", "Linia", "Data", "Nazwa Direct", "Direct %", "Nazwa IW", "IW %", "Nazwa Wydajność", "Wydajność", "Nazwa Produktywność", "Produktywność", "Nazwa Błędy", "Błędy", "Nazwa Nieobecność", "Nieobecność"]
 
+        # Ustawianie szerokości kolumn
+        ws.column_dimensions['A'].width = 38  # Kolumna 'Nazwisko i Imię'
+        ws.column_dimensions['B'].width = 7  # Kolumna 'Nr akt'
+        ws.column_dimensions['C'].width = 6  # Kolumna 'Linia'
+        ws.column_dimensions['D'].width = 11  # Kolumna 'Data'
+        ws.column_dimensions['E'].width = 13  # Kolumna 'Nazwa Direct'
+        ws.column_dimensions['F'].width = 9  # Kolumna 'Direct %'
+        ws.column_dimensions['G'].width = 14  # Kolumna 'Nazwa IW'
+        ws.column_dimensions['H'].width = 9  # Kolumna 'IW %'
+        ws.column_dimensions['I'].width = 18  # Kolumna 'Nazwa Wydajność'
+        ws.column_dimensions['J'].width = 11  # Kolumna 'Wydajność'
+        ws.column_dimensions['K'].width = 22  # Kolumna 'Nazwa Produktywność'
+        ws.column_dimensions['L'].width = 16  # Kolumna 'Produktywność'
+        ws.column_dimensions['M'].width = 13  # Kolumna 'Nazwa Błędy'
+        ws.column_dimensions['N'].width = 7  # Kolumna 'Błędy'
+        ws.column_dimensions['O'].width = 20  # Kolumna 'Nazwa Nieobecność'
+        ws.column_dimensions['P'].width = 13  # Kolumna 'Nieobecność'ws[f"{col}1"].alignment = Alignment(vertical='center')
+
+        for col_num, header in enumerate(headers, start=1):
+            cell = ws.cell(row=1, column=col_num)
+            cell.value = header
+            cell.alignment = Alignment(vertical='center')
+
+
+
         lista_pracownicy = []
-        lista_pracownicy.append(headers)
+        #lista_pracownicy.append(headers)
         for dane in result:
-            # kwota = float(dane[4]).replace('.', ',')
-            # kwota_liczbowa = float(kwota.replace(',', '.'))
+            direkt = str(float(dane[4]) * 100.00)
+            indirect = str(float(dane[5]) * 100.00)
+            lista_pracownicy.append([dane[2], dane[1], dane[3], pierwszy, "Direct Work", f"{direkt}%", "Indirect Work", f"{indirect}%", "Wydajność", f"{dane[6]}%", "Produktywność", f"{dane[7]}%", "Błędy", dane[9], "Nieobecność", dane[8]])
 
-            # print(['PracownikFirmy', dane[2], pierwszy, ostatni,'Premia za Produkt.',dane[4]])
-            lista_pracownicy.append([dane[2], dane[1], dane[3], pierwszy, "Direct Work", dane[4], "Indirect Work", dane[5], "Wydajność", dane[6], "Produktywność", dane[7], "Błędy", dane[9], "Nieobecność", dane[8]])
-
+        wiersz = 1
         for row in lista_pracownicy:
             new_row = list(row)
             ws.append(new_row)
+            ws.row_dimensions[wiersz].height = 30
+            wiersz += 1
 
-        output_file = "output_pracownicy.xlsx"
-        wb.save(output_file)
+        for row2 in ws.iter_rows():
+            for cell in row2:
+                cell.alignment = Alignment(vertical='center')
+
+        domyslna_nazwa = 'raportowanie_pracownicy.xlsx'
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getSaveFileName(
+            None,
+            "Zapisz plik",
+            domyslna_nazwa,  # Domyślna nazwa pliku
+            "Pliki Excel (*.xlsx);;Wszystkie pliki (*)",
+            options=options
+        )
+
+        # Sprawdzanie, czy użytkownik wybrał plik
+        if file_path:
+            wb.save(file_path)
+            print(f"Plik zapisano: {file_path}")
+        else:
+            print("Zapis pliku anulowany")
+
+        #output_file = "output_pracownicy.xlsx"
+        #wb.save(output_file)

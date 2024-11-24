@@ -165,6 +165,13 @@
              <number>4</number>
             </property>
             <item>
+             <widget class="QPushButton" name="btn_dodaj">
+              <property name="text">
+               <string>Dodaj</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QPushButton" name="btn_importuj">
               <property name="text">
                <string>Importuj</string>

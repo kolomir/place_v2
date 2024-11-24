@@ -68,6 +68,9 @@ class Ui_Form(object):
         self.horizontalLayout_2.setContentsMargins(4, 4, 4, 4)
         self.horizontalLayout_2.setSpacing(2)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.btn_dodaj = QtWidgets.QPushButton(self.widget_5)
+        self.btn_dodaj.setObjectName("btn_dodaj")
+        self.horizontalLayout_2.addWidget(self.btn_dodaj)
         self.btn_importuj = QtWidgets.QPushButton(self.widget_5)
         self.btn_importuj.setObjectName("btn_importuj")
         self.horizontalLayout_2.addWidget(self.btn_importuj)
@@ -104,5 +107,6 @@ class Ui_Form(object):
         self.label_2.setText(_translate("Form", "v1.1"))
         self.ed_sciezka_dane.setPlaceholderText(_translate("Form", "Wpisz ścieżkę do pliku lub wybierz..."))
         self.btn_przegladaj.setText(_translate("Form", "Wybierz plik"))
+        self.btn_dodaj.setText(_translate("Form", "Dodaj"))
         self.btn_importuj.setText(_translate("Form", "Importuj"))
 import icon_rc

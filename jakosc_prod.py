@@ -1,4 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QTableWidgetItem,QHeaderView
+from PyQt5.QtCore import pyqtSlot, Qt
 import configparser
 import openpyxl
 #import sys
@@ -6,6 +7,7 @@ import os
 from datetime import date, datetime
 import calendar
 
+from jakosc_prodDodaj import MainWindow_jakosc_prodDodaj
 from _jakosc_prod_ui import Ui_Form
 import db, dodatki
 
@@ -16,33 +18,38 @@ class MainWindow_jakosc(QWidget):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
-        #- wczytanie pliku INI --------------------------------------------
+        # - wczytanie pliku INI --------------------------------------------
         self.config = configparser.ConfigParser()
         self.config.read('config.ini')
-        #- załadowanie zmiennych z pliku INI ------------------------------
+        # - załadowanie zmiennych z pliku INI ------------------------------
         self.folder_bledy = self.config['sciezki']['folder_bledy']
         self.plik = self.config['sciezki']['plik_jakosc']
-        #------------------------------------------------------------------
+        # ------------------------------------------------------------------
         # - domyślna ścieżka dla pliku -----------------
-        #domyslny = f"{self.folder_bledy}"
-        #self.ui.ed_sciezka_dane.setText(domyslny)
+        # domyslny = f"{self.folder_bledy}"
+        # self.ui.ed_sciezka_dane.setText(domyslny)
         # -----------------------------------------------
 
         self.ui.btn_przegladaj.clicked.connect(self.open_file_dialog)
         self.ui.btn_importuj.clicked.connect(self.czytaj_dane)
+        self.ui.btn_dodaj.clicked.connect(self.otworz_okno_jakosc_prodDodaj)
         self.ui.btn_szablon.clicked.connect(self.szablon)
-        self.wyszukaj_dane()
 
-    def data_miesiac_dzis(self):
-        data_dzis = date.today()
-        prev_miesiac = data_dzis.month - 1 if data_dzis.month > 1 else 12
-        prev_rok = data_dzis.year if data_dzis.month > 1 else data_dzis.year - 1
-        data_miesiac = "%s-%s-%s" % (prev_rok,prev_miesiac,"1")
-        print(data_miesiac)
-        return data_miesiac
+        self.import_in_progress = False
+
+        self.load_data_from_database()
+        self.ui.tab_dane.itemChanged.connect(self.on_item_changed)
+
+    def open_file_dialog(self):
+        # Otwieranie dialogu wyboru pliku
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getOpenFileName(self, "Wybierz plik Excel", "", "Pliki tekstowe (*.xlsx);;Wszystkie pliki (*)", options=options)
+        if file_path:
+            self.ui.ed_sciezka_dane.setText(file_path)  # Ustawienie ścieżki w polu tekstowym
 
     def folder_istnieje(self):
         folder = self.ui.ed_sciezka_dane.text().strip()
+        self.flaga_import = 1
         if not folder:
             QMessageBox.critical(self, 'Error', 'Nie wybrano lokalizacji pliku')
             self.ui.ed_sciezka_dane.setFocus()
@@ -54,35 +61,47 @@ class MainWindow_jakosc(QWidget):
             return False
         return True
 
-    def open_file_dialog(self):
-        # Otwieranie dialogu wyboru pliku
-        options = QFileDialog.Options()
-        file_path, _ = QFileDialog.getOpenFileName(self, "Wybierz plik Excel", "", "Pliki tekstowe (*.xlsx);;Wszystkie pliki (*)", options=options)
-        if file_path:
-            self.ui.ed_sciezka_dane.setText(file_path)  # Ustawienie ścieżki w polu tekstowym
-
     def load_from_path(self):
         # Wczytanie pliku z ręcznie wpisanej ścieżki
         file_path = self.ui.ed_sciezka_dane.text()
         if file_path:
             self.load_file(file_path)
 
+    def sprawdz_wpisy(self):
+        miestac_roboczy = dodatki.data_miesiac_dzis()
+        select_data = "SELECT * FROM `jakosc_prod` WHERE miesiac = '%s';" % (miestac_roboczy)  # (miestac_roboczy)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, select_data)
+        connection.close()
+
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        if results:
+            for x in results:
+                delete_data = "delete from jakosc_prod where id = '%s' and miesiac = '%s';" % (x[0],miestac_roboczy)
+                print('Do skasowania:',delete_data)
+                db.execute_query(connection, delete_data)
+        else:
+            print('--Brak wpisów jeszcze--')
+        connection.close()
+
     def czytaj_dane(self):
         if not self.folder_istnieje():
             return
+        self.sprawdz_wpisy()
+        self.import_in_progress = True
         file_path = self.ui.ed_sciezka_dane.text()
         wb = openpyxl.load_workbook(os.path.join(file_path))
         sheet = wb.active
         teraz = datetime.today()
         data_miesiac = str(dodatki.data_miesiac_dzis())
-        #print(data_miesiac)
+        # print(data_miesiac)
 
         lista_wpisow = []
 
         i = 1
-        #czytamy wszystkie kolumny i wiersze ze wskazanego pliku
+        # czytamy wszystkie kolumny i wiersze ze wskazanego pliku
         for row in sheet.iter_rows(min_row=2, min_col=1, max_col=4, values_only=True):
-            #sprawdzamy czy wiersz nie jest pusty (zakładając że pusty wiersz ma wszystkie kolumny o wartosci None i kończy zestawienie)
+            # sprawdzamy czy wiersz nie jest pusty (zakładając że pusty wiersz ma wszystkie kolumny o wartosci None i kończy zestawienie)
             if any(cell is not None for cell in row):
                 grupa = row[0].strip()
                 grupa_robocza = str(row[1]).strip()
@@ -95,63 +114,87 @@ class MainWindow_jakosc(QWidget):
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
 
         for row in lista_wpisow:
-            insert_data = "INSERT INTO jakosc_prod VALUES (NULL,'%s','%s','%s','%s','%s','%s');" % (row[0], row[1], row[2], row[3], row[4], row[5])
+            insert_data = "INSERT INTO jakosc_prod VALUES (NULL,'%s','%s','%s','%s','%s','%s');" % (
+            row[0], row[1], row[2], row[3], row[4], row[5])
             db.execute_query(connection, insert_data)
 
-        self.wyszukaj_dane()
+        self.load_data_from_database()
+        self.import_in_progress = False
 
-    def wyszukaj_dane(self):
-        miestac_roboczy = dodatki.data_miesiac_dzis()
-        print('miesiac',miestac_roboczy)
-        select_data = "SELECT * FROM `jakosc_prod` WHERE miesiac = '%s';" % (miestac_roboczy) #(miestac_roboczy)
-        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-        results = db.read_query(connection, select_data)
+    def load_data_from_database(self):
+        """Funkcja do załadowania danych z bazy do QTableWidget."""
+        try:
+            miestac_roboczy = dodatki.data_miesiac_dzis()
+            select_data = "select * from jakosc_prod where miesiac = '%s';" % (miestac_roboczy)
+            #select_data = "select * from kpi_mag"
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+            results = db.read_query(connection, select_data)
 
-        if not results:
-            print('wynik ZLE')
-            self.clear_table()
-            self.naglowki_tabeli()
-        else:
-            print('wynik OK')
-            self.naglowki_tabeli()
-            self.pokaz_dane(results)
-        connection.close()
+            self.ui.tab_dane.setColumnCount(6)  # Zmień na liczbę kolumn w twojej tabeli
+            self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
+            self.ui.tab_dane.setHorizontalHeaderLabels([
+                'Grupa',
+                'Grupa robocza',
+                'PPM',
+                'Reklamacje',
+                'Miesiac',
+                'Data dodania'
+            ])
 
-    def clear_table(self):
-        # Wyczyść zawartość tabeli
-        self.ui.tab_dane.clearContents()
-        self.ui.tab_dane.setRowCount(0)
+            # Ustawianie liczby wierszy na podstawie danych z bazy
+            self.ui.tab_dane.setRowCount(len(results))
 
-    def naglowki_tabeli(self):
-        self.ui.tab_dane.setColumnCount(6)  # Zmień na liczbę kolumn w twojej tabeli
-        self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
-        self.ui.tab_dane.setHorizontalHeaderLabels(['Grupa', 'Grupa robocza', 'PPM', 'Reklamacje', 'Miesiąc', 'Data dodania'])
+            # Wypełnianie tabeli danymi
+            for row_idx, row_data in enumerate(results):
+                # Przechowujemy id każdego wiersza
+                for col_idx, value in enumerate(row_data[1:]):  # Pomijamy id
+                    item = QTableWidgetItem(str(value))
+                    if col_idx == 2 or col_idx == 3:  # Zablokowanie edycji dla kolumny "nazwa"
+                        item.setFlags(item.flags() | Qt.ItemIsEditable)  # Ustawienie komórek jako edytowalne
+                    else:
+                        item.setFlags(item.flags() & ~Qt.ItemIsEditable)  # Usuwamy flagę edytowalności
+                    print(row_idx, col_idx, item.text())
+                    self.ui.tab_dane.setItem(row_idx, col_idx, item)
 
-    def pokaz_dane(self, rows):
-        # Column count
-        if int(len(rows[0])) > 0:
-            self.ui.tab_dane.setColumnCount(int(len(rows[0])) - 1)
+            # Przechowywanie id wierszy
+            self.row_ids = [row_data[0] for row_data in results]
+            print(row_data[0] for row_data in results)
 
-        # Row count
-        self.ui.tab_dane.setRowCount(int(len(rows)))
+        except db.Error as e:
+            print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
 
-        wiersz = 0
-        for wynik in rows:
-            self.ui.tab_dane.setItem(wiersz, 0, QTableWidgetItem(str(wynik[1])))
-            self.ui.tab_dane.setItem(wiersz, 1, QTableWidgetItem(str(wynik[2])))
-            self.ui.tab_dane.setItem(wiersz, 2, QTableWidgetItem(str(wynik[3])))
-            self.ui.tab_dane.setItem(wiersz, 3, QTableWidgetItem(str(wynik[4])))
-            self.ui.tab_dane.setItem(wiersz, 4, QTableWidgetItem(str(wynik[5])))
-            self.ui.tab_dane.setItem(wiersz, 5, QTableWidgetItem(str(wynik[6])))
-            wiersz += 1
+    def on_item_changed(self, item):
+        if self.import_in_progress:
+            return
+        """Funkcja wywoływana przy każdej zmianie komórki."""
+        row = item.row()
+        col = item.column()
+        print(f"DEBUG: Wybrane kolumny: {col}")
+        new_value = item.text()
 
-        self.ui.tab_dane.horizontalHeader().setStretchLastSection(True)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        # Pobranie id rekordu dla zmienionego wiersza
+        record_id = self.row_ids[row]
+        print('record_id:',record_id)
+
+        # Zapis zmienionych danych do bazy
+        self.update_database(record_id, col, new_value)
+
+
+    def update_database(self, record_id, col, new_value):
+        """Funkcja do aktualizacji konkretnej komórki w bazie danych."""
+        try:
+            # Mapowanie indeksu kolumny na nazwę kolumny w bazie
+            column_names = ["grupa", "grupa_robocza", "ppm", "reklamacje"]
+            column_name = column_names[col]
+
+            # Aktualizacja w bazie danych
+            sql_query = f"UPDATE jakosc_prod SET {column_name} = %s WHERE id = %s"
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+            db.execute_query_virable(connection,sql_query,(new_value, record_id))
+            print(f"Zaktualizowano rekord o id {record_id}, {column_name} = {new_value}")
+
+        except db.Error as e:
+            print(f"Błąd zapisu do bazy danych: {e}")
 
     def szablon(self):
         wb = openpyxl.Workbook()
@@ -209,3 +252,7 @@ class MainWindow_jakosc(QWidget):
             print(f"Plik zapisano: {file_path}")
         else:
             print("Zapis pliku anulowany")
+
+    def otworz_okno_jakosc_prodDodaj(self):
+        self.okno_jakosc_prodDodaj = MainWindow_jakosc_prodDodaj()
+        self.okno_jakosc_prodDodaj.show()

@@ -65,9 +65,27 @@ class MainWindow_raportowanie_total_prod(QWidget):
         if file_path:
             self.load_file(file_path)
 
+    def sprawdz_wpisy(self):
+        miestac_roboczy = dodatki.data_miesiac_dzis()
+        select_data = "SELECT * FROM `raportowanie_total` WHERE miesiac = '%s';" % (miestac_roboczy)  # (miestac_roboczy)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, select_data)
+        connection.close()
+
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        if results:
+            for x in results:
+                delete_data = "delete from raportowanie_total where id = '%s' and miesiac = '%s';" % (x[0],miestac_roboczy)
+                print('Do skasowania:',delete_data)
+                db.execute_query(connection, delete_data)
+        else:
+            print('--Brak wpisów jeszcze--')
+        connection.close()
+
     def czytaj_dane(self):
         if not self.folder_istnieje():
             return
+        self.sprawdz_wpisy()
         file_path = self.ui.ed_sciezka_dane.text()
         wb = openpyxl.load_workbook(os.path.join(file_path))
         sheet = wb.active

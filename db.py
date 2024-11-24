@@ -65,3 +65,6 @@ def read_query(connection, query):
             cursor.close()
             connection.close()
             print("Połączenie z bazą danych zostało zamknięte.")
+
+def pisz_error():
+    return mysql.connector.Error()

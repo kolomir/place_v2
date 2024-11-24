@@ -5,6 +5,7 @@ pip install configparser
 pip install openpyxl
 pip install mysql-connector-python
 #pip install calendar
+pip install auto_py_to_exe
 
 designer
 

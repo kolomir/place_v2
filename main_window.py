@@ -33,9 +33,9 @@ class MainWindow(QMainWindow):
         self.config = configparser.ConfigParser()
         self.config.read('config.ini')
         #- załadowanie zmiennych z pliku INI ------------------------------
-        self.folder_bledy = self.config['sciezki']['folder_bledy']
-        self.plik_bledy = self.config['sciezki']['plik_bledy']
-        self.plik_nieobecnosci = self.config['sciezki']['plik_nieobecnosci']
+        #self.folder_bledy = self.config['sciezki']['folder_bledy']
+        #self.plik_bledy = self.config['sciezki']['plik_bledy']
+        #self.plik_nieobecnosci = self.config['sciezki']['plik_nieobecnosci']
         self.dostep = self.config['dostep']['poziom']
         #------------------------------------------------------------------
 

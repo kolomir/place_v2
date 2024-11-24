@@ -82,9 +82,46 @@ class MainWindow_nieobecnosci(QWidget):
             dni_wolne = 0
         return dni_wolne
 
+    def sprawdz_wpisy(self):
+        miestac_roboczy = dodatki.data_miesiac_dzis()
+        select_data = "SELECT * FROM `nieobecnosci_prod` WHERE miesiac = '%s';" % (miestac_roboczy)  # (miestac_roboczy)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, select_data)
+        connection.close()
+
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        if results:
+            for x in results:
+                delete_data = "delete from nieobecnosci_prod where id = '%s' and Stanowisko is not Null and miesiac = '%s';" % (x[0],miestac_roboczy)
+                print('Do skasowania:',delete_data)
+                db.execute_query(connection, delete_data)
+        else:
+            print('--Brak wpisów jeszcze--')
+        connection.close()
+
+
+
+    def sprawdz_wpisy_obco(self):
+        miestac_roboczy = dodatki.data_miesiac_dzis()
+        select_data = "SELECT * FROM `nieobecnosci_prod` WHERE miesiac = '%s';" % (miestac_roboczy)  # (miestac_roboczy)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, select_data)
+        connection.close()
+
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        if results:
+            for x in results:
+                delete_data = "delete from nieobecnosci_prod where id = '%s' and Stanowisko is Null and miesiac = '%s';" % (x[0],miestac_roboczy)
+                print('Do skasowania:',delete_data)
+                db.execute_query(connection, delete_data)
+        else:
+            print('--Brak wpisów jeszcze--')
+        connection.close()
+
     def czytaj_dane_obco(self):
         if not self.folder_istnieje():
             return
+        self.sprawdz_wpisy_obco()
         file_path = self.ui.ed_sciezka_dane.text()
         wb = openpyxl.load_workbook(os.path.join(file_path))
         sheet = wb.active
@@ -121,6 +158,7 @@ class MainWindow_nieobecnosci(QWidget):
     def czytaj_dane(self):
         if not self.folder_istnieje():
             return
+        self.sprawdz_wpisy()
         file_path = self.ui.ed_sciezka_dane.text()
         wb = openpyxl.load_workbook(os.path.join(file_path))
         sheet = wb.active

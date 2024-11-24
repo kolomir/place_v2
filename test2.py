@@ -1,85 +1,104 @@
-# Dane
-data = [
-    ['Czaplinek', 'A', 93.62, 0.93, 68.81, 72.47, 1.05, 98.6],
-    ['Czaplinek', 'B', 92.24, 1.09, 100.57, 103.37, 1.03, 94.81],
-    ['Borne Sulinowo', 'A', 93.44, 0.81, 119.79, 149.57, 1.25, 116.67],
-    ['Czaplinek', 'inna', 93.25, 0.86, 82.5, 81.58, 0.99, 92.21],
-    ['Borne Sulinowo', 'B', 91.38, 2.62, 121.38, 98.87, 0.81, 74.43],
-    ['Borne Sulinowo', 'inna', 97.57, 2.4, 117.27, 112.51, 0.96, 93.61],
-    ['Borne Sulinowo', 'C', 81.92, 7.97, 54.29, 50.24, 0.93, 75.81]
-]
+from PyQt5.QtWidgets import QWidget, QTableWidgetItem,QHeaderView,QApplication
+from PyQt5.QtCore import pyqtSlot, Qt
 
-# Inicjalizacja sum dla grup
-sum_grupy_czaplinek = {'A': [0] * 6, 'B': [0] * 6, 'C': [0] * 6}
-sum_inna_czaplinek = [0] * 6
-sum_grupy_borne_sulinowo = {'A': [0] * 6, 'B': [0] * 6, 'C': [0] * 6}
-sum_inna_borne_sulinowo = [0] * 6
+from _kpi_mag_ui import Ui_Form
+import db, dodatki
+import sys
 
-# Liczba grup w Czaplinku i Borne Sulinowo
-ile_czaplinek = 2  # Zakładana wartość zmiennej, zmień ją zgodnie z potrzebą
-ile_borne = 2      # Zakładana wartość zmiennej, zmień ją zgodnie z potrzebą
+from kpi_magDodaj import MainWindow_kpi_magDodaj
 
-# Funkcja dodawania wartości kolumn
-def dodaj_do_sumy(suma, row):
-    for i in range(2, len(row)):
-        suma[i-2] += row[i]
+class MainWindow_kpi_mag(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.ui = Ui_Form()
+        self.ui.setupUi(self)
 
-# Sumowanie z podziałem na lokalizacje i grupy
-for row in data:
-    if row[0] == 'Czaplinek':
-        if row[1] in sum_grupy_czaplinek:
-            dodaj_do_sumy(sum_grupy_czaplinek[row[1]], row)
-        elif row[1] == 'inna':
-            dodaj_do_sumy(sum_inna_czaplinek, row)
-    elif row[0] == 'Borne Sulinowo':
-        if row[1] in sum_grupy_borne_sulinowo:
-            dodaj_do_sumy(sum_grupy_borne_sulinowo[row[1]], row)
-        elif row[1] == 'inna':
-            dodaj_do_sumy(sum_inna_borne_sulinowo, row)
+        self.load_data_from_database()
+        self.ui.tab_dane.itemChanged.connect(self.on_item_changed)
+        self.ui.btn_importuj.clicked.connect(self.otworz_okno_kpi_magDodaj)
 
-# Przypisywanie wartości z grupy 'inna' do głównych grup w Czaplinku
-if ile_czaplinek == 1:
-    # Suma dla wszystkich grup w Czaplinku
-    for group in sum_grupy_czaplinek:
-        for i in range(len(sum_grupy_czaplinek[group])):
-            sum_grupy_czaplinek[group][i] += sum_inna_czaplinek[i]
-elif ile_czaplinek == 2:
-    # Podział grupy 'inna' na grupy A i B
-    for i in range(len(sum_inna_czaplinek)):
-        sum_grupy_czaplinek['A'][i] += sum_inna_czaplinek[i] / 2
-        sum_grupy_czaplinek['B'][i] += sum_inna_czaplinek[i] / 2
-elif ile_czaplinek == 3:
-    # Podział grupy 'inna' na grupy A, B i C
-    for i in range(len(sum_inna_czaplinek)):
-        sum_grupy_czaplinek['A'][i] += sum_inna_czaplinek[i] / 3
-        sum_grupy_czaplinek['B'][i] += sum_inna_czaplinek[i] / 3
-        sum_grupy_czaplinek['C'][i] += sum_inna_czaplinek[i] / 3
+    def load_data_from_database(self):
+        """Funkcja do załadowania danych z bazy do QTableWidget."""
+        try:
+            miestac_roboczy = dodatki.data_miesiac_dzis()
+            select_data = "select * from kpi_mag where miesiac = '%s';" % (miestac_roboczy)
+            #select_data = "select * from kpi_mag"
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+            results = db.read_query(connection, select_data)
 
-# Przypisywanie wartości z grupy 'inna' do głównych grup w Borne Sulinowo
-if ile_borne == 1:
-    # Suma dla wszystkich grup w Borne Sulinowo
-    for group in sum_grupy_borne_sulinowo:
-        for i in range(len(sum_grupy_borne_sulinowo[group])):
-            sum_grupy_borne_sulinowo[group][i] += sum_inna_borne_sulinowo[i]
-elif ile_borne == 2:
-    # Podział grupy 'inna' na grupy A i B
-    for i in range(len(sum_inna_borne_sulinowo)):
-        sum_grupy_borne_sulinowo['A'][i] += sum_inna_borne_sulinowo[i] / 2
-        sum_grupy_borne_sulinowo['B'][i] += sum_inna_borne_sulinowo[i] / 2
-elif ile_borne == 3:
-    # Podział grupy 'inna' na grupy A, B i C
-    for i in range(len(sum_inna_borne_sulinowo)):
-        sum_grupy_borne_sulinowo['A'][i] += sum_inna_borne_sulinowo[i] / 3
-        sum_grupy_borne_sulinowo['B'][i] += sum_inna_borne_sulinowo[i] / 3
-        sum_grupy_borne_sulinowo['C'][i] += sum_inna_borne_sulinowo[i] / 3
+            self.ui.tab_dane.setColumnCount(8)  # Zmień na liczbę kolumn w twojej tabeli
+            self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
+            self.ui.tab_dane.setHorizontalHeaderLabels([
+                'Delivery',
+                'Reklamacje',
+                'DP po initial',
+                'Zgodnosc',
+                'Zapasy',
+                'Raportowanie',
+                'Miesiac',
+                'Data dodania'
+            ])
 
-# Wyświetlanie wyników
-print("Suma dla Czaplinka (A):", sum_grupy_czaplinek['A'])
-print("Suma dla Czaplinka (B):", sum_grupy_czaplinek['B'])
-if ile_czaplinek == 3:
-    print("Suma dla Czaplinka (C):", sum_grupy_czaplinek['C'])
+            # Ustawianie liczby wierszy na podstawie danych z bazy
+            self.ui.tab_dane.setRowCount(len(results))
 
-print("Suma dla Borne Sulinowo (A):", sum_grupy_borne_sulinowo['A'])
-print("Suma dla Borne Sulinowo (B):", sum_grupy_borne_sulinowo['B'])
-if ile_borne == 3:
-    print("Suma dla Borne Sulinowo (C):", sum_grupy_borne_sulinowo['C'])
+
+            # Wypełnianie tabeli danymi
+            for row_idx, row_data in enumerate(results):
+                # Przechowujemy id każdego wiersza
+                for col_idx, value in enumerate(row_data[1:]):  # Pomijamy id
+                    item = QTableWidgetItem(str(value))
+                    if col_idx == 6 or col_idx == 7:  # Zablokowanie edycji dla kolumny "nazwa"
+                        item.setFlags(item.flags() & ~Qt.ItemIsEditable)  # Usuwamy flagę edytowalności
+                    else:
+                        item.setFlags(item.flags() | Qt.ItemIsEditable)  # Ustawienie komórek jako edytowalne
+                    print(row_idx, col_idx, item.text())
+                    self.ui.tab_dane.setItem(row_idx, col_idx, item)
+
+            # Przechowywanie id wierszy
+            self.row_ids = [row_data[0] for row_data in results]
+            print(row_data[0] for row_data in results)
+
+        except db.Error as e:
+            print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
+
+    def on_item_changed(self, item):
+        """Funkcja wywoływana przy każdej zmianie komórki."""
+        row = item.row()
+        col = item.column()
+        new_value = item.text()
+
+        # Pobranie id rekordu dla zmienionego wiersza
+        record_id = self.row_ids[row]
+
+        # Zapis zmienionych danych do bazy
+        self.update_database(record_id, col, new_value)
+
+    def update_database(self, record_id, col, new_value):
+        """Funkcja do aktualizacji konkretnej komórki w bazie danych."""
+        try:
+            # Mapowanie indeksu kolumny na nazwę kolumny w bazie
+            column_names = ["delivery", "reklamacje", "dp_init", "zgodnosc", "zapasy", "raportowanie"]
+            column_name = column_names[col]
+
+            # Aktualizacja w bazie danych
+            sql_query = f"UPDATE kpi_mag SET {column_name} = %s WHERE id = %s"
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+            db.execute_query_virable(connection,sql_query,(new_value, record_id))
+            #self.cursor.execute(sql_query, (new_value, record_id))
+            #self.db_connection.commit()
+            print(f"Zaktualizowano rekord o id {record_id}, {column_name} = {new_value}")
+
+        except db.Error as e:
+            print(f"Błąd zapisu do bazy danych: {e}")
+
+    def otworz_okno_kpi_magDodaj(self):
+        self.okno_kpi_magDodaj = MainWindow_kpi_magDodaj()
+        self.okno_kpi_magDodaj.show()
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    editor = MainWindow_kpi_mag()
+    editor.show()
+    sys.exit(app.exec_())
