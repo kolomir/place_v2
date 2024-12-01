@@ -12,7 +12,7 @@ class MainWindow_pomoc_nieobecnosci(QWidget):
         self.ui.setupUi(self)
 
         self.current_image_index = 0
-        self.image_paths = ["img/pomoc/follow up 1.png", "img/pomoc/follow up 2.png"]
+        self.image_paths = ["img/pomoc/01 nieobecnosci.png", "img/pomoc/02 nieobecnosci.png", "img/pomoc/03 nieobecnosci.png"]
 
         self.update_image()
 
