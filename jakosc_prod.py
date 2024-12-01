@@ -205,16 +205,16 @@ class MainWindow_jakosc(QWidget):
 
         line1 = ["lider","3011","",""]
         line2 = ["lider","3012","",""]
-        line3 = ["lider","3013 + 3015","",""]
+        line3 = ["lider","3013+3015","",""]
         line4 = ["lider","3014","",""]
-        line5 = ["lider","3016 + 3019","",""]
+        line5 = ["lider","3016+3019","",""]
         line6 = ["lider","3018","",""]
         line7 = ["lider","3031+3032","",""]
         line8 = ["lider","Montaż","",""]
         line9 = ["lider","Zakuwanie","",""]
         line10 = ["lider","Maszyny","",""]
         line11 = ["instruktor","Czaplinek","",""]
-        line12 = ["instruktor","Borne","",""]
+        line12 = ["instruktor","Borne Sulinowo","",""]
 
         ws.append(line1)
         ws.append(line2)

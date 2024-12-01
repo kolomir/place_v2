@@ -18,6 +18,7 @@ class MainWindow_raporty(QWidget):
 
         self.ui.btn_eksport_enova.clicked.connect(self.raport_eksport_enova)
         self.ui.btn_zestawienie_pracownicy.clicked.connect(self.raport_zestawienie)
+        self.ui.btn_eksport_obco.clicked.connect(self.raport_eksport_obco)
 
     def sprzwdzenie_raportow(self):
         data_miesiac = str(dodatki.data_miesiac_dzis())
@@ -56,7 +57,7 @@ class MainWindow_raporty(QWidget):
 
     def raport_eksport_enova(self):
         data_miesiac = str(dodatki.data_miesiac_dzis())
-        select_data = "SELECT * FROM eksport_danych zp WHERE zp.miesiac = '{0}'".format(data_miesiac)
+        select_data = "SELECT * FROM eksport_danych zp WHERE zp.miesiac = '{0}' and kod > 0".format(data_miesiac)
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         result = db.read_query(connection, select_data)
         connection.close()
@@ -198,4 +199,69 @@ class MainWindow_raporty(QWidget):
             print("Zapis pliku anulowany")
 
         #output_file = "output_pracownicy.xlsx"
+        #wb.save(output_file)
+
+    def raport_eksport_obco(self):
+        data_miesiac = str(dodatki.data_miesiac_dzis())
+        select_data = "SELECT * FROM eksport_danych zp WHERE zp.miesiac = '{0}' and kod = 0".format(data_miesiac)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        result = db.read_query(connection, select_data)
+        connection.close()
+
+        dzisiaj = datetime.today()
+        pierwszy_dzien_biezacego_miesiaca = dzisiaj.replace(day=1)
+        ostatni_dzien_biezacego_miesiaca = (pierwszy_dzien_biezacego_miesiaca + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        pierwszy_dzien_poprzedniego_miesiaca = (pierwszy_dzien_biezacego_miesiaca - timedelta(days=1)).replace(day=1)
+        ostatni_dzien_poprzedniego_miesiaca = pierwszy_dzien_biezacego_miesiaca - timedelta(days=1)
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+
+        pierwszy = pierwszy_dzien_poprzedniego_miesiaca.strftime("%d.%m.%Y")
+        ostatni = ostatni_dzien_poprzedniego_miesiaca.strftime("%d.%m.%Y")
+        print(pierwszy)
+        print(ostatni)
+        print(pierwszy_dzien_poprzedniego_miesiaca.strftime("%d.%m.%Y"))
+        print(ostatni_dzien_poprzedniego_miesiaca.strftime("%d.%m.%Y"))
+
+        headers = ["Nr akt", "Okres.Od", "Okres.Do", "Last.Podstawa"]
+
+        # Ustawianie szerokości kolumn
+        ws.column_dimensions['A'].width = 15  # Kolumna 'Pracownik:Class'
+        ws.column_dimensions['B'].width = 14  # Kolumna 'Pracownik:Kod'
+        ws.column_dimensions['C'].width = 14  # Kolumna 'Last.Okres.Od'
+        ws.column_dimensions['D'].width = 14  # Kolumna 'Last.Okres.Do'
+
+        lista_eksport = []
+        lista_eksport.append(headers)
+        for dane in result:
+            #kwota = float(dane[4]).replace('.', ',')
+            #kwota_liczbowa = float(kwota.replace(',', '.'))
+
+            #print(['PracownikFirmy', dane[2], pierwszy, ostatni,'Premia za Produkt.',dane[4]])
+            lista_eksport.append([dane[1], pierwszy, ostatni, dane[4]])
+
+
+        for row in lista_eksport:
+            new_row = list(row)
+            ws.append(new_row)
+
+        domyslna_nazwa = 'eksport_obcokrajowcy.xlsx'
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getSaveFileName(
+            None,
+            "Zapisz plik",
+            domyslna_nazwa,  # Domyślna nazwa pliku
+            "Pliki Excel (*.xlsx);;Wszystkie pliki (*)",
+            options=options
+        )
+
+        # Sprawdzanie, czy użytkownik wybrał plik
+        if file_path:
+            wb.save(file_path)
+            print(f"Plik zapisano: {file_path}")
+        else:
+            print("Zapis pliku anulowany")
+
+        #output_file = "output.xlsx"
         #wb.save(output_file)

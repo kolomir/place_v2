@@ -25,8 +25,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
         self.lista_pracownik_wysylka = []
 
     def przeliczenie(self):
-        self.licz_nieobecnosci()
         self.miesiac_info_nieobecnosci()
+        self.licz_nieobecnosci()
         self.licz_przyjecia()
         self.licz_transport_cz()
         self.licz_wysylka()

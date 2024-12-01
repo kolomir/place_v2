@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
-        Form.resize(493, 418)
+        Form.resize(574, 418)
         self.gridLayout = QtWidgets.QGridLayout(Form)
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
         self.gridLayout.setSpacing(0)
@@ -95,6 +95,9 @@ class Ui_Form(object):
         self.tab_dane.setColumnCount(0)
         self.tab_dane.setRowCount(0)
         self.verticalLayout_3.addWidget(self.tab_dane)
+        self.label_3 = QtWidgets.QLabel(self.widget)
+        self.label_3.setObjectName("label_3")
+        self.verticalLayout_3.addWidget(self.label_3)
         self.gridLayout.addWidget(self.widget, 0, 0, 1, 1)
 
         self.retranslateUi(Form)
@@ -109,4 +112,5 @@ class Ui_Form(object):
         self.btn_przegladaj.setText(_translate("Form", "Wybierz plik"))
         self.btn_dodaj.setText(_translate("Form", "Dodaj"))
         self.btn_importuj.setText(_translate("Form", "Importuj"))
+        self.label_3.setText(_translate("Form", "Reklamacje: 0 - brak reklamacji; 1 - reklamacja; Dla grupy 3031+3032: 0-100%, 1-75%, 2-50%, >=3-0%"))
 import icon_rc

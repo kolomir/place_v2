@@ -119,7 +119,7 @@ class MainWindow_jakosc_prodDodaj(QWidget):
 
         insert_data = "INSERT INTO jakosc_prod VALUES (NULL,'%s','%s','%s','%s','%s','%s');" % (pole_ranga, pole_grupa, pole_ppm, pole_reklamacje, data_miesiac, teraz)
         print(insert_data)
-        #connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-        #db.execute_query(connection, insert_data)
-        #connection.close()
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        db.execute_query(connection, insert_data)
+        connection.close()
         self.close()

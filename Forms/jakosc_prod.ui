@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>493</width>
+    <width>574</width>
     <height>418</height>
    </rect>
   </property>
@@ -216,6 +216,13 @@
       </item>
       <item>
        <widget class="QTableWidget" name="tab_dane"/>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Reklamacje: 0 - brak reklamacji; 1 - reklamacja; Dla grupy 3031+3032: 0-100%, 1-75%, 2-50%, &gt;=3-0%</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>

@@ -24,12 +24,12 @@ class MainWindow_wyliczeniaForm(QWidget):
         self.lista_instruktor_prem = []
 
     def przeliczenie(self):
-        self.licz_nieobecnosci()
         self.miesiac_info_nieobecnosci()
+        self.licz_nieobecnosci()
         self.licz_pracownicy()
-        self.licz_wsparcie()
-        self.licz_liderzy()
-        self.licz_instruktorzy()
+        #self.licz_wsparcie()
+        #self.licz_liderzy()
+        #self.licz_instruktorzy()
 
 
 
@@ -98,6 +98,9 @@ class MainWindow_wyliczeniaForm(QWidget):
             if suma <= int(float(prog50)) and suma > (int(float(prog100)) - int(float(prog75))):
                 wsp = 1
             lista.append([dane[0], dane[1], dane[2], dane[3], suma, wsp])
+
+        print("50",prog50)
+        print("75",prog75)
 
         if not results:
             self.clear_table_nieobecnosci()
@@ -199,7 +202,7 @@ class MainWindow_wyliczeniaForm(QWidget):
                         from 
                             direct d
                                 join logowanie_zlecen lz on d.Nr_akt = lz.nr_akt 
-                                left join nieobecnosci_prod np on np.nr_akt  = d.Nr_akt 
+                                left join nieobecnosci_prod np on np.nr_akt  = d.Nr_akt and np.miesiac = '{0}' 
                                 left join bledy_prod bp on bp.nr_akt = d.Nr_akt 
                                 left join pracownicy p on p.Nr_akt = d.Nr_akt 
                         where 
@@ -228,10 +231,9 @@ class MainWindow_wyliczeniaForm(QWidget):
         prog100 = self.ui.lab_pracujacychNieobecnosci.text()
         prog75 = self.ui.lab_pracujacych075Nieobecnosci.text()
         prog50 = self.ui.lab_pracujacych050Nieobecnosci.text()
-
         
         prog = 96.00
-
+        print('testy:',str((int(float(prog100)) - int(float(prog75)))))
         for dane in results:
             wynik = 0
             if dane[4] > prog:
@@ -244,9 +246,11 @@ class MainWindow_wyliczeniaForm(QWidget):
 
                 wsp = 0
                 wynik_n = wynik
+                #if dane[10] > int(float(prog50)):
                 if dane[10] > int(float(prog50)):
                     wsp = 2
                     wynik_n = 0.0
+                #if dane[10] <= int(float(prog50)) and dane[10] > (int(float(prog100)) - int(float(prog75))):
                 if dane[10] <= int(float(prog50)) and dane[10] > (int(float(prog100)) - int(float(prog75))):
                     wsp = 1
                     wynik_n = wynik / 2
@@ -274,6 +278,7 @@ class MainWindow_wyliczeniaForm(QWidget):
 
             #print([dane[0], dane[1], dane[2], dane[3], dane[4], dane[5], dane[6], dane[7], dane[8], dane[9], wynik, dane[10], wsp, wynik_n, dane[11], wynik_b])
             self.lista.append([dane[0], dane[1], dane[2], dane[3], dane[4], dane[5], dane[6], dane[7], dane[8], dane[9], wynik, dane[10], wsp, wynik_n, dane[11], wynik_b])
+
 
         suma_kwot = sum(round(float(wiersz[15]), 2) for wiersz in self.lista)
         self.ui.lab_sumaPracownicy.setText(str(suma_kwot))
@@ -497,7 +502,7 @@ class MainWindow_wyliczeniaForm(QWidget):
                                 from 
                                     instruktor i 
                                         left join pracownicy p on p.Nr_akt = i.nr_akt 
-                                            left join nieobecnosci_prod np on np.nr_akt = p.Nr_akt 
+                                            left join nieobecnosci_prod np on np.nr_akt = p.Nr_akt and np.miesiac = '{0}' 
                                 where 
                                     i.id_ranga = 4
                                     and p.miesiac = '{0}'
@@ -819,7 +824,7 @@ class MainWindow_wyliczeniaForm(QWidget):
                                 from 
                                     instruktor i 
                                         left join pracownicy p on p.Nr_akt = i.nr_akt 
-                                            left join nieobecnosci_prod np on np.nr_akt = p.Nr_akt 
+                                            left join nieobecnosci_prod np on np.nr_akt = p.Nr_akt and np.miesiac = '{0}' 
                                         left join linia_gniazdo lg on lg.id_lider = i.id 
                                             left join gniazda_robocze gr on gr.id = lg.id_grupa 
 			                                    left join jakosc_prod jp on jp.grupa_robocza = gr.nazwa 
@@ -1165,7 +1170,7 @@ class MainWindow_wyliczeniaForm(QWidget):
                                             left join lokalizacja l on l.id = lg.id_lokalizacja 
                                                 left join jakosc_prod jp on jp.grupa_robocza = l.lokalizacja and jp.miesiac = '{0}'
                                         left join pracownicy p on p.Nr_akt = i.nr_akt 
-                                        left join nieobecnosci_prod np on np.nr_akt = i.nr_akt 
+                                        left join nieobecnosci_prod np on np.nr_akt = i.nr_akt and np.miesiac = '{0}' 
                                 where 
                                     i.aktywny = 1
                                     and i.id_ranga = 1
@@ -1599,7 +1604,8 @@ class MainWindow_wyliczeniaForm(QWidget):
             else:
                 wynik_j = 0
 
-            self.lista_instruktor_prem.append([dane[0],dane[1],dane[2],dane[3],dane[4],wynik,dane[5],wynik_n,kwota_j,wynik_j])
+            self.lista_instruktor_prem.append([dane[0],dane[1],dane[2],dane[3],dane[4],wynik,wsp,wynik_n,kwota_j,wynik_j])
+        print(self.lista_instruktor_prem)
 
 
         print('---------------------------------------')
