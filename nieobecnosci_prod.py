@@ -189,9 +189,13 @@ class MainWindow_nieobecnosci(QWidget):
                 break
 
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        lista_wpisow_notNone = [
+            tuple(0 if x is None else x for x in wiersz) for wiersz in lista_wpisow
+        ]
 
-        for row in lista_wpisow:
+        for row in lista_wpisow_notNone:
             insert_data = "INSERT INTO nieobecnosci_prod VALUES (NULL,'%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',0,'%s','%s','%s');" % (row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],row[13],row[14],row[15],row[16],row[17],row[18],row[19],row[20])
+            #print(insert_data)
             db.execute_query(connection, insert_data)
 
         self.wyszukaj_dane()

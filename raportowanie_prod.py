@@ -116,7 +116,7 @@ class MainWindow_raportowanie_prod(QWidget):
                 else:
                     wydajnosc = row[6] / row[8]
                 #print(i,[row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],wydajnosc,data_miesiac,teraz])
-                lista_wpisow.append([row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],row[13],zmiana_lit,wydajnosc,data_miesiac,teraz])
+                lista_wpisow.append([row[0],row[1],row[2],row[3],data_miesiac,row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],row[13],zmiana_lit,wydajnosc,data_miesiac,teraz])
                 i=i+1
             else:
                 break
@@ -125,6 +125,7 @@ class MainWindow_raportowanie_prod(QWidget):
 
         for row in lista_wpisow:
             insert_data = "INSERT INTO logowanie_zlecen VALUES (NULL,'%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');" % (row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],row[13],row[14],row[15],row[16],row[17])
+            #print(insert_data)
             db.execute_query(connection, insert_data)
 
         self.wyszukaj_dane()
