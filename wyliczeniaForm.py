@@ -27,9 +27,9 @@ class MainWindow_wyliczeniaForm(QWidget):
         self.miesiac_info_nieobecnosci()
         self.licz_nieobecnosci()
         self.licz_pracownicy()
-        #self.licz_wsparcie()
-        #self.licz_liderzy()
-        #self.licz_instruktorzy()
+        self.licz_wsparcie()
+        self.licz_liderzy()
+        self.licz_instruktorzy()
 
 
 
