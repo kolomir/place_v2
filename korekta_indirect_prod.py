@@ -16,26 +16,85 @@ class MainWindow_korekta_indirect_prod(QWidget):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
+        self.load_data_from_database()
         self.ui.btn_zapisz.clicked.connect(self.otworz_okno_korekta_indirect_prod_dodaj)
         self.ui.btn_przegladaj.clicked.connect(self.open_file_dialog)
         self.ui.btn_importuj.clicked.connect(self.czytaj_dane)
         self.ui.btn_szablon.clicked.connect(self.szablon)
 
-        QApplication.instance().focusChanged.connect(self.wyszukaj_dane)
-        self.wyszukaj_dane()
+        #QApplication.instance().focusChanged.connect(self.load_data_from_database)
 
-    def folder_istnieje(self):
-        folder = self.ui.ed_sciezka_dane.text().strip()
-        if not folder:
-            QMessageBox.critical(self, 'Error', 'Nie wybrano lokalizacji pliku')
-            self.ui.ed_sciezka_dane.setFocus()
-            return False
+    def load_data_from_database(self):
+        """Funkcja do załadowania danych z bazy do QTableWidget."""
+        try:
+            miestac_roboczy = dodatki.data_miesiac_dzis()
+            select_data = "select ki.id, ki.nr_akt, ki.`nazwisko_i_imie`, ki.czas, ki.opis, ki.miesiac from korekta_indirect ki where miesiac = '{0}';".format(miestac_roboczy)
+            #select_data = "select * from kpi_mag"
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+            results = db.read_query(connection, select_data)
 
-        if not os.path.exists(folder):
-            QMessageBox.critical(self, 'Error', 'Folder nie istnieje. Sprawdź lokalizację pliku')
-            self.ui.ed_sciezka_dane.setFocus()
-            return False
-        return True
+            self.ui.tab_dane.setColumnCount(5)  # Zmień na liczbę kolumn w twojej tabeli
+            self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
+            self.ui.tab_dane.setHorizontalHeaderLabels([
+                'Nr akt',
+                'Nazwisko i imię',
+                'Korekta',
+                'Opis',
+                'Data dodania'
+            ])
+
+            # Ustawianie liczby wierszy na podstawie danych z bazy
+            self.ui.tab_dane.setRowCount(len(results))
+
+
+            # Wypełnianie tabeli danymi
+            for row_idx, row_data in enumerate(results):
+                # Przechowujemy id każdego wiersza
+                for col_idx, value in enumerate(row_data[1:]):  # Pomijamy id
+                    item = QTableWidgetItem(str(value))
+                    if col_idx == 0 or col_idx == 1 or col_idx == 4:  # Zablokowanie edycji dla kolumny "nazwa"
+                        item.setFlags(item.flags() & ~Qt.ItemIsEditable)  # Usuwamy flagę edytowalności
+                    else:
+                        item.setFlags(item.flags() | Qt.ItemIsEditable)  # Ustawienie komórek jako edytowalne
+                    print(row_idx, col_idx, item.text())
+                    self.ui.tab_dane.setItem(row_idx, col_idx, item)
+
+            # Przechowywanie id wierszy
+            self.row_ids = [row_data[0] for row_data in results]
+            print(row_data[0] for row_data in results)
+
+        except db.Error as e:
+            print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
+
+    def update_database(self, record_id, col, new_value):
+        """Funkcja do aktualizacji konkretnej komórki w bazie danych."""
+        try:
+            # Mapowanie indeksu kolumny na nazwę kolumny w bazie
+            column_names = ["czas", "opis"]
+            column_name = column_names[col]
+
+            # Aktualizacja w bazie danych
+            sql_query = f"UPDATE korekta_indirect SET {column_name} = %s WHERE id = %s"
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+            db.execute_query_virable(connection,sql_query,(new_value, record_id))
+            #self.cursor.execute(sql_query, (new_value, record_id))
+            #self.db_connection.commit()
+            print(f"Zaktualizowano rekord o id {record_id}, {column_name} = {new_value}")
+
+        except db.Error as e:
+            print(f"Błąd zapisu do bazy danych: {e}")
+
+    def on_item_changed(self, item):
+        """Funkcja wywoływana przy każdej zmianie komórki."""
+        row = item.row()
+        col = item.column()
+        new_value = item.text()
+
+        # Pobranie id rekordu dla zmienionego wiersza
+        record_id = self.row_ids[row]
+
+        # Zapis zmienionych danych do bazy
+        self.update_database(record_id, col, new_value)
 
     def open_file_dialog(self):
         # Otwieranie dialogu wyboru pliku
@@ -49,6 +108,39 @@ class MainWindow_korekta_indirect_prod(QWidget):
         file_path = self.ui.ed_sciezka_dane.text()
         if file_path:
             self.load_file(file_path)
+
+    def otworz_okno_korekta_indirect_prod_dodaj(self):
+        self.okno_korekta_indirect_prod_dodaj = MainWindow_korekta_indirect_prod_dodaj()
+        self.okno_korekta_indirect_prod_dodaj.show()
+
+    def szablon(self):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+
+        headers = ["nr prac.","czas","opis"]
+        ws.append(headers)
+
+        # Ustawianie szerokości kolumn
+        ws.column_dimensions['A'].width = 5  # Kolumna 'lp'
+        ws.column_dimensions['B'].width = 10  # Kolumna 'nr pracownika'
+        ws.column_dimensions['C'].width = 65  # Kolumna 'IMIĘ i NAZWISKO'
+
+        domyslna_nazwa = 'korekta_direct.xlsx'
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getSaveFileName(
+            None,
+            "Zapisz plik",
+            domyslna_nazwa,  # Domyślna nazwa pliku
+            "Pliki Excel (*.xlsx);;Wszystkie pliki (*)",
+            options=options
+        )
+
+        # Sprawdzanie, czy użytkownik wybrał plik
+        if file_path:
+            wb.save(file_path)
+            print(f"Plik zapisano: {file_path}")
+        else:
+            print("Zapis pliku anulowany")
 
     def sprawdz_wpisy(self):
         miestac_roboczy = dodatki.data_miesiac_dzis()
@@ -68,8 +160,6 @@ class MainWindow_korekta_indirect_prod(QWidget):
         connection.close()
 
     def czytaj_dane(self):
-        if not self.folder_istnieje():
-            return
         self.sprawdz_wpisy()
         file_path = self.ui.ed_sciezka_dane.text()
         wb = openpyxl.load_workbook(os.path.join(file_path))
@@ -110,107 +200,4 @@ class MainWindow_korekta_indirect_prod(QWidget):
             insert_data = "INSERT INTO korekta_indirect VALUES (NULL,'%s','%s','%s','%s','%s','%s');" % (row[0], row[1], row[2], row[3], row[4], row[5])
             db.execute_query(connection, insert_data)
 
-        self.wyszukaj_dane()
-
-    def wyszukaj_dane(self):
-        miestac_roboczy = dodatki.data_miesiac_dzis()
-        select_data = '''
-                        select 
-                            ki.id
-                            ,ki.nr_akt 
-                            ,ki.`nazwisko_i_imie` 
-                            ,ki.czas 
-                            ,ki.opis 
-                            ,ki.data_dodania 
-                        from 
-                            korekta_indirect ki 
-                        where 
-                            miesiac = '{0}'
-                        '''.format(miestac_roboczy)
-        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-        results = db.read_query(connection, select_data)
-        connection.close()
-
-        if not results:
-            self.clear_table()
-            self.naglowki_tabeli()
-        else:
-            self.naglowki_tabeli()
-            self.pokaz_dane(results)
-        connection.close()
-
-    def pokaz_dane(self, rows):
-        # Column count
-        if int(len(rows[0])) > 0:
-            self.ui.tab_dane.setColumnCount(int(len(rows[0])))
-
-        # Row count
-        self.ui.tab_dane.setRowCount(int(len(rows)))
-
-        wiersz = 0
-        for wynik in rows:
-            self.ui.tab_dane.setItem(wiersz, 0, QTableWidgetItem(str(wynik[0])))
-            self.ui.tab_dane.setItem(wiersz, 1, QTableWidgetItem(str(wynik[1])))
-            self.ui.tab_dane.setItem(wiersz, 2, QTableWidgetItem(str(wynik[2])))
-            self.ui.tab_dane.setItem(wiersz, 3, QTableWidgetItem(str(wynik[3])))
-            self.ui.tab_dane.setItem(wiersz, 4, QTableWidgetItem(str(wynik[4])))
-            self.ui.tab_dane.setItem(wiersz, 5, QTableWidgetItem(str(wynik[5])))
-            wiersz += 1
-
-        self.ui.tab_dane.horizontalHeader().setStretchLastSection(True)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
-
-    def naglowki_tabeli(self):
-        self.ui.tab_dane.setColumnCount(6)  # Zmień na liczbę kolumn w twojej tabeli
-        self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
-        self.ui.tab_dane.setHorizontalHeaderLabels([
-            'ID',
-            'Nr akt',
-            'Nazwisko i imię',
-            'Korekta',
-            'Opis',
-            'Data dodania'
-        ])
-
-    def clear_table(self):
-        # Wyczyść zawartość tabeli
-        self.ui.tab_dane.clearContents()
-        self.ui.tab_dane.setRowCount(0)
-
-    def otworz_okno_korekta_indirect_prod_dodaj(self):
-        self.okno_korekta_indirect_prod_dodaj = MainWindow_korekta_indirect_prod_dodaj()
-        self.okno_korekta_indirect_prod_dodaj.show()
-
-    def szablon(self):
-        wb = openpyxl.Workbook()
-        ws = wb.active
-
-        headers = ["nr prac.","czas","opis"]
-        ws.append(headers)
-
-        # Ustawianie szerokości kolumn
-        ws.column_dimensions['A'].width = 5  # Kolumna 'lp'
-        ws.column_dimensions['B'].width = 10  # Kolumna 'nr pracownika'
-        ws.column_dimensions['C'].width = 65  # Kolumna 'IMIĘ i NAZWISKO'
-
-        domyslna_nazwa = 'korekta_direct.xlsx'
-        options = QFileDialog.Options()
-        file_path, _ = QFileDialog.getSaveFileName(
-            None,
-            "Zapisz plik",
-            domyslna_nazwa,  # Domyślna nazwa pliku
-            "Pliki Excel (*.xlsx);;Wszystkie pliki (*)",
-            options=options
-        )
-
-        # Sprawdzanie, czy użytkownik wybrał plik
-        if file_path:
-            wb.save(file_path)
-            print(f"Plik zapisano: {file_path}")
-        else:
-            print("Zapis pliku anulowany")
+        self.load_data_from_database()

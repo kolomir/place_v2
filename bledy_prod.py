@@ -1,4 +1,5 @@
-from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QTableWidgetItem, QHeaderView
+from PyQt5.QtWidgets import QWidget, QFileDialog, QTableWidgetItem
+from PyQt5.QtCore import Qt
 import configparser
 import openpyxl
 #import sys
@@ -15,43 +16,81 @@ class MainWindow_bledy(QWidget):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
-        #- wczytanie pliku INI --------------------------------------------
-        self.config = configparser.ConfigParser()
-        self.config.read('config.ini')
-        #- załadowanie zmiennych z pliku INI ------------------------------
-        self.folder_bledy = self.config['sciezki']['folder_bledy']
-        self.plik = self.config['sciezki']['plik_bledy']
-        #------------------------------------------------------------------
-        # - domyślna ścieżka dla pliku -----------------
-        #domyslny = f"{self.folder_bledy}"
-        #self.ui.ed_sciezka_dane.setText(domyslny)
-        # -----------------------------------------------
-
+        self.load_data_from_database()
         self.ui.btn_przegladaj.clicked.connect(self.open_file_dialog)
         self.ui.btn_importuj.clicked.connect(self.czytaj_dane)
         self.ui.btn_szablon.clicked.connect(self.szablon)
-        self.wyszukaj_dane()
 
-    def data_miesiac_dzis(self):
-        data_dzis = date.today()
-        prev_miesiac = data_dzis.month - 1 if data_dzis.month > 1 else 12
-        prev_rok = data_dzis.year if data_dzis.month > 1 else data_dzis.year - 1
-        data_miesiac = "%s-%s-%s" % (prev_rok,prev_miesiac,"1")
-        print(data_miesiac)
-        return data_miesiac
+    def load_data_from_database(self):
+        """Funkcja do załadowania danych z bazy do QTableWidget."""
+        try:
+            miestac_roboczy = dodatki.data_miesiac_dzis()
+            select_data = "SELECT * FROM `bledy_prod` WHERE miesiac = '%s';" % (miestac_roboczy)
+            #select_data = "select * from kpi_mag"
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+            results = db.read_query(connection, select_data)
 
-    def folder_istnieje(self):
-        folder = self.ui.ed_sciezka_dane.text().strip()
-        if not folder:
-            QMessageBox.critical(self, 'Error', 'Nie wybrano lokalizacji pliku')
-            self.ui.ed_sciezka_dane.setFocus()
-            return False
+            self.ui.tab_dane.setColumnCount(4)  # Zmień na liczbę kolumn w twojej tabeli
+            self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
+            self.ui.tab_dane.setHorizontalHeaderLabels([
+                'Nr akt',
+                'Bledy',
+                'Miesiac',
+                'Data dodania'
+                ])
 
-        if not os.path.exists(folder):
-            QMessageBox.critical(self, 'Error', 'Folder nie istnieje. Sprawdź lokalizację pliku')
-            self.ui.ed_sciezka_dane.setFocus()
-            return False
-        return True
+            # Ustawianie liczby wierszy na podstawie danych z bazy
+            self.ui.tab_dane.setRowCount(len(results))
+
+
+            # Wypełnianie tabeli danymi
+            for row_idx, row_data in enumerate(results):
+                # Przechowujemy id każdego wiersza
+                for col_idx, value in enumerate(row_data[1:]):  # Pomijamy id
+                    item = QTableWidgetItem(str(value))
+                    if col_idx == 0 or col_idx == 2 or col_idx == 3:  # Zablokowanie edycji dla kolumny "nazwa"
+                        item.setFlags(item.flags() & ~Qt.ItemIsEditable)  # Usuwamy flagę edytowalności
+                    else:
+                        item.setFlags(item.flags() | Qt.ItemIsEditable)  # Ustawienie komórek jako edytowalne
+                    print(row_idx, col_idx, item.text())
+                    self.ui.tab_dane.setItem(row_idx, col_idx, item)
+
+            # Przechowywanie id wierszy
+            self.row_ids = [row_data[0] for row_data in results]
+            print(row_data[0] for row_data in results)
+
+        except db.Error as e:
+            print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
+
+    def update_database(self, record_id, col, new_value):
+        """Funkcja do aktualizacji konkretnej komórki w bazie danych."""
+        try:
+            # Mapowanie indeksu kolumny na nazwę kolumny w bazie
+            column_names = ["bledy",]
+            column_name = column_names[col]
+
+            # Aktualizacja w bazie danych
+            sql_query = f"UPDATE bledy_prod SET {column_name} = %s WHERE id = %s"
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+            db.execute_query_virable(connection,sql_query,(new_value, record_id))
+            #self.cursor.execute(sql_query, (new_value, record_id))
+            #self.db_connection.commit()
+            print(f"Zaktualizowano rekord o id {record_id}, {column_name} = {new_value}")
+
+        except db.Error as e:
+            print(f"Błąd zapisu do bazy danych: {e}")
+
+    def on_item_changed(self, item):
+        """Funkcja wywoływana przy każdej zmianie komórki."""
+        row = item.row()
+        col = item.column()
+        new_value = item.text()
+
+        # Pobranie id rekordu dla zmienionego wiersza
+        record_id = self.row_ids[row]
+
+        # Zapis zmienionych danych do bazy
+        self.update_database(record_id, col, new_value)
 
     def open_file_dialog(self):
         # Otwieranie dialogu wyboru pliku
@@ -65,23 +104,6 @@ class MainWindow_bledy(QWidget):
         file_path = self.ui.ed_sciezka_dane.text()
         if file_path:
             self.load_file(file_path)
-
-    def sprawdz_wpisy(self):
-        miestac_roboczy = dodatki.data_miesiac_dzis()
-        select_data = "SELECT * FROM `bledy_prod` WHERE miesiac = '%s';" % (miestac_roboczy)  # (miestac_roboczy)
-        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-        results = db.read_query(connection, select_data)
-        connection.close()
-
-        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-        if results:
-            for x in results:
-                delete_data = "delete from bledy_prod where id = '%s' and miesiac = '%s';" % (x[0],miestac_roboczy)
-                print('Do skasowania:',delete_data)
-                db.execute_query(connection, delete_data)
-        else:
-            print('--Brak wpisów jeszcze--')
-        connection.close()
 
     def czytaj_dane(self):
         if not self.folder_istnieje():
@@ -110,56 +132,7 @@ class MainWindow_bledy(QWidget):
             insert_data = "INSERT INTO bledy_prod VALUES (NULL,'%s','%s','%s','%s');" % (row[0],row[1],row[2],row[3])
             db.execute_query(connection, insert_data)
 
-        self.wyszukaj_dane()
-
-    def wyszukaj_dane(self):
-        miestac_roboczy = dodatki.data_miesiac_dzis()
-        print('miesiac',miestac_roboczy)
-        select_data = "SELECT * FROM `bledy_prod` WHERE miesiac = '%s';" % (miestac_roboczy) #(miestac_roboczy)
-        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-        results = db.read_query(connection, select_data)
-
-        if not results:
-            print('wynik ZLE')
-            self.clear_table()
-            self.naglowki_tabeli()
-        else:
-            print('wynik OK')
-            self.naglowki_tabeli()
-            self.pokaz_dane(results)
-        connection.close()
-
-    def clear_table(self):
-        # Wyczyść zawartość tabeli
-        self.ui.tab_dane.clearContents()
-        self.ui.tab_dane.setRowCount(0)
-
-    def naglowki_tabeli(self):
-        self.ui.tab_dane.setColumnCount(4)  # Zmień na liczbę kolumn w twojej tabeli
-        self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
-        self.ui.tab_dane.setHorizontalHeaderLabels(['Nr akt', 'Bledy', 'Miesiac', 'Data dodania'])
-
-    def pokaz_dane(self, rows):
-        # Column count
-        if int(len(rows[0])) > 0:
-            self.ui.tab_dane.setColumnCount(int(len(rows[0])) - 1)
-
-        # Row count
-        self.ui.tab_dane.setRowCount(int(len(rows)))
-
-        wiersz = 0
-        for wynik in rows:
-            self.ui.tab_dane.setItem(wiersz, 0, QTableWidgetItem(str(wynik[1])))
-            self.ui.tab_dane.setItem(wiersz, 1, QTableWidgetItem(str(wynik[2])))
-            self.ui.tab_dane.setItem(wiersz, 2, QTableWidgetItem(str(wynik[3])))
-            self.ui.tab_dane.setItem(wiersz, 3, QTableWidgetItem(str(wynik[4])))
-            wiersz += 1
-
-        self.ui.tab_dane.horizontalHeader().setStretchLastSection(True)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.load_data_from_database()
 
     def szablon(self):
         wb = openpyxl.Workbook()

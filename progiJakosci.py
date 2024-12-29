@@ -13,100 +13,69 @@ class MainWindow_progiJakosci(QWidget):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
+        self.load_data_from_database()
         self.ui.btn_zapisz.clicked.connect(self.otworz_okno_progiJakosciDodaj)
 
-        QApplication.instance().focusChanged.connect(self.wyszukaj_dane)
+        QApplication.instance().focusChanged.connect(self.load_data_from_database)
 
-        self.wyszukaj_dane()
+    def load_data_from_database(self):
+        """Funkcja do załadowania danych z bazy do QTableWidget."""
+        try:
+            select_data = """
+                    select 
+                        p.id, 
+                        l.lokalizacja, 
+                        gr.nazwa, 
+                        r.ranga, 
+                        p.pulap1, 
+                        p.pulap2, 
+                        p.pulap3, 
+                        k.kwota, 
+                        p.aktywny, 
+                        p.data_dodania 
+                    from 
+                        progi_jakosc p 
+                            left join ranga r on r.id = p.id_ranga 
+                            left join gniazda_robocze gr on gr.id = p.id_wc 
+                            left join kwoty_jakosc k on k.id_ranga = p.id_ranga 
+                            left join lokalizacja l on l.id = p.id_lokalizacja 
+                    order by 
+                        r.ranga ASC;
+                    """
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+            results = db.read_query(connection, select_data)
 
-    def wyszukaj_dane(self):
-        select_data = """
-        select 
-            p.id, 
-            l.lokalizacja, 
-            gr.nazwa, 
-            r.ranga, 
-            p.pulap1, 
-            p.pulap2, 
-            p.pulap3, 
-            k.kwota, 
-            p.aktywny, 
-            p.data_dodania 
-        from 
-            progi_jakosc p 
-                left join ranga r on r.id = p.id_ranga 
-                left join gniazda_robocze gr on gr.id = p.id_wc 
-                left join kwoty_jakosc k on k.id_ranga = p.id_ranga 
-                left join lokalizacja l on l.id = p.id_lokalizacja 
-        order by 
-            r.ranga ASC;
-        """
-        #select_data = "select * from progi_prod p;"
-        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-        results = db.read_query(connection, select_data)
+            self.ui.tab_dane.setColumnCount(9)  # Zmień na liczbę kolumn w twojej tabeli
+            self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
+            self.ui.tab_dane.setHorizontalHeaderLabels([
+                'Lokalizacja',
+                'Grupa robocza',
+                'Ranga',
+                'Pułap1',
+                'Pułap2',
+                'Pułap3',
+                'Kwota',
+                'Aktywny',
+                'Dodano'
+            ])
 
-        if not results:
-            self.clear_table()
-            self.naglowki_tabeli()
-        else:
-            self.naglowki_tabeli()
-            self.pokaz_dane(results)
-        connection.close()
+            # Ustawianie liczby wierszy na podstawie danych z bazy
+            self.ui.tab_dane.setRowCount(len(results))
 
-    def pokaz_dane(self, rows):
-        # Column count
-        if int(len(rows[0])) > 0:
-            self.ui.tab_dane.setColumnCount(int(len(rows[0])))
 
-        # Row count
-        self.ui.tab_dane.setRowCount(int(len(rows)))
+            # Wypełnianie tabeli danymi
+            for row_idx, row_data in enumerate(results):
+                # Przechowujemy id każdego wiersza
+                for col_idx, value in enumerate(row_data[1:]):  # Pomijamy id
+                    item = QTableWidgetItem(str(value))
+                    self.ui.tab_dane.setItem(row_idx, col_idx, item)
 
-        wiersz = 0
-        for wynik in rows:
-            self.ui.tab_dane.setItem(wiersz, 0, QTableWidgetItem(str(wynik[0])))
-            self.ui.tab_dane.setItem(wiersz, 1, QTableWidgetItem(str(wynik[1])))
-            self.ui.tab_dane.setItem(wiersz, 2, QTableWidgetItem(str(wynik[2])))
-            self.ui.tab_dane.setItem(wiersz, 3, QTableWidgetItem(str(wynik[3])))
-            self.ui.tab_dane.setItem(wiersz, 4, QTableWidgetItem(str(wynik[4])))
-            self.ui.tab_dane.setItem(wiersz, 5, QTableWidgetItem(str(wynik[5])))
-            self.ui.tab_dane.setItem(wiersz, 6, QTableWidgetItem(str(wynik[6])))
-            self.ui.tab_dane.setItem(wiersz, 7, QTableWidgetItem(str(wynik[7])))
-            self.ui.tab_dane.setItem(wiersz, 8, QTableWidgetItem(str(wynik[8])))
-            self.ui.tab_dane.setItem(wiersz, 9, QTableWidgetItem(str(wynik[9])))
-            wiersz += 1
+            # Przechowywanie id wierszy
+            self.row_ids = [row_data[0] for row_data in results]
+            #print(row_data[0] for row_data in results)
 
-        self.ui.tab_dane.horizontalHeader().setStretchLastSection(True)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(8, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(9, QHeaderView.ResizeToContents)
-
-    def naglowki_tabeli(self):
-        self.ui.tab_dane.setColumnCount(10)  # Zmień na liczbę kolumn w twojej tabeli
-        self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
-        self.ui.tab_dane.setHorizontalHeaderLabels([
-            'ID',
-            'Lokalizacja',
-            'Grupa robocza',
-            'Ranga',
-            'Pułap1',
-            'Pułap2',
-            'Pułap3',
-            'Kwota',
-            'Aktywny',
-            'Dodano'
-        ])
-
-    def clear_table(self):
-        # Wyczyść zawartość tabeli
-        self.ui.tab_dane.clearContents()
-        self.ui.tab_dane.setRowCount(0)
+        except db.Error as e:
+            print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
 
     def otworz_okno_progiJakosciDodaj(self):
         self.okno_progiJakosciDodaj = MainWindow_progiJakosciDodaj()

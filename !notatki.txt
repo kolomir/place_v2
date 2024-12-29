@@ -5,7 +5,7 @@ pip install configparser
 pip install openpyxl
 pip install mysql-connector-python
 #pip install calendar
-pip install auto_py_to_exe
+pip install auto-py-to-exe
 
 designer
 
@@ -45,3 +45,19 @@ group by p.Nr_akt
 	,d.`Direct_%`
 	,d.Indirect_work
 	,d.`Indirect_%`
+
+
+Direct %
+===========================================================================
+,ROUND(						
+case 
+	when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+	else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+end 
+/(case 
+	when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
+	else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+end + case 
+			when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
+			else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
+		end),2) as Direct|  -- dane zawierają wartości czasowe a nie procentowe

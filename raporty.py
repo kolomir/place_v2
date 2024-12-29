@@ -166,8 +166,8 @@ class MainWindow_raporty(QWidget):
         lista_pracownicy = []
         #lista_pracownicy.append(headers)
         for dane in result:
-            direkt = str(float(dane[4]) * 100.00)
-            indirect = str(float(dane[5]) * 100.00)
+            direkt = str(float(dane[4]))
+            indirect = str(float(dane[5]))
             lista_pracownicy.append([dane[2], dane[1], dane[3], pierwszy, "Direct Work", f"{direkt}%", "Indirect Work", f"{indirect}%", "Wydajność", f"{dane[6]}%", "Produktywność", f"{dane[7]}%", "Błędy", dane[9], "Nieobecność", dane[8]])
 
         wiersz = 1

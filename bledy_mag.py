@@ -1,4 +1,5 @@
-from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QTableWidgetItem, QHeaderView
+from PyQt5.QtWidgets import QWidget, QTableWidgetItem, QFileDialog
+from PyQt5.QtCore import Qt
 import configparser
 import openpyxl
 #import sys
@@ -15,43 +16,10 @@ class MainWindow_bledy_mag(QWidget):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
-        #- wczytanie pliku INI --------------------------------------------
-        self.config = configparser.ConfigParser()
-        self.config.read('config.ini')
-        #- załadowanie zmiennych z pliku INI ------------------------------
-        self.folder_bledy = self.config['sciezki']['folder_bledy']
-        self.plik = self.config['sciezki']['plik_bledy_mag']
-        #------------------------------------------------------------------
-        # - domyślna ścieżka dla pliku -----------------
-        #domyslny = f"{self.folder_bledy}"
-        #self.ui.ed_sciezka_dane.setText(domyslny)
-        # -----------------------------------------------
-
+        self.load_data_from_database()
+        self.ui.tab_dane.itemChanged.connect(self.on_item_changed)
         self.ui.btn_przegladaj.clicked.connect(self.open_file_dialog)
-        self.ui.btn_importuj.clicked.connect(self.czytaj_dane)
         self.ui.btn_szablon.clicked.connect(self.szablon)
-        self.wyszukaj_dane()
-
-    def data_miesiac_dzis(self):
-        data_dzis = date.today()
-        prev_miesiac = data_dzis.month - 1 if data_dzis.month > 1 else 12
-        prev_rok = data_dzis.year if data_dzis.month > 1 else data_dzis.year - 1
-        data_miesiac = "%s-%s-%s" % (prev_rok,prev_miesiac,"1")
-        print(data_miesiac)
-        return data_miesiac
-
-    def folder_istnieje(self):
-        folder = self.ui.ed_sciezka_dane.text().strip()
-        if not folder:
-            QMessageBox.critical(self, 'Error', 'Nie wybrano lokalizacji pliku')
-            self.ui.ed_sciezka_dane.setFocus()
-            return False
-
-        if not os.path.exists(folder):
-            QMessageBox.critical(self, 'Error', 'Folder nie istnieje. Sprawdź lokalizację pliku')
-            self.ui.ed_sciezka_dane.setFocus()
-            return False
-        return True
 
     def open_file_dialog(self):
         # Otwieranie dialogu wyboru pliku
@@ -78,72 +46,90 @@ class MainWindow_bledy_mag(QWidget):
 
         lista_wpisow = []
 
-        #czytamy wszystkie kolumny i wiersze ze wskazanego pliku
+        # czytamy wszystkie kolumny i wiersze ze wskazanego pliku
         for row in sheet.iter_rows(min_row=2, min_col=1, max_col=5, values_only=True):
-            #sprawdzamy czy wiersz nie jest pusty (zakładając że pusty wiersz ma wszystkie kolumny o wartosci None i kończy zestawienie)
+            # sprawdzamy czy wiersz nie jest pusty (zakładając że pusty wiersz ma wszystkie kolumny o wartosci None i kończy zestawienie)
             if any(cell is not None for cell in row):
-                lista_wpisow.append([row[1],row[3],row[4],data_miesiac,teraz])
+                lista_wpisow.append([row[1], row[3], row[4], data_miesiac, teraz])
             else:
                 break
 
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
 
         for row in lista_wpisow:
-            insert_data = "INSERT INTO bledy_mag VALUES (NULL,'%s','%s','%s','%s','%s');" % (row[0],row[1],row[2],row[3],row[4])
+            insert_data = "INSERT INTO bledy_mag VALUES (NULL,'%s','%s','%s','%s','%s');" % (
+            row[0], row[1], row[2], row[3], row[4])
             db.execute_query(connection, insert_data)
 
-        self.wyszukaj_dane()
+        self.load_data_from_database()
 
-    def wyszukaj_dane(self):
-        miestac_roboczy = dodatki.data_miesiac_dzis()
-        print('miesiac',miestac_roboczy)
-        select_data = "SELECT * FROM `bledy_mag` WHERE miesiac = '%s';" % (miestac_roboczy) #(miestac_roboczy)
-        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-        results = db.read_query(connection, select_data)
+    def load_data_from_database(self):
+        try:
+            miesiac_roboczy = dodatki.data_miesiac_dzis()
+            select_data = "SELECT * FROM `bledy_mag` WHERE miesiac = '{0}';".format(miesiac_roboczy)
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+            results = db.read_query(connection, select_data)
 
-        if not results:
-            print('wynik ZLE')
-            self.clear_table()
-            self.naglowki_tabeli()
-        else:
-            print('wynik OK')
-            self.naglowki_tabeli()
-            self.pokaz_dane(results)
-        connection.close()
+            self.ui.tab_dane.setColumnCount(5)  # Zmień na liczbę kolumn w twojej tabeli
+            self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
+            self.ui.tab_dane.setHorizontalHeaderLabels([
+                'Nr akt',
+                'Bledy zewnętrzne',
+                'Bledy wewnętrzne',
+                'Miesiac',
+                'Data dodania'
+            ])
 
-    def clear_table(self):
-        # Wyczyść zawartość tabeli
-        self.ui.tab_dane.clearContents()
-        self.ui.tab_dane.setRowCount(0)
+            # Ustawianie liczby wierszy na podstawie danych z bazy
+            self.ui.tab_dane.setRowCount(len(results))
 
-    def naglowki_tabeli(self):
-        self.ui.tab_dane.setColumnCount(5)  # Zmień na liczbę kolumn w twojej tabeli
-        self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
-        self.ui.tab_dane.setHorizontalHeaderLabels(['Nr akt', 'Bledy zewnętrzne', 'Bledy wewnętrzne', 'Miesiac', 'Data dodania'])
+            # Wypełnianie tabeli danymi
+            for row_idx, row_data in enumerate(results):
+                # Przechowujemy id każdego wiersza
+                for col_idx, value in enumerate(row_data[1:]):  # Pomijamy id
+                    item = QTableWidgetItem(str(value))
+                    if col_idx == 0 or col_idx == 3 or col_idx == 4:  # Zablokowanie edycji dla kolumny "nazwa"
+                        item.setFlags(item.flags() & ~Qt.ItemIsEditable)  # Usuwamy flagę edytowalności
+                    else:
+                        item.setFlags(item.flags() | Qt.ItemIsEditable)  # Ustawienie komórek jako edytowalne
+                    self.ui.tab_dane.setItem(row_idx, col_idx, item)
 
-    def pokaz_dane(self, rows):
-        # Column count
-        if int(len(rows[0])) > 0:
-            self.ui.tab_dane.setColumnCount(int(len(rows[0])) - 1)
+            # Przechowywanie id wierszy
+            self.row_ids = [row_data[0] for row_data in results]
+            print(row_data[0] for row_data in results)
 
-        # Row count
-        self.ui.tab_dane.setRowCount(int(len(rows)))
+        except db.Error as e:
+            print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
 
-        wiersz = 0
-        for wynik in rows:
-            self.ui.tab_dane.setItem(wiersz, 0, QTableWidgetItem(str(wynik[1])))
-            self.ui.tab_dane.setItem(wiersz, 1, QTableWidgetItem(str(wynik[2])))
-            self.ui.tab_dane.setItem(wiersz, 2, QTableWidgetItem(str(wynik[3])))
-            self.ui.tab_dane.setItem(wiersz, 3, QTableWidgetItem(str(wynik[4])))
-            self.ui.tab_dane.setItem(wiersz, 4, QTableWidgetItem(str(wynik[5])))
-            wiersz += 1
+    def update_database(self, record_id, col, new_value):
+        """Funkcja do aktualizacji konkretnej komórki w bazie danych."""
+        try:
+            # Mapowanie indeksu kolumny na nazwę kolumny w bazie
+            column_names = ["nr_akt", "bledy_zew", "bledy_wew"]
+            column_name = column_names[col]
 
-        self.ui.tab_dane.horizontalHeader().setStretchLastSection(True)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+            # Aktualizacja w bazie danych
+            sql_query = f"UPDATE bledy_mag SET {column_name} = %s WHERE id = %s"
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+            db.execute_query_virable(connection,sql_query,(new_value, record_id))
+            #self.cursor.execute(sql_query, (new_value, record_id))
+            #self.db_connection.commit()
+            print(f"Zaktualizowano rekord o id {record_id}, {column_name} = {new_value}")
+
+        except db.Error as e:
+            print(f"Błąd zapisu do bazy danych: {e}")
+
+    def on_item_changed(self, item):
+        """Funkcja wywoływana przy każdej zmianie komórki."""
+        row = item.row()
+        col = item.column()
+        new_value = item.text()
+
+        # Pobranie id rekordu dla zmienionego wiersza
+        record_id = self.row_ids[row]
+
+        # Zapis zmienionych danych do bazy
+        self.update_database(record_id, col, new_value)
 
     def szablon(self):
         wb = openpyxl.Workbook()

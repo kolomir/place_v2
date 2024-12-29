@@ -13,61 +13,43 @@ class MainWindow_wclinia(QWidget):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
+        self.load_data_from_database()
         self.ui.btn_zapisz.clicked.connect(self.otworz_okno_wcFormDodaj)
-        #self.ui.btn_kasuj.clicked.connect(self.kasuj_wiersz)
         self.ui.tab_dane.doubleClicked.connect(self.otworz_okno_wcFormEdytuj)
-        QApplication.instance().focusChanged.connect(self.wyszukaj_dane)
-        self.wyszukaj_dane()
+        QApplication.instance().focusChanged.connect(self.load_data_from_database)
 
-    def wyszukaj_dane(self):
-        select_data = "select gl.id, gr.nazwa, l.nazwa, gl.aktywny from gniazdo_linia gl left join linie l on l.id = gl.id_linia left join gniazda_robocze gr on gr.id = gl.id_gniazdo Order by gr.nazwa, l.nazwa;"
-        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-        results = db.read_query(connection, select_data)
+    def load_data_from_database(self):
+        """Funkcja do załadowania danych z bazy do QTableWidget."""
+        try:
+            select_data = "select gl.id, gr.nazwa, l.nazwa, gl.aktywny from gniazdo_linia gl left join linie l on l.id = gl.id_linia left join gniazda_robocze gr on gr.id = gl.id_gniazdo Order by gr.nazwa, l.nazwa;"
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+            results = db.read_query(connection, select_data)
 
-        if not results:
-            self.clear_table()
-            self.naglowki_tabeli()
-        else:
-            self.naglowki_tabeli()
-            self.pokaz_dane(results)
-        connection.close()
+            self.ui.tab_dane.setColumnCount(3)  # Zmień na liczbę kolumn w twojej tabeli
+            self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
+            self.ui.tab_dane.setHorizontalHeaderLabels([
+                'Gniazdo',
+                'Linia',
+                'Aktywny'
+            ])
 
-    def pokaz_dane(self, rows):
-        # Column count
-        if int(len(rows[0])) > 0:
-            self.ui.tab_dane.setColumnCount(int(len(rows[0])))
+            # Ustawianie liczby wierszy na podstawie danych z bazy
+            self.ui.tab_dane.setRowCount(len(results))
 
-        # Row count
-        self.ui.tab_dane.setRowCount(int(len(rows)))
 
-        wiersz = 0
-        for wynik in rows:
-            self.ui.tab_dane.setItem(wiersz, 0, QTableWidgetItem(str(wynik[0])))
-            self.ui.tab_dane.setItem(wiersz, 1, QTableWidgetItem(str(wynik[1])))
-            self.ui.tab_dane.setItem(wiersz, 2, QTableWidgetItem(str(wynik[2])))
-            self.ui.tab_dane.setItem(wiersz, 3, QTableWidgetItem(str(wynik[3])))
-            wiersz += 1
+            # Wypełnianie tabeli danymi
+            for row_idx, row_data in enumerate(results):
+                # Przechowujemy id każdego wiersza
+                for col_idx, value in enumerate(row_data[1:]):  # Pomijamy id
+                    item = QTableWidgetItem(str(value))
+                    self.ui.tab_dane.setItem(row_idx, col_idx, item)
 
-        self.ui.tab_dane.horizontalHeader().setStretchLastSection(True)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.ui.tab_dane.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+            # Przechowywanie id wierszy
+            self.row_ids = [row_data[0] for row_data in results]
+            #print(row_data[0] for row_data in results)
 
-    def naglowki_tabeli(self):
-        self.ui.tab_dane.setColumnCount(4)  # Zmień na liczbę kolumn w twojej tabeli
-        self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
-        self.ui.tab_dane.setHorizontalHeaderLabels([
-            'ID',
-            'Gniazdo',
-            'Linia',
-            'Aktywny'
-        ])
-
-    def clear_table(self):
-        # Wyczyść zawartość tabeli
-        self.ui.tab_dane.clearContents()
-        self.ui.tab_dane.setRowCount(0)
+        except db.Error as e:
+            print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
 
     def otworz_okno_wcFormDodaj(self):
         self.okno_wcliniaFormDodaj = MainWindow_wcliniaDodaj()
