@@ -7,6 +7,21 @@ import db
 from progiProduktywnosciDodaj import MainWindow_progiProduktywnosciDodaj
 from progiProduktywnosciEdytuj import MainWindow_progiProduktywnosciEdytuj
 
+# klasa która pozwala na poprawne sortowanie danych w kolumnach numerycznych.
+# Normalnie dane układają się w sposób 1,10,11,2,23,245
+# Po zastosowaniu klasy dane posortują się w sposób 1,2,10,11,23,245
+class NumericTableWidgetItem(QTableWidgetItem):
+    def __lt__(self, other):
+        # Sprawdzamy, czy drugi element też jest instancją QTableWidgetItem
+        if isinstance(other, QTableWidgetItem):
+            try:
+                # Porównujemy jako liczby
+                return float(self.text()) < float(other.text())
+            except ValueError:
+                # W przypadku błędu porównujemy jako tekst
+                return self.text() < other.text()
+        return super().__lt__(other)
+
 class MainWindow_progiProduktywnosci(QWidget):
     def __init__(self):
         super().__init__()
@@ -25,6 +40,8 @@ class MainWindow_progiProduktywnosci(QWidget):
             select_data = "select p.id, r.ranga, p.pulap1, p.kwota1, p.pulap2, p.kwota2, p.pulap3, p.kwota3, p.aktywny, p.data_dodania from progi_prod p left join ranga r on r.id = p.id_ranga order by r.ranga ASC;"
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             results = db.read_query(connection, select_data)
+
+            self.ui.tab_dane.setSortingEnabled(True)
 
             self.ui.tab_dane.setColumnCount(9)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
@@ -47,7 +64,20 @@ class MainWindow_progiProduktywnosci(QWidget):
             for row_idx, row_data in enumerate(results):
                 # Przechowujemy id każdego wiersza
                 for col_idx, value in enumerate(row_data[1:]):  # Pomijamy id
-                    item = QTableWidgetItem(str(value))
+                    item = NumericTableWidgetItem(str(value))              # Użycie klasy soryującej dane numeryczne
+
+                    item.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+
+                    self.ui.tab_dane.setColumnWidth(0, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane.setColumnWidth(1, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane.setColumnWidth(2, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane.setColumnWidth(3, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane.setColumnWidth(4, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane.setColumnWidth(5, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane.setColumnWidth(6, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane.setColumnWidth(7, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane.setColumnWidth(8, 150)  # Stała szerokość: 150 pikseli
+
                     self.ui.tab_dane.setItem(row_idx, col_idx, item)
 
             # Przechowywanie id wierszy

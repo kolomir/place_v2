@@ -1,104 +1,74 @@
-from PyQt5.QtWidgets import QWidget, QTableWidgetItem,QHeaderView,QApplication
-from PyQt5.QtCore import pyqtSlot, Qt
+from PyQt5.QtWidgets import (
+    QApplication, QTableView, QVBoxLayout, QWidget, QLineEdit, QHBoxLayout, QHeaderView, QAbstractItemView
+)
+from PyQt5.QtCore import Qt, QSortFilterProxyModel, QAbstractTableModel
+from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
-from _kpi_mag_ui import Ui_Form
-import db, dodatki
-import sys
 
-from kpi_magDodaj import MainWindow_kpi_magDodaj
-
-class MainWindow_kpi_mag(QWidget):
+class FilterableTable(QWidget):
     def __init__(self):
         super().__init__()
-        self.ui = Ui_Form()
-        self.ui.setupUi(self)
+        self.setWindowTitle("Filtrowanie w nagłówkach")
+        self.resize(800, 400)
 
-        self.load_data_from_database()
-        self.ui.tab_dane.itemChanged.connect(self.on_item_changed)
-        self.ui.btn_importuj.clicked.connect(self.otworz_okno_kpi_magDodaj)
+        # Model danych
+        self.model = QStandardItemModel(10, 3)  # 10 wierszy, 3 kolumny
+        self.model.setHorizontalHeaderLabels(["Kolumna 1", "Kolumna 2", "Kolumna 3"])
+        dane = [
+            ["Jabłko", "123", "A"],
+            ["Gruszka", "45", "B"],
+            ["Banan", "789", "C"],
+            ["Jabłko", "567", "A"],
+            ["Gruszka", "234", "C"],
+            ["Banan", "12", "B"],
+            ["Ananas", "890", "C"],
+            ["Winogrono", "678", "A"],
+            ["Melon", "345", "B"],
+            ["Pomarańcza", "456", "A"],
+        ]
+        for row, row_data in enumerate(dane):
+            for col, value in enumerate(row_data):
+                self.model.setItem(row, col, QStandardItem(value))
 
-    def load_data_from_database(self):
-        """Funkcja do załadowania danych z bazy do QTableWidget."""
-        try:
-            miestac_roboczy = dodatki.data_miesiac_dzis()
-            select_data = "select * from kpi_mag where miesiac = '%s';" % (miestac_roboczy)
-            #select_data = "select * from kpi_mag"
-            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-            results = db.read_query(connection, select_data)
+        # Proxy model do filtrowania danych
+        self.proxy_model = QSortFilterProxyModel(self)
+        self.proxy_model.setSourceModel(self.model)
+        self.proxy_model.setFilterCaseSensitivity(Qt.CaseInsensitive)  # Ignorujemy wielkość liter
 
-            self.ui.tab_dane.setColumnCount(8)  # Zmień na liczbę kolumn w twojej tabeli
-            self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
-            self.ui.tab_dane.setHorizontalHeaderLabels([
-                'Delivery',
-                'Reklamacje',
-                'DP po initial',
-                'Zgodnosc',
-                'Zapasy',
-                'Raportowanie',
-                'Miesiac',
-                'Data dodania'
-            ])
+        # Tabela
+        self.table = QTableView()
+        self.table.setModel(self.proxy_model)
+        self.table.setSortingEnabled(True)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
 
-            # Ustawianie liczby wierszy na podstawie danych z bazy
-            self.ui.tab_dane.setRowCount(len(results))
+        # Wiersz z filtrami
+        self.add_filter_row()
 
+        # Układ główny
+        layout = QVBoxLayout()
+        layout.addWidget(self.filter_row)
+        layout.addWidget(self.table)
+        self.setLayout(layout)
 
-            # Wypełnianie tabeli danymi
-            for row_idx, row_data in enumerate(results):
-                # Przechowujemy id każdego wiersza
-                for col_idx, value in enumerate(row_data[1:]):  # Pomijamy id
-                    item = QTableWidgetItem(str(value))
-                    if col_idx == 6 or col_idx == 7:  # Zablokowanie edycji dla kolumny "nazwa"
-                        item.setFlags(item.flags() & ~Qt.ItemIsEditable)  # Usuwamy flagę edytowalności
-                    else:
-                        item.setFlags(item.flags() | Qt.ItemIsEditable)  # Ustawienie komórek jako edytowalne
-                    print(row_idx, col_idx, item.text())
-                    self.ui.tab_dane.setItem(row_idx, col_idx, item)
+    def add_filter_row(self):
+        # Tworzymy układ poziomy na filtry
+        self.filter_row = QWidget()
+        filter_layout = QHBoxLayout()
+        filter_layout.setContentsMargins(0, 0, 0, 0)
+        self.filter_inputs = []
 
-            # Przechowywanie id wierszy
-            self.row_ids = [row_data[0] for row_data in results]
-            print(row_data[0] for row_data in results)
+        for col in range(self.model.columnCount()):
+            filter_input = QLineEdit()
+            filter_input.setPlaceholderText(f"Filtruj kolumnę {col + 1}")
+            filter_input.textChanged.connect(lambda text, column=col: self.proxy_model.setFilterKeyColumn(column) or self.proxy_model.setFilterRegularExpression(text))
+            filter_layout.addWidget(filter_input)
+            self.filter_inputs.append(filter_input)
 
-        except db.Error as e:
-            print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
-
-    def on_item_changed(self, item):
-        """Funkcja wywoływana przy każdej zmianie komórki."""
-        row = item.row()
-        col = item.column()
-        new_value = item.text()
-
-        # Pobranie id rekordu dla zmienionego wiersza
-        record_id = self.row_ids[row]
-
-        # Zapis zmienionych danych do bazy
-        self.update_database(record_id, col, new_value)
-
-    def update_database(self, record_id, col, new_value):
-        """Funkcja do aktualizacji konkretnej komórki w bazie danych."""
-        try:
-            # Mapowanie indeksu kolumny na nazwę kolumny w bazie
-            column_names = ["delivery", "reklamacje", "dp_init", "zgodnosc", "zapasy", "raportowanie"]
-            column_name = column_names[col]
-
-            # Aktualizacja w bazie danych
-            sql_query = f"UPDATE kpi_mag SET {column_name} = %s WHERE id = %s"
-            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-            db.execute_query_virable(connection,sql_query,(new_value, record_id))
-            #self.cursor.execute(sql_query, (new_value, record_id))
-            #self.db_connection.commit()
-            print(f"Zaktualizowano rekord o id {record_id}, {column_name} = {new_value}")
-
-        except db.Error as e:
-            print(f"Błąd zapisu do bazy danych: {e}")
-
-    def otworz_okno_kpi_magDodaj(self):
-        self.okno_kpi_magDodaj = MainWindow_kpi_magDodaj()
-        self.okno_kpi_magDodaj.show()
+        self.filter_row.setLayout(filter_layout)
 
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    editor = MainWindow_kpi_mag()
-    editor.show()
-    sys.exit(app.exec_())
+app = QApplication([])
+window = FilterableTable()
+window.show()
+app.exec_()

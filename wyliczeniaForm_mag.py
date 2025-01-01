@@ -1,4 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QTableWidgetItem,QHeaderView
+from PyQt5.QtCore import Qt
 import configparser
 import openpyxl
 #import sys
@@ -8,6 +9,20 @@ from datetime import date, datetime
 from _wyliczeniaForm_mag_ui import Ui_Form
 import db, dodatki
 
+# klasa która pozwala na poprawne sortowanie danych w kolumnach numerycznych.
+# Normalnie dane układają się w sposób 1,10,11,2,23,245
+# Po zastosowaniu klasy dane posortują się w sposób 1,2,10,11,23,245
+class NumericTableWidgetItem(QTableWidgetItem):
+    def __lt__(self, other):
+        # Sprawdzamy, czy drugi element też jest instancją QTableWidgetItem
+        if isinstance(other, QTableWidgetItem):
+            try:
+                # Porównujemy jako liczby
+                return float(self.text()) < float(other.text())
+            except ValueError:
+                # W przypadku błędu porównujemy jako tekst
+                return self.text() < other.text()
+        return super().__lt__(other)
 
 class MainWindow_wyliczeniaForm_mag(QWidget):
     def __init__(self):
@@ -100,6 +115,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                     wsp = 1
                 lista.append([dane[0], dane[1], dane[2], dane[3], suma, wsp])
 
+            self.ui.tab_dane_nieobecnosci.setSortingEnabled(True)
+
             self.ui.tab_dane_nieobecnosci.setColumnCount(5)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane_nieobecnosci.setRowCount(0)  # Ustawienie liczby wierszy na 0
             self.ui.tab_dane_nieobecnosci.setHorizontalHeaderLabels([
@@ -117,7 +134,16 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
             for row_idx, row_data in enumerate(lista):
                 # Przechowujemy id każdego wiersza
                 for col_idx, value in enumerate(row_data[1:]):  # Pomijamy id
-                    item = QTableWidgetItem(str(value))
+                    item = NumericTableWidgetItem(str(value))              # Użycie klasy soryującej dane numeryczne
+
+                    item.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+
+                    self.ui.tab_dane_nieobecnosci.setColumnWidth(0, 200)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_nieobecnosci.setColumnWidth(1, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_nieobecnosci.setColumnWidth(2, 200)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_nieobecnosci.setColumnWidth(3, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_nieobecnosci.setColumnWidth(4, 75)  # Stała szerokość: 150 pikseli
+
                     self.ui.tab_dane_nieobecnosci.setItem(row_idx, col_idx, item)
 
         except db.Error as e:
@@ -424,6 +450,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
             self.ui.lab_sumaWydania.setText(str(suma_kwot))
             self.ui.lab_sumaWydania2.setText(str(suma_kwot))
 
+            self.ui.tab_wyliczenia_wydania.setSortingEnabled(True)
 
             self.ui.tab_wyliczenia_wydania.setColumnCount(8)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_wyliczenia_wydania.setRowCount(0)  # Ustawienie liczby wierszy na 0
@@ -446,9 +473,22 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
             for row_idx, row_data in enumerate(lista):
                 # Przechowujemy id każdego wiersza
                 for col_idx, value in enumerate(row_data[0:]):  # Pomijamy id
-                    item = QTableWidgetItem(str(value))
+                    item = NumericTableWidgetItem(str(value))              # Użycie klasy soryującej dane numeryczne
+
+                    item.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+
+                    self.ui.tab_wyliczenia_wydania.setColumnWidth(0, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_wyliczenia_wydania.setColumnWidth(1, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_wyliczenia_wydania.setColumnWidth(2, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_wyliczenia_wydania.setColumnWidth(3, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_wyliczenia_wydania.setColumnWidth(4, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_wyliczenia_wydania.setColumnWidth(5, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_wyliczenia_wydania.setColumnWidth(6, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_wyliczenia_wydania.setColumnWidth(7, 75)  # Stała szerokość: 150 pikseli
+
                     self.ui.tab_wyliczenia_wydania.setItem(row_idx, col_idx, item)
 
+            self.ui.tab_dane_wydania.setSortingEnabled(True)
 
             self.ui.tab_dane_wydania.setColumnCount(9)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane_wydania.setRowCount(0)  # Ustawienie liczby wierszy na 0
@@ -471,7 +511,20 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
             for row_idx, row_data in enumerate(self.lista_pracownik_wydania):
                 # Przechowujemy id każdego wiersza
                 for col_idx, value in enumerate(row_data[0:]):  # Pomijamy id
-                    item = QTableWidgetItem(str(value))
+                    item = NumericTableWidgetItem(str(value))              # Użycie klasy soryującej dane numeryczne
+
+                    item.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+
+                    self.ui.tab_dane_wydania.setColumnWidth(0, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_wydania.setColumnWidth(1, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_wydania.setColumnWidth(2, 200)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_wydania.setColumnWidth(3, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_wydania.setColumnWidth(4, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_wydania.setColumnWidth(5, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_wydania.setColumnWidth(6, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_wydania.setColumnWidth(7, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_wydania.setColumnWidth(8, 75)  # Stała szerokość: 150 pikseli
+
                     self.ui.tab_dane_wydania.setItem(row_idx, col_idx, item)
 
         except db.Error as e:
@@ -571,6 +624,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                 self.ui.lab_sumaPrzyjecia.setText(str(suma_kwot))
                 self.ui.lab_sumaPrzyjecia2.setText(str(suma_kwot))
 
+            self.ui.tab_dane_przyjecia.setSortingEnabled(True)
+
             self.ui.tab_dane_przyjecia.setColumnCount(9)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane_przyjecia.setRowCount(0)  # Ustawienie liczby wierszy na 0
             self.ui.tab_dane_przyjecia.setHorizontalHeaderLabels([
@@ -592,7 +647,20 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
             for row_idx, row_data in enumerate(self.lista_pracownik_przyjecia):
                 # Przechowujemy id każdego wiersza
                 for col_idx, value in enumerate(row_data[0:]):  # Pomijamy id
-                    item = QTableWidgetItem(str(value))
+                    item = NumericTableWidgetItem(str(value))              # Użycie klasy soryującej dane numeryczne
+
+                    item.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+
+                    self.ui.tab_dane_przyjecia.setColumnWidth(0, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_przyjecia.setColumnWidth(1, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_przyjecia.setColumnWidth(2, 200)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_przyjecia.setColumnWidth(3, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_przyjecia.setColumnWidth(4, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_przyjecia.setColumnWidth(5, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_przyjecia.setColumnWidth(6, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_przyjecia.setColumnWidth(7, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_przyjecia.setColumnWidth(8, 75)  # Stała szerokość: 150 pikseli
+
                     self.ui.tab_dane_przyjecia.setItem(row_idx, col_idx, item)
 
         except db.Error as e:
@@ -697,6 +765,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                 self.ui.lab_sumaTransport_BS.setText(str(suma_kwot))
                 self.ui.lab_sumaTransport_BS2.setText(str(suma_kwot))
 
+            self.ui.tab_dane_transport_bs.setSortingEnabled(True)
+
             self.ui.tab_dane_transport_bs.setColumnCount(10)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane_transport_bs.setRowCount(0)  # Ustawienie liczby wierszy na 0
             self.ui.tab_dane_transport_bs.setHorizontalHeaderLabels([
@@ -719,7 +789,21 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
             for row_idx, row_data in enumerate(self.lista_pracownik_transport_bs):
                 # Przechowujemy id każdego wiersza
                 for col_idx, value in enumerate(row_data[0:]):  # Pomijamy id
-                    item = QTableWidgetItem(str(value))
+                    item = NumericTableWidgetItem(str(value))              # Użycie klasy soryującej dane numeryczne
+
+                    item.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+
+                    self.ui.tab_dane_transport_bs.setColumnWidth(0, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transport_bs.setColumnWidth(1, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transport_bs.setColumnWidth(2, 200)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transport_bs.setColumnWidth(3, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transport_bs.setColumnWidth(4, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transport_bs.setColumnWidth(5, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transport_bs.setColumnWidth(6, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transport_bs.setColumnWidth(7, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transport_bs.setColumnWidth(8, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transport_bs.setColumnWidth(9, 75)  # Stała szerokość: 150 pikseli
+
                     self.ui.tab_dane_transport_bs.setItem(row_idx, col_idx, item)
 
         except db.Error as e:
@@ -820,6 +904,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                 self.ui.lab_sumaTransport_Cz.setText(str(suma_kwot))
                 self.ui.lab_sumaTransport_Cz2.setText(str(suma_kwot))
 
+            self.ui.tab_dane_transport_Cz.setSortingEnabled(True)
+
             self.ui.tab_dane_transport_Cz.setColumnCount(11)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane_transport_Cz.setRowCount(0)  # Ustawienie liczby wierszy na 0
             self.ui.tab_dane_transport_Cz.setHorizontalHeaderLabels([
@@ -843,7 +929,22 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
             for row_idx, row_data in enumerate(self.lista_pracownik_transport_cz):
                 # Przechowujemy id każdego wiersza
                 for col_idx, value in enumerate(row_data[0:]):  # Pomijamy id
-                    item = QTableWidgetItem(str(value))
+                    item = NumericTableWidgetItem(str(value))              # Użycie klasy soryującej dane numeryczne
+
+                    item.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+
+                    self.ui.tab_dane_transport_Cz.setColumnWidth(0, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transport_Cz.setColumnWidth(1, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transport_Cz.setColumnWidth(2, 200)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transport_Cz.setColumnWidth(3, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transport_Cz.setColumnWidth(4, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transport_Cz.setColumnWidth(5, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transport_Cz.setColumnWidth(6, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transport_Cz.setColumnWidth(7, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transport_Cz.setColumnWidth(8, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transport_Cz.setColumnWidth(9, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transport_Cz.setColumnWidth(10, 75)  # Stała szerokość: 150 pikseli
+
                     self.ui.tab_dane_transport_Cz.setItem(row_idx, col_idx, item)
 
         except db.Error as e:
@@ -941,6 +1042,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                 self.ui.lab_sumaWysylka.setText(str(suma_kwot))
                 self.ui.lab_sumaWysylka2.setText(str(suma_kwot))
 
+            self.ui.tab_dane_wysylka.setSortingEnabled(True)
+
             self.ui.tab_dane_wysylka.setColumnCount(9)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane_wysylka.setRowCount(0)  # Ustawienie liczby wierszy na 0
             self.ui.tab_dane_wysylka.setHorizontalHeaderLabels([
@@ -962,7 +1065,20 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
             for row_idx, row_data in enumerate(self.lista_pracownik_wysylka):
                 # Przechowujemy id każdego wiersza
                 for col_idx, value in enumerate(row_data[0:]):  # Pomijamy id
-                    item = QTableWidgetItem(str(value))
+                    item = NumericTableWidgetItem(str(value))              # Użycie klasy soryującej dane numeryczne
+
+                    item.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+
+                    self.ui.tab_dane_wysylka.setColumnWidth(0, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_wysylka.setColumnWidth(1, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_wysylka.setColumnWidth(2, 200)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_wysylka.setColumnWidth(3, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_wysylka.setColumnWidth(4, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_wysylka.setColumnWidth(5, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_wysylka.setColumnWidth(6, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_wysylka.setColumnWidth(7, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_wysylka.setColumnWidth(8, 75)  # Stała szerokość: 150 pikseli
+
                     self.ui.tab_dane_wysylka.setItem(row_idx, col_idx, item)
 
         except db.Error as e:

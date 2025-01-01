@@ -69,3 +69,32 @@ def read_query(connection, query):
 
 def pisz_error():
     return mysql.connector.Error()
+
+# Funkcja wywołująca procedurę
+def wywolaj_procedure(connection, procedure):
+    cursor = connection.cursor()
+    result = None
+
+    try:
+        cursor.callproc(procedure)
+        rows = []
+        for result in cursor.stored_results():
+            rows.append(result.fetchall())
+        #result = cursor.stored_results()
+        return rows
+
+        #for result in cursor.stored_results():
+        #    rows = result.fetchall()
+        #    for row in rows:
+        #        print(row)
+    except Error as err:
+        print(f"Error: '{err}'")
+    except IndexError as err:
+        print(f"Błąd indeksowania listy: {err}")
+    except Exception as err:
+        print(f"Nieoczekiwany błąd: {err}")
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+            print("Połączenie z bazą danych zostało zamknięte.")

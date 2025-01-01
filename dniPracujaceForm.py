@@ -8,6 +8,18 @@ from datetime import date, datetime
 
 from dniPracujaceFormDodaj import MainWindow_dniPracujaceFormDodaj
 
+class NumericTableWidgetItem(QTableWidgetItem):
+    def __lt__(self, other):
+        # Sprawdzamy, czy drugi element też jest instancją QTableWidgetItem
+        if isinstance(other, QTableWidgetItem):
+            try:
+                # Porównujemy jako liczby
+                return float(self.text()) < float(other.text())
+            except ValueError:
+                # W przypadku błędu porównujemy jako tekst
+                return self.text() < other.text()
+        return super().__lt__(other)
+
 class MainWindow_dniPracujaceForm(QWidget):
     def __init__(self):
         super().__init__()
@@ -26,6 +38,8 @@ class MainWindow_dniPracujaceForm(QWidget):
             select_data = "select d.id, d.miesiac, d.godziny_pracy, d.dni_pracy, d.dni_wolne from dni_pracujace_w_roku d WHERE rok = %s;" % (combo_rok_text)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             results = db.read_query(connection, select_data)
+
+            self.ui.tab_dane.setSortingEnabled(True)
 
             self.ui.tab_dane.setColumnCount(5)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
@@ -50,13 +64,21 @@ class MainWindow_dniPracujaceForm(QWidget):
             for row_idx, row_data in enumerate(lista):
                 # Przechowujemy id każdego wiersza
                 for col_idx, value in enumerate(row_data):
-                    item = QTableWidgetItem(str(value))
-                    print(row_idx, col_idx, item.text())
+                    item = NumericTableWidgetItem(str(value))              # Użycie klasy soryującej dane numeryczne
+
+                    item.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+
+                    self.ui.tab_dane.setColumnWidth(0, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane.setColumnWidth(1, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane.setColumnWidth(2, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane.setColumnWidth(3, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane.setColumnWidth(4, 75)  # Stała szerokość: 150 pikseli
+
                     self.ui.tab_dane.setItem(row_idx, col_idx, item)
 
             # Przechowywanie id wierszy
             self.row_ids = [row_data[0] for row_data in lista]
-            print(row_data[0] for row_data in lista)
+            #print(row_data[0] for row_data in lista)
 
         except db.Error as e:
             print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
@@ -72,6 +94,7 @@ class MainWindow_dniPracujaceForm(QWidget):
         # Obliczenie przesuniętego miesiąca i roku
         miesiac = dzisiaj.month - 1
         rok = dzisiaj.year
+        dzien = 1
 
         # Obsługa zmiany roku, jeśli przesunięcie powoduje przejście do stycznia
         if miesiac < 1:
@@ -79,7 +102,7 @@ class MainWindow_dniPracujaceForm(QWidget):
             rok -= 1
 
         # Tworzenie nowej daty z przesuniętym miesiącem
-        przesunieta_data = dzisiaj.replace(year=rok, month=miesiac)
+        przesunieta_data = dzisiaj.replace(year=rok, month=miesiac, day=dzien)
 
         # Wyświetlenie roku z przesuniętej daty
         ten_rok = przesunieta_data.year
