@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QFileDialog, QTableWidgetItem
+from PyQt5.QtWidgets import QWidget, QFileDialog, QTableWidgetItem, QMessageBox
 from PyQt5.QtCore import Qt
 import configparser
 import openpyxl
@@ -182,3 +182,33 @@ class MainWindow_direct_prod(QWidget):
     def otworz_okno_plik_pomoc_direct(self):
         self.okno_plik_pomoc_direct = MainWindow_pomoc_direct()
         self.okno_plik_pomoc_direct.show()
+
+    def folder_istnieje(self):
+        folder = self.ui.ed_sciezka_dane.text().strip()
+        if not folder:
+            QMessageBox.critical(self, 'Error', 'Nie wybrano lokalizacji pliku')
+            self.ui.ed_sciezka_dane.setFocus()
+            return False
+
+        if not os.path.exists(folder):
+            QMessageBox.critical(self, 'Error', 'Folder nie istnieje. Sprawdź lokalizację pliku')
+            self.ui.ed_sciezka_dane.setFocus()
+            return False
+        return True
+
+    def sprawdz_wpisy(self):
+        miestac_roboczy = dodatki.data_miesiac_dzis()
+        select_data = "SELECT * FROM `direct` WHERE miesiac = '%s';" % (miestac_roboczy)  # (miestac_roboczy)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, select_data)
+        connection.close()
+
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        if results:
+            for x in results:
+                delete_data = "delete from direct where id = '%s' and miesiac = '%s';" % (x[0],miestac_roboczy)
+                print('Do skasowania:',delete_data)
+                db.execute_query(connection, delete_data)
+        else:
+            print('--Brak wpisów jeszcze--')
+        connection.close()

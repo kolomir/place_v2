@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QTableWidgetItem, QFileDialog
+from PyQt5.QtWidgets import QWidget, QTableWidgetItem, QFileDialog, QMessageBox
 from PyQt5.QtCore import Qt
 import configparser
 import openpyxl
@@ -34,6 +34,7 @@ class MainWindow_bledy_mag(QWidget):
         self.ui.tab_dane.itemChanged.connect(self.on_item_changed)
         self.ui.btn_przegladaj.clicked.connect(self.open_file_dialog)
         self.ui.btn_szablon.clicked.connect(self.szablon)
+        self.ui.btn_importuj.clicked.connect(self.czytaj_dane)
 
     def open_file_dialog(self):
         # Otwieranie dialogu wyboru pliku
@@ -194,3 +195,16 @@ class MainWindow_bledy_mag(QWidget):
             print(f"Plik zapisano: {file_path}")
         else:
             print("Zapis pliku anulowany")
+
+    def folder_istnieje(self):
+        folder = self.ui.ed_sciezka_dane.text().strip()
+        if not folder:
+            QMessageBox.critical(self, 'Error', 'Nie wybrano lokalizacji pliku')
+            self.ui.ed_sciezka_dane.setFocus()
+            return False
+
+        if not os.path.exists(folder):
+            QMessageBox.critical(self, 'Error', 'Folder nie istnieje. Sprawdź lokalizację pliku')
+            self.ui.ed_sciezka_dane.setFocus()
+            return False
+        return True

@@ -32,6 +32,8 @@ class MainWindow_pracownicy(QWidget):
 
         self.load_data_from_database()
         self.ui.btn_pomoc.clicked.connect(self.otworz_okno_plik_pomoc_pracownicy)
+        self.ui.btn_przegladaj.clicked.connect(self.open_file_dialog)
+        self.ui.btn_importuj.clicked.connect(self.czytaj_dane)
 
     def load_data_from_database(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""

@@ -31,6 +31,9 @@ class MainWindow_raportowanie_prod(QWidget):
         self.ui.setupUi(self)
 
         self.load_data_from_database()
+        self.ui.btn_przegladaj.clicked.connect(self.open_file_dialog)
+        self.ui.btn_importuj.clicked.connect(self.czytaj_dane)
+        self.ui.btn_foto.clicked.connect(self.otworz_okno_plik_pomoc_raportowanie_prod)
 
     def load_data_from_database(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
