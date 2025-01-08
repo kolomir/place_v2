@@ -4,8 +4,8 @@ from mysql.connector import Error
 host_name = 'localhost'
 user_name = 'root'
 password = ''
-#database_name = 'place_v2'
-database_name = 'place_v2_test'
+database_name = 'place_v2'
+#database_name = 'place_v2_test'
 
 def create_db_connection(host_name, username, user_password, db_name):
     connection = None

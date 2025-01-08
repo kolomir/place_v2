@@ -1873,7 +1873,7 @@ class MainWindow_wyliczeniaForm(QWidget):
                 nr_akt = dane_place[0]  # nr akt
                 kod = dane_place[1]  # kod
                 imie_i_nazwisko = dane_place[2]  # Imie i nazwisko
-                kwota = dane_place[15]  # kwota
+                kwota = dane_place[17]  # kwota
                 opis = 'produkcja'
                 dzial = 'prod'
 
@@ -1915,8 +1915,7 @@ class MainWindow_wyliczeniaForm(QWidget):
 
             for test in lista_place:
                 # print(test[0],test[1],test[2],test[3],test[4],test[5],test[6],test[7])
-                insert_data = "INSERT INTO eksport_danych VALUES (NULL,'%s','%s','%s','%s','%s','%s','%s','%s');" % (
-                test[0], test[1], test[2], test[3], test[4], test[5], test[6], test[7])
+                insert_data = "INSERT INTO eksport_danych VALUES (NULL,'%s','%s','%s','%s','%s','%s','%s','%s');" % (test[0], test[1], test[2], test[3], test[4], test[5], test[6], test[7])
                 db.execute_query(connection, insert_data)
 
             connection.close()
