@@ -271,16 +271,22 @@ class MainWindow_nieobecnosci(QWidget):
                 break
 
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-        lista_wpisow_notNone = [
-            tuple(0 if x is None else x for x in wiersz) for wiersz in lista_wpisow
-        ]
+        lista_wpisow_notNone = [tuple(0 if x is None else x for x in wiersz) for wiersz in lista_wpisow]
 
         for row in lista_wpisow_notNone:
+            #print(dane)
+            #row = [self.truncate_float(value) if isinstance(value, (int, float)) else value for value in dane]
             insert_data = "INSERT INTO nieobecnosci_prod VALUES (NULL,'%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',0,'%s','%s','%s');" % (row[0],row[1],row[2],int(row[3]),int(row[4]),int(row[5]),int(row[6]),int(row[7]),int(row[8]),int(row[9]),int(row[10]),int(row[11]),int(row[12]),int(row[13]),int(row[14]),int(row[15]),int(row[16]),int(row[17]),int(row[18]),row[19],row[20])
             #print(insert_data)
             db.execute_query(connection, insert_data)
 
         self.load_data_from_database()
+
+    def truncate_float(value):
+        try:
+            return math.floor(float(value))
+        except ValueError:
+            return value  # Jeśli to nie jest liczba, zwraca wartość oryginalną
 
     def folder_istnieje(self):
         folder = self.ui.ed_sciezka_dane.text().strip()
