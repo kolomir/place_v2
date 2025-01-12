@@ -28,6 +28,7 @@ class MainWindow_bledy(QWidget):
         self.ui.setupUi(self)
 
         self.load_data_from_database()
+        self.ui.tab_dane.itemChanged.connect(self.on_item_changed)
         self.ui.btn_przegladaj.clicked.connect(self.open_file_dialog)
         self.ui.btn_importuj.clicked.connect(self.czytaj_dane)
         self.ui.btn_szablon.clicked.connect(self.szablon)
@@ -74,12 +75,12 @@ class MainWindow_bledy(QWidget):
                     self.ui.tab_dane.setColumnWidth(2, 75)  # Stała szerokość: 150 pikseli
                     self.ui.tab_dane.setColumnWidth(3, 150)  # Stała szerokość: 150 pikseli
 
-                    print(row_idx, col_idx, item.text())
+                    #print(row_idx, col_idx, item.text())
                     self.ui.tab_dane.setItem(row_idx, col_idx, item)
 
             # Przechowywanie id wierszy
             self.row_ids = [row_data[0] for row_data in results]
-            print(row_data[0] for row_data in results)
+            #print(row_data[0] for row_data in results)
 
         except db.Error as e:
             print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
@@ -97,7 +98,7 @@ class MainWindow_bledy(QWidget):
             db.execute_query_virable(connection,sql_query,(new_value, record_id))
             #self.cursor.execute(sql_query, (new_value, record_id))
             #self.db_connection.commit()
-            print(f"Zaktualizowano rekord o id {record_id}, {column_name} = {new_value}")
+            #print(f"Zaktualizowano rekord o id {record_id}, {column_name} = {new_value}")
 
         except db.Error as e:
             print(f"Błąd zapisu do bazy danych: {e}")
@@ -136,7 +137,7 @@ class MainWindow_bledy(QWidget):
         sheet = wb.active
         teraz = datetime.today()
         data_miesiac = str(dodatki.data_miesiac_dzis())
-        print(data_miesiac)
+        #print(data_miesiac)
 
         lista_wpisow = []
 
@@ -154,7 +155,9 @@ class MainWindow_bledy(QWidget):
             insert_data = "INSERT INTO bledy_prod VALUES (NULL,'%s','%s','%s','%s');" % (row[0],row[1],row[2],row[3])
             db.execute_query(connection, insert_data)
 
+        self.ui.tab_dane.blockSignals(True)
         self.load_data_from_database()
+        self.ui.tab_dane.blockSignals(False)
 
     def szablon(self):
         wb = openpyxl.Workbook()
@@ -210,8 +213,7 @@ class MainWindow_bledy(QWidget):
         if results:
             for x in results:
                 delete_data = "delete from bledy_prod where id = '%s' and miesiac = '%s';" % (x[0],miestac_roboczy)
-                print('Do skasowania:',delete_data)
+                #print('Do skasowania:',delete_data)
                 db.execute_query(connection, delete_data)
         else:
             print('--Brak wpisów jeszcze--')
-        connection.close()

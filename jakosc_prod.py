@@ -49,8 +49,6 @@ class MainWindow_jakosc(QWidget):
         self.ui.btn_dodaj.clicked.connect(self.otworz_okno_jakosc_prodDodaj)
         self.ui.btn_szablon.clicked.connect(self.szablon)
 
-        self.import_in_progress = False
-
         self.load_data_from_database()
         self.ui.tab_dane.itemChanged.connect(self.on_item_changed)
 
@@ -102,7 +100,6 @@ class MainWindow_jakosc(QWidget):
         if not self.folder_istnieje():
             return
         self.sprawdz_wpisy()
-        self.import_in_progress = True
         file_path = self.ui.ed_sciezka_dane.text()
         wb = openpyxl.load_workbook(os.path.join(file_path))
         sheet = wb.active
@@ -132,8 +129,9 @@ class MainWindow_jakosc(QWidget):
             row[0], row[1], row[2], row[3], row[4], row[5])
             db.execute_query(connection, insert_data)
 
+        self.ui.tab_dane.blockSignals(True)
         self.load_data_from_database()
-        self.import_in_progress = False
+        self.ui.tab_dane.blockSignals(False)
 
     def load_data_from_database(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
@@ -190,17 +188,15 @@ class MainWindow_jakosc(QWidget):
             print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
 
     def on_item_changed(self, item):
-        if self.import_in_progress:
-            return
         """Funkcja wywoływana przy każdej zmianie komórki."""
         row = item.row()
         col = item.column()
-        print(f"DEBUG: Wybrane kolumny: {col}")
+        #print(f"DEBUG: Wybrane kolumny: {col}")
         new_value = item.text()
 
         # Pobranie id rekordu dla zmienionego wiersza
         record_id = self.row_ids[row]
-        print('record_id:',record_id)
+        #print('record_id:',record_id)
 
         # Zapis zmienionych danych do bazy
         self.update_database(record_id, col, new_value)
@@ -217,7 +213,7 @@ class MainWindow_jakosc(QWidget):
             sql_query = f"UPDATE jakosc_prod SET {column_name} = %s WHERE id = %s"
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             db.execute_query_virable(connection,sql_query,(new_value, record_id))
-            print(f"Zaktualizowano rekord o id {record_id}, {column_name} = {new_value}")
+            #print(f"Zaktualizowano rekord o id {record_id}, {column_name} = {new_value}")
 
         except db.Error as e:
             print(f"Błąd zapisu do bazy danych: {e}")

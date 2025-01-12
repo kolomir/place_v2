@@ -49,9 +49,27 @@ class MainWindow_bledy_mag(QWidget):
         if file_path:
             self.load_file(file_path)
 
+    def sprawdz_wpisy(self):
+        miestac_roboczy = dodatki.data_miesiac_dzis()
+        select_data = "SELECT * FROM `bledy_mag` WHERE miesiac = '%s';" % (miestac_roboczy)  # (miestac_roboczy)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, select_data)
+        connection.close()
+
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        if results:
+            for x in results:
+                delete_data = "delete from bledy_mag where id = '%s' and miesiac = '%s';" % (x[0],miestac_roboczy)
+                #print('Do skasowania:',delete_data)
+                db.execute_query(connection, delete_data)
+        else:
+            print('--Brak wpisów jeszcze--')
+        connection.close()
+
     def czytaj_dane(self):
         if not self.folder_istnieje():
             return
+        self.sprawdz_wpisy()
         file_path = self.ui.ed_sciezka_dane.text()
         wb = openpyxl.load_workbook(os.path.join(file_path))
         sheet = wb.active
@@ -76,7 +94,9 @@ class MainWindow_bledy_mag(QWidget):
             row[0], row[1], row[2], row[3], row[4])
             db.execute_query(connection, insert_data)
 
+        self.ui.tab_dane.blockSignals(True)
         self.load_data_from_database()
+        self.ui.tab_dane.blockSignals(False)
 
     def load_data_from_database(self):
         try:
@@ -130,7 +150,7 @@ class MainWindow_bledy_mag(QWidget):
 
             # Przechowywanie id wierszy
             self.row_ids = [row_data[0] for row_data in results]
-            print(row_data[0] for row_data in results)
+            #print(row_data[0] for row_data in results)
 
         except db.Error as e:
             print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
@@ -141,9 +161,12 @@ class MainWindow_bledy_mag(QWidget):
             # Mapowanie indeksu kolumny na nazwę kolumny w bazie
             column_names = ["nr_akt", "bledy_zew", "bledy_wew"]
             column_name = column_names[col]
+            print('col',col)
+            print('column_name',column_name)
 
             # Aktualizacja w bazie danych
             sql_query = f"UPDATE bledy_mag SET {column_name} = %s WHERE id = %s"
+            print('sql_query',sql_query)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             db.execute_query_virable(connection,sql_query,(new_value, record_id))
             #self.cursor.execute(sql_query, (new_value, record_id))
@@ -157,10 +180,12 @@ class MainWindow_bledy_mag(QWidget):
         """Funkcja wywoływana przy każdej zmianie komórki."""
         row = item.row()
         col = item.column()
+        # print(f"DEBUG: Wybrane kolumny: {col}")
         new_value = item.text()
 
         # Pobranie id rekordu dla zmienionego wiersza
         record_id = self.row_ids[row]
+        # print('record_id:',record_id)
 
         # Zapis zmienionych danych do bazy
         self.update_database(record_id, col, new_value)

@@ -141,7 +141,7 @@ class MainWindow_pracownicy(QWidget):
         sheet = wb.active
         teraz = datetime.today()
         data_miesiac = str(dodatki.data_miesiac_dzis())
-        print(data_miesiac)
+        #print(data_miesiac)
 
         lista_wpisow = []
 

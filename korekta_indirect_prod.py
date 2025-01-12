@@ -36,8 +36,65 @@ class MainWindow_korekta_indirect_prod(QWidget):
         self.ui.btn_przegladaj.clicked.connect(self.open_file_dialog)
         self.ui.btn_importuj.clicked.connect(self.czytaj_dane)
         self.ui.btn_szablon.clicked.connect(self.szablon)
+        self.ui.tab_dane.itemChanged.connect(self.on_item_changed)
 
-        #QApplication.instance().focusChanged.connect(self.load_data_from_database)
+    def open_file_dialog(self):
+        # Otwieranie dialogu wyboru pliku
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getOpenFileName(self, "Wybierz plik Excel", "","Pliki tekstowe (*.xlsx);;Wszystkie pliki (*)", options=options)
+        if file_path:
+            self.ui.ed_sciezka_dane.setText(file_path)  # Ustawienie ścieżki w polu tekstowym
+
+    def load_from_path(self):
+        # Wczytanie pliku z ręcznie wpisanej ścieżki
+        file_path = self.ui.ed_sciezka_dane.text()
+        if file_path:
+            self.load_file(file_path)
+
+    def czytaj_dane(self):
+        self.sprawdz_wpisy()
+        file_path = self.ui.ed_sciezka_dane.text()
+        wb = openpyxl.load_workbook(os.path.join(file_path))
+        sheet = wb.active
+        teraz = datetime.today()
+        data_miesiac = str(dodatki.data_miesiac_dzis())
+        print(data_miesiac)
+
+        query = '''
+                        select 
+                            d.Nr_akt 
+                            ,d.Nazwisko_i_imie 
+                        from 
+                            direct d 
+                        where 
+                            miesiac = '{0}'
+                        '''.format(data_miesiac)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, query)
+        connection.close()
+
+        lista_wpisow = []
+
+        # czytamy wszystkie kolumny i wiersze ze wskazanego pliku
+        for row in sheet.iter_rows(min_row=2, min_col=1, max_col=3, values_only=True):
+            # sprawdzamy czy wiersz nie jest pusty (zakładając że pusty wiersz ma wszystkie kolumny o wartosci None i kończy zestawienie)
+            if any(cell is not None for cell in row):
+                for dane in results:
+                    if int(dane[0]) == row[0]:
+                        pracownik = dane[1]
+                lista_wpisow.append([row[0], pracownik, row[1], row[2], data_miesiac, teraz])
+            else:
+                break
+
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+
+        for row in lista_wpisow:
+            insert_data = "INSERT INTO korekta_indirect VALUES (NULL,'%s','%s','%s','%s','%s','%s');" % (row[0], row[1], row[2], row[3], row[4], row[5])
+            db.execute_query(connection, insert_data)
+
+        self.ui.tab_dane.blockSignals(True)
+        self.load_data_from_database()
+        self.ui.tab_dane.blockSignals(False)
 
     def load_data_from_database(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
@@ -95,8 +152,10 @@ class MainWindow_korekta_indirect_prod(QWidget):
         """Funkcja do aktualizacji konkretnej komórki w bazie danych."""
         try:
             # Mapowanie indeksu kolumny na nazwę kolumny w bazie
-            column_names = ["czas", "opis"]
+            column_names = ["nr_akt", "nazwisko_i_imie", "czas", "opis"]
             column_name = column_names[col]
+            if col == 2:
+                new_value = new_value.replace(",", ".")
 
             # Aktualizacja w bazie danych
             sql_query = f"UPDATE korekta_indirect SET {column_name} = %s WHERE id = %s"
@@ -104,7 +163,7 @@ class MainWindow_korekta_indirect_prod(QWidget):
             db.execute_query_virable(connection,sql_query,(new_value, record_id))
             #self.cursor.execute(sql_query, (new_value, record_id))
             #self.db_connection.commit()
-            print(f"Zaktualizowano rekord o id {record_id}, {column_name} = {new_value}")
+            #print(f"Zaktualizowano rekord o id {record_id}, {column_name} = {new_value}")
 
         except db.Error as e:
             print(f"Błąd zapisu do bazy danych: {e}")
@@ -120,19 +179,6 @@ class MainWindow_korekta_indirect_prod(QWidget):
 
         # Zapis zmienionych danych do bazy
         self.update_database(record_id, col, new_value)
-
-    def open_file_dialog(self):
-        # Otwieranie dialogu wyboru pliku
-        options = QFileDialog.Options()
-        file_path, _ = QFileDialog.getOpenFileName(self, "Wybierz plik Excel", "","Pliki tekstowe (*.xlsx);;Wszystkie pliki (*)", options=options)
-        if file_path:
-            self.ui.ed_sciezka_dane.setText(file_path)  # Ustawienie ścieżki w polu tekstowym
-
-    def load_from_path(self):
-        # Wczytanie pliku z ręcznie wpisanej ścieżki
-        file_path = self.ui.ed_sciezka_dane.text()
-        if file_path:
-            self.load_file(file_path)
 
     def otworz_okno_korekta_indirect_prod_dodaj(self):
         self.okno_korekta_indirect_prod_dodaj = MainWindow_korekta_indirect_prod_dodaj()
@@ -183,46 +229,3 @@ class MainWindow_korekta_indirect_prod(QWidget):
         else:
             print('--Brak wpisów jeszcze--')
         connection.close()
-
-    def czytaj_dane(self):
-        self.sprawdz_wpisy()
-        file_path = self.ui.ed_sciezka_dane.text()
-        wb = openpyxl.load_workbook(os.path.join(file_path))
-        sheet = wb.active
-        teraz = datetime.today()
-        data_miesiac = str(dodatki.data_miesiac_dzis())
-        print(data_miesiac)
-
-        query = '''
-                        select 
-                            d.Nr_akt 
-                            ,d.Nazwisko_i_imie 
-                        from 
-                            direct d 
-                        where 
-                            miesiac = '{0}'
-                        '''.format(data_miesiac)
-        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-        results = db.read_query(connection, query)
-        connection.close()
-
-        lista_wpisow = []
-
-        # czytamy wszystkie kolumny i wiersze ze wskazanego pliku
-        for row in sheet.iter_rows(min_row=2, min_col=1, max_col=3, values_only=True):
-            # sprawdzamy czy wiersz nie jest pusty (zakładając że pusty wiersz ma wszystkie kolumny o wartosci None i kończy zestawienie)
-            if any(cell is not None for cell in row):
-                for dane in results:
-                    if int(dane[0]) == row[0]:
-                        pracownik = dane[1]
-                lista_wpisow.append([row[0], pracownik, row[1], row[2], data_miesiac, teraz])
-            else:
-                break
-
-        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-
-        for row in lista_wpisow:
-            insert_data = "INSERT INTO korekta_indirect VALUES (NULL,'%s','%s','%s','%s','%s','%s');" % (row[0], row[1], row[2], row[3], row[4], row[5])
-            db.execute_query(connection, insert_data)
-
-        self.load_data_from_database()
