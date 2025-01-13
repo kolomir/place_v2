@@ -28,6 +28,7 @@ class MainWindow_grupy_mag(QWidget):
         self.ui.setupUi(self)
 
         self.load_data_from_database()
+        self.ui.tab_dane.itemChanged.connect(self.on_item_changed)
         self.ui.btn_zapisz.clicked.connect(self.otworz_okno_grupy_magDodaj)
 
     def load_data_from_database(self):
@@ -66,6 +67,10 @@ class MainWindow_grupy_mag(QWidget):
                     self.ui.tab_dane.setColumnWidth(2, 75)  # Stała szerokość: 150 pikseli
                     self.ui.tab_dane.setColumnWidth(3, 150)  # Stała szerokość: 150 pikseli
 
+                    if col_idx == 2 or col_idx == 3:  # Zablokowanie edycji dla kolumny "nazwa"
+                        item.setFlags(item.flags() & ~Qt.ItemIsEditable)  # Usuwamy flagę edytowalności
+                    else:
+                        item.setFlags(item.flags() | Qt.ItemIsEditable)  # Ustawienie komórek jako edytowalne
                     self.ui.tab_dane.setItem(row_idx, col_idx, item)
 
             # Przechowywanie id wierszy
@@ -78,3 +83,33 @@ class MainWindow_grupy_mag(QWidget):
     def otworz_okno_grupy_magDodaj(self):
         self.okno_grupy_magDodaj = MainWindow_grupy_magDodaj()
         self.okno_grupy_magDodaj.show()
+
+    def update_database(self, record_id, col, new_value):
+        """Funkcja do aktualizacji konkretnej komórki w bazie danych."""
+        try:
+            # Mapowanie indeksu kolumny na nazwę kolumny w bazie
+            column_names = ["nazwa", "aktywne"]
+            column_name = column_names[col]
+
+            # Aktualizacja w bazie danych
+            sql_query = f"UPDATE grupy_mag SET {column_name} = %s WHERE id = %s"
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+            db.execute_query_virable(connection,sql_query,(new_value, record_id))
+            #self.cursor.execute(sql_query, (new_value, record_id))
+            #self.db_connection.commit()
+            print(f"Zaktualizowano rekord o id {record_id}, {column_name} = {new_value}")
+
+        except db.Error as e:
+            print(f"Błąd zapisu do bazy danych: {e}")
+
+    def on_item_changed(self, item):
+        """Funkcja wywoływana przy każdej zmianie komórki."""
+        row = item.row()
+        col = item.column()
+        new_value = item.text()
+
+        # Pobranie id rekordu dla zmienionego wiersza
+        record_id = self.row_ids[row]
+
+        # Zapis zmienionych danych do bazy
+        self.update_database(record_id, col, new_value)
