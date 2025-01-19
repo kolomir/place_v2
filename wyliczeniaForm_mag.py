@@ -39,6 +39,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
         self.lista_pracownik_transport_cz = []
         self.lista_pracownik_wysylka = []
 
+        self.miesiac_roboczy = dodatki.data_miesiac_dzis()
+
     def przeliczenie(self):
         self.miesiac_info_nieobecnosci()
         self.licz_nieobecnosci()
@@ -155,48 +157,12 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
     def licz_wydania(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
-            miestac_roboczy = dodatki.data_miesiac_dzis()
-            select_data_direct = '''
-                                    select 
-                                        ROUND(COALESCE(SUM(case 
-                                                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                                                else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                                            end), 0), 2) AS 'Direct_work'
-                                        ,ROUND(COALESCE(SUM(case 
-                                                                when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                                                else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                                            end), 0), 2) AS 'Indirect_work'
-                                        ,pm.zmiana 
-                                    from 
-                                        direct d 
-                                        left join pracownicy_mag pm on pm.nr_akt = d.Nr_akt 
-                                    where 
-                                        d.miesiac = '{0}'
-                                        and d.dzial = '101'
-                                        and pm.zmiana is not null
-                                    group by 
-                                        pm.zmiana
-                                '''.format(miestac_roboczy)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-            results_direct = db.read_query(connection, select_data_direct)
+            results_direct = db.wywolaj_procedure_zmienna(connection, 'wyliczenia_mag_wydania_direct', self.miesiac_roboczy)
             connection.close()
 
-            select_data_wydajnosc = '''
-                                        select 
-                                            ROUND(COALESCE(SUM(lz.reported), 0), 2) AS 'reported'
-                                            ,ROUND(COALESCE(SUM(lz.planned), 0), 2) AS 'planned'
-                                            ,ROUND((SUM(lz.planned) / SUM(lz.reported) * 100), 2) AS 'wydajnosci'
-                                            ,lz.zmiana_lit 
-                                        from 
-                                            logowanie_zlecen lz 
-                                        where 
-                                            lz.miesiac = '{0}'
-                                            and lz.grupa = '101'
-                                        group by
-                                            lz.zmiana_lit 
-                                    '''.format(miestac_roboczy)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-            results_wydajnosc = db.read_query(connection, select_data_wydajnosc)
+            results_wydajnosc = db.wywolaj_procedure_zmienna(connection, 'wyliczenia_mag_wydania_wydajnosc', self.miesiac_roboczy)
             connection.close()
 
             ile_zmian = len(results_direct)
@@ -330,67 +296,18 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
             prog75 = self.ui.lab_pracujacych075Nieobecnosci.text()
             prog50 = self.ui.lab_pracujacych050Nieobecnosci.text()
 
-            select_data_pracownik = '''
-                                                    select 
-                                                        pm.nr_akt 
-                                                        ,p.Kod 
-                                                        ,CONCAT(pm.nazwisko,' ',pm.imie) as 'Nazwisko i imie' 
-                                                        ,case 
-                                                            when np.nr_akt > 6000 then np.razem 
-                                                            else case 
-                                                                    when (np.krew + np.rodz + np.rehab + np.nn + np.usp) = 0 then np.krew + np.rodz + np.rehab + np.nn + np.usp + np.inne_nieobecn + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz 
-                                                                    else np.krew + np.rodz + np.rehab + np.nn + np.usp + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz
-                                                                end 
-                                                        end as nieobecnosci
-                                                        ,bm.bledy_zew 
-                                                        ,bm.bledy_wew 
-                                                        ,pm.zmiana 
-                                                    from 
-                                                        pracownicy_mag pm 
-                                                            left join pracownicy p on p.Nr_akt = pm.nr_akt and p.miesiac = '{0}'
-                                                            left join nieobecnosci_prod np on np.nr_akt = pm.Nr_akt and np.miesiac = '{0}'
-                                                            left join bledy_mag bm on bm.nr_akt = pm.nr_akt and bm.miesiac = '{0}'
-                                                    where 
-                                                        pm.id_grupa = 1
-                                                        and pm.aktywny = 1
-                                                    '''.format(miestac_roboczy)
+
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-            results_pracownik = db.read_query(connection, select_data_pracownik)
+            results_pracownik = db.wywolaj_procedure_zmienna(connection, 'wyliczenia_mag_wydania_pracownik', self.miesiac_roboczy)
             connection.close()
 
-            select_data_bledy = "select * from bledy_mag bm where bm.miesiac = '{0}'".format(miestac_roboczy)
+            select_data_bledy = "select * from bledy_mag bm where bm.miesiac = '{0}'".format(self.miesiac_roboczy)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             results_bledy = db.read_query(connection, select_data_bledy)
             connection.close()
 
-            select_iw = ''' 
-                            select 
-                                d.Nr_akt 
-                                ,ROUND(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                    else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end, 2) AS 'DW'
-                                ,ROUND(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                    else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end, 2) as 'IW'
-                                ,ROUND(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                    else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end / (case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                    else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end + case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                    else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end), 2) as 'IW2'
-                            from
-                                direct d 
-                            where 
-                                d.miesiac = '{0}' and d.dzial = '101'
-                     '''.format(miestac_roboczy)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-            results_iw = db.read_query(connection, select_iw)
+            results_iw = db.wywolaj_procedure_zmienna(connection, 'wyliczenia_mag_wydania_iw', self.miesiac_roboczy)
             connection.close()
 
             select_wytyczne = ''' select * from wytyczne_mag wm where wm.aktywny = 1 and wm.id_grupa = 1 '''
@@ -452,7 +369,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
 
             self.ui.tab_wyliczenia_wydania.setSortingEnabled(True)
 
-            self.ui.tab_wyliczenia_wydania.setColumnCount(8)  # Zmień na liczbę kolumn w twojej tabeli
+            self.ui.tab_wyliczenia_wydania.setColumnCount(9)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_wyliczenia_wydania.setRowCount(0)  # Ustawienie liczby wierszy na 0
             self.ui.tab_wyliczenia_wydania.setHorizontalHeaderLabels([
                 'Zmiana',
@@ -536,41 +453,17 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
     def licz_przyjecia(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
-            miestac_roboczy = dodatki.data_miesiac_dzis()
-            select_data = '''
-                            select 
-                                pm.nr_akt 
-                                ,CONCAT(pm.nazwisko,' ',pm.imie) as 'Nazwisko i imie' 
-                                ,gm.nazwa 
-                                ,case 
-                                    when np.nr_akt is null then 0
-                                    else case 
-                                            when (np.krew + np.rodz + np.rehab + np.nn + np.usp) = 0 then np.krew + np.rodz + np.rehab + np.nn + np.usp + np.inne_nieobecn + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz 
-                                            else np.krew + np.rodz + np.rehab + np.nn + np.usp + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz
-                                        end
-                                end as nieobecnosci
-                                ,p.Kod 
-                            from 
-                                pracownicy_mag pm 
-                                    left join grupy_mag gm on gm.id = pm.id_grupa 
-                                    left join nieobecnosci_prod np on np.nr_akt = pm.Nr_akt 
-                                    left join pracownicy p on p.Nr_akt = pm.nr_akt 
-                            where 
-                            gm.id = 2
-                            and pm.aktywny = 1
-                            and np.miesiac = '{0}'
-                            and p.miesiac = '{0}'
-                        '''.format(miestac_roboczy)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-            results = db.read_query(connection, select_data)
+            grupa_mag = 2                               # jest to ID grypy pracowników magazynu zgodnie z tabelą grupy_mag
+            results = db.wywolaj_procedure_zmienna2(connection, 'wyliczenia_mag_pracownik', self.miesiac_roboczy, grupa_mag)
             connection.close()
 
-            select_kpi = ''' select * from kpi_mag km where km.miesiac = '{0}' '''.format(miestac_roboczy)
+            select_kpi = ''' select * from kpi_mag km where km.miesiac = '{0}' '''.format(self.miesiac_roboczy)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             results_kpi = db.read_query(connection, select_kpi)
             connection.close()
 
-            select_bledy = ''' select * from bledy_mag bm where bm.miesiac = '{0}' '''.format(miestac_roboczy)
+            select_bledy = ''' select * from bledy_mag bm where bm.miesiac = '{0}' '''.format(self.miesiac_roboczy)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             results_bledy = db.read_query(connection, select_bledy)
             connection.close()
@@ -672,40 +565,17 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
     def licz_transport_bs(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
-            miestac_roboczy = dodatki.data_miesiac_dzis()
-            select_data = '''
-                            select 
-                                pm.nr_akt 
-                                ,CONCAT(pm.nazwisko,' ',pm.imie) as 'Nazwisko i imie' 
-                                ,gm.nazwa 
-                                ,case 
-                                    when np.nr_akt is null then 0
-                                    else case 
-                                            when (np.krew + np.rodz + np.rehab + np.nn + np.usp) = 0 then np.krew + np.rodz + np.rehab + np.nn + np.usp + np.inne_nieobecn + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz 
-                                            else np.krew + np.rodz + np.rehab + np.nn + np.usp + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz
-                                        end
-                                end as nieobecnosci
-                                ,p.Kod 
-                            from 
-                                pracownicy_mag pm 
-                                    left join grupy_mag gm on gm.id = pm.id_grupa 
-                                    left join nieobecnosci_prod np on np.nr_akt = pm.Nr_akt 
-                                    left join pracownicy p on p.Nr_akt = pm.nr_akt and p.miesiac = '{0}'
-                            where 
-                            gm.id = 3
-                            and pm.aktywny = 1
-                            and np.miesiac = '{0}'
-                        '''.format(miestac_roboczy)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-            results = db.read_query(connection, select_data)
+            grupa_mag = 3  # jest to ID grypy pracowników magazynu zgodnie z tabelą grupy_mag
+            results = db.wywolaj_procedure_zmienna2(connection, 'wyliczenia_mag_pracownik', self.miesiac_roboczy, grupa_mag)
             connection.close()
 
-            select_kpi = ''' select * from kpi_mag km where km.miesiac = '{0}' '''.format(miestac_roboczy)
+            select_kpi = ''' select * from kpi_mag km where km.miesiac = '{0}' '''.format(self.miesiac_roboczy)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             results_kpi = db.read_query(connection, select_kpi)
             connection.close()
 
-            select_bledy = ''' select * from bledy_mag bm where bm.miesiac = '{0}' '''.format(miestac_roboczy)
+            select_bledy = ''' select * from bledy_mag bm where bm.miesiac = '{0}' '''.format(self.miesiac_roboczy)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             results_bledy = db.read_query(connection, select_bledy)
             connection.close()
@@ -815,41 +685,17 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
     def licz_transport_cz(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
-            miestac_roboczy = dodatki.data_miesiac_dzis()
-            select_data = '''
-                            select 
-                                pm.nr_akt 
-                                ,CONCAT(pm.nazwisko,' ',pm.imie) as 'Nazwisko i imie' 
-                                ,gm.nazwa 
-                                ,case 
-                                    when np.nr_akt is null then 0
-                                    else case 
-                                            when (np.krew + np.rodz + np.rehab + np.nn + np.usp) = 0 then np.krew + np.rodz + np.rehab + np.nn + np.usp + np.inne_nieobecn + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz 
-                                            else np.krew + np.rodz + np.rehab + np.nn + np.usp + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz
-                                        end
-                                end as nieobecnosci
-                                ,p.Kod 
-                            from 
-                                pracownicy_mag pm 
-                                    left join grupy_mag gm on gm.id = pm.id_grupa 
-                                    left join nieobecnosci_prod np on np.nr_akt = pm.Nr_akt 
-                                    left join pracownicy p on p.Nr_akt = pm.nr_akt 
-                            where 
-                            gm.id = 4
-                            and pm.aktywny = 1
-                            and np.miesiac = '{0}'
-                            and p.miesiac = '{0}'
-                        '''.format(miestac_roboczy)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-            results = db.read_query(connection, select_data)
+            grupa_mag = 4  # jest to ID grypy pracowników magazynu zgodnie z tabelą grupy_mag
+            results = db.wywolaj_procedure_zmienna2(connection, 'wyliczenia_mag_pracownik', self.miesiac_roboczy, grupa_mag)
             connection.close()
 
-            select_kpi = ''' select * from kpi_mag km where km.miesiac = '{0}' '''.format(miestac_roboczy)
+            select_kpi = ''' select * from kpi_mag km where km.miesiac = '{0}' '''.format(self.miesiac_roboczy)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             results_kpi = db.read_query(connection, select_kpi)
             connection.close()
 
-            select_bledy = ''' select * from bledy_mag bm where bm.miesiac = '{0}' '''.format(miestac_roboczy)
+            select_bledy = ''' select * from bledy_mag bm where bm.miesiac = '{0}' '''.format(self.miesiac_roboczy)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             results_bledy = db.read_query(connection, select_bledy)
             connection.close()
@@ -956,41 +802,17 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
     def licz_wysylka(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
-            miestac_roboczy = dodatki.data_miesiac_dzis()
-            select_data = '''
-                            select 
-                                pm.nr_akt 
-                                ,CONCAT(pm.nazwisko,' ',pm.imie) as 'Nazwisko i imie' 
-                                ,gm.nazwa 
-                                ,case 
-                                    when np.nr_akt is null then 0
-                                    else case 
-                                            when (np.krew + np.rodz + np.rehab + np.nn + np.usp) = 0 then np.krew + np.rodz + np.rehab + np.nn + np.usp + np.inne_nieobecn + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz 
-                                            else np.krew + np.rodz + np.rehab + np.nn + np.usp + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz
-                                        end
-                                end as nieobecnosci
-                                ,p.Kod 
-                            from 
-                                pracownicy_mag pm 
-                                    left join grupy_mag gm on gm.id = pm.id_grupa 
-                                    left join nieobecnosci_prod np on np.nr_akt = pm.Nr_akt 
-                                    left join pracownicy p on p.Nr_akt = pm.nr_akt 
-                            where 
-                            gm.id = 5
-                            and pm.aktywny = 1
-                            and np.miesiac = '{0}'
-                            and p.miesiac = '{0}'
-                        '''.format(miestac_roboczy)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-            results = db.read_query(connection, select_data)
+            grupa_mag = 5  # jest to ID grypy pracowników magazynu zgodnie z tabelą grupy_mag
+            results = db.wywolaj_procedure_zmienna2(connection, 'wyliczenia_mag_pracownik', self.miesiac_roboczy, grupa_mag)
             connection.close()
 
-            select_kpi = ''' select * from kpi_mag km where km.miesiac = '{0}' '''.format(miestac_roboczy)
+            select_kpi = ''' select * from kpi_mag km where km.miesiac = '{0}' '''.format(self.miesiac_roboczy)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             results_kpi = db.read_query(connection, select_kpi)
             connection.close()
 
-            select_bledy = ''' select * from bledy_mag bm where bm.miesiac = '{0}' '''.format(miestac_roboczy)
+            select_bledy = ''' select * from bledy_mag bm where bm.miesiac = '{0}' '''.format(self.miesiac_roboczy)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             results_bledy = db.read_query(connection, select_bledy)
             connection.close()

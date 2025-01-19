@@ -38,6 +38,8 @@ class MainWindow_wyliczeniaForm(QWidget):
         self.lista_pracownik_lider = []
         self.lista_instruktor_prem = []
 
+        self.miesiac_roboczy = dodatki.data_miesiac_dzis()
+
     def przeliczenie(self):
         self.miesiac_info_nieobecnosci()
         self.licz_nieobecnosci()
@@ -155,96 +157,13 @@ class MainWindow_wyliczeniaForm(QWidget):
             print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
 
 # =========================================================================================================================================================================
-# = PRODUKTYWNOŚĆ =========================================================================================================================================================
+# = PRACOWNICY PRODUKCJI =========================================================================================================================================================
 
     def licz_pracownicy(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
-            miestac_roboczy = dodatki.data_miesiac_dzis()
-            select_data = '''
-                            select 
-                                d.Nr_akt 
-                                ,case 
-                                    when p.Kod is null then 0
-                                    else p.Kod
-                                end as Kod
-                                ,d.Nazwisko_i_imie 
-                                ,d.dzial 
-                                ,case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                    else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end as Direct_  -- dane zawierają wartości czasowe a nie procentowe
-                                ,case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                    else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end as Indirect_  -- dane zawierają wartości czasowe a nie procentowe
-                                ,ROUND((case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                    else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end)/((case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                    else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end)+(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                    else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end))*100,2) as Direct_2
-                                ,ROUND((case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                    else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end)/((case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                    else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end)+(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                    else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end))*100,2) as Indirect_2
-                                ,ROUND(COALESCE(SUM(lz.reported), 0), 2) AS 'raportowany'
-                                ,ROUND(COALESCE(SUM(lz.planned), 0), 2) AS 'planowany'
-                                ,ROUND((SUM(lz.planned) / SUM(lz.reported)) * 100, 2)  AS 'wydajnosci'
-                                ,ROUND(((case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                    else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end / (case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                    else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end + case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                    else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end)) * COALESCE(SUM(lz.planned) / NULLIF(SUM(lz.reported), 0), 0)) * 100, 2) AS 'produktywnosc' -- produktywność wyliczona za pomocą liczbowych wartości DW i IW wraz z wprowadzonymi korektami
-                                ,case
-                                    when np.nr_akt > 5999 then np.razem 
-                                    else 
-                                        case 
-                                            when (np.krew + np.rodz + np.rehab + np.nn + np.usp) = 0 then np.krew + np.rodz + np.rehab + np.nn + np.usp + np.inne_nieobecn + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz 
-                                            else np.krew + np.rodz + np.rehab + np.nn + np.usp + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz
-                                        end
-                                end as nieobecnosci
-                                ,case 
-                                    when bp.bledy is null then 0
-                                    else bp.bledy
-                                end as bledow
-                            from 
-                                direct d
-                                    join logowanie_zlecen lz on d.Nr_akt = lz.nr_akt 
-                                    left join nieobecnosci_prod np on np.nr_akt  = d.Nr_akt and np.miesiac = '{0}' 
-                                    left join bledy_prod bp on bp.nr_akt = d.Nr_akt and bp.miesiac = '{0}'
-                                    left join pracownicy p on p.Nr_akt = d.Nr_akt 
-                            where 
-                                d.dzial not in ('2030', '1-210', '4001', '4002', '4003', '4004', '4005', '4006', '4007', '4008', '4009', '4010', '401', '2-305')
-                                and d.miesiac = '{0}'
-                                and lz.miesiac = '{0}'
-                                and p.miesiac = '{0}'
-                            group by 
-                                d.Nr_akt 
-                                ,d.Nazwisko_i_imie 
-                                ,d.dzial 
-                                ,d.Direct_work 
-                                -- ,d.Direct_ 
-                                ,d.Indirect_work
-                                -- ,d.Indirect_ 
-                            '''.format(miestac_roboczy)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-            results = db.read_query(connection, select_data)
+            results = db.wywolaj_procedure_zmienna(connection, 'wyliczenia_prod_pracownicy_produktywnosc', self.miesiac_roboczy)
             connection.close()
 
             select_data_progi = "select * from progi_prod pp where pp.id_ranga = 3 and pp.aktywny = 1"
@@ -388,65 +307,8 @@ class MainWindow_wyliczeniaForm(QWidget):
     def licz_wsparcie(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
-            miestac_roboczy = dodatki.data_miesiac_dzis()
-            select_data = '''
-                            select 
-                                l.nazwa 
-                                ,( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                    else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) as direct
-                                ,( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                    else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) as indirect
-                                ,ROUND(((( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                    else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )/(( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                    else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) + ( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                    else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )))*100),2) as 'Direct %'
-                                ,ROUND(((( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                    else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )/(( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                    else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) + ( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                    else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )))*100),2) as 'Indirect %'
-                                ,rt.Pl_total_time 
-                                ,rt.Rep_total_time 
-                                ,ROUND(((rt.Pl_total_time/rt.Rep_total_time)*100),2) as 'Wydajnosc'
-                                ,ROUND(((( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                    else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )/(( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                    else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) + ( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                    else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )))*((rt.Pl_total_time/rt.Rep_total_time))*100),2) as 'Produktywnosc'
-                                ,i.nr_akt
-                            from 
-                                wsparcie_produkcji wp 
-                                    left join instruktor i on i.id = wp.id_pracownik 
-                                    left join linie l on l.id = wp.id_linia 
-                                        left join raportowanie_total rt on rt.Work_center = l.nazwa
-                            where 
-                                wp.aktywny = 1
-                                and i.aktywny = 1
-                                and l.aktywne  = 1
-                                and rt.miesiac = '{0}'
-                            '''.format(miestac_roboczy)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-            results = db.read_query(connection, select_data)
+            results = db.wywolaj_procedure_zmienna(connection, 'wyliczenia_prod_wsparcie_produktywnosc', self.miesiac_roboczy)
             connection.close()
 
             select_data_progi = "select * from progi_prod pp where pp.id_ranga = 3 and pp.aktywny = 1"
@@ -507,28 +369,9 @@ class MainWindow_wyliczeniaForm(QWidget):
                 else:
                     suma_raportowany[klucz] = wartosc
 
-            select_data_pracownik = '''
-                                        select 
-                                            i.nr_akt 
-                                            ,p.Kod 
-                                            ,CONCAT(i.nazwisko,' ',i.imie) as 'Nazwisko i imie' 
-                                            ,case 
-                                                when (np.krew + np.rodz + np.rehab + np.nn + np.usp) = 0 then np.krew + np.rodz + np.rehab + np.nn + np.usp + np.inne_nieobecn + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz 
-                                                else np.krew + np.rodz + np.rehab + np.nn + np.usp + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz
-                                            end as nieobecnosci
-                                        from 
-                                            instruktor i 
-                                                left join pracownicy p on p.Nr_akt = i.nr_akt 
-                                                    left join nieobecnosci_prod np on np.nr_akt = p.Nr_akt and np.miesiac = '{0}' 
-                                        where 
-                                            i.id_ranga = 4
-                                            and p.miesiac = '{0}'
-                                        group by 
-                                            i.nr_akt 
-                                            ,p.Kod 
-                                        '''.format(miestac_roboczy)
+
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-            results_pracownik = db.read_query(connection, select_data_pracownik)
+            results_pracownik = db.wywolaj_procedure_zmienna(connection, 'wyliczenia_prod_wsparcie_pracownik', self.miesiac_roboczy)
             connection.close()
 
             # self.lista_pracownik_wsparcia = []
@@ -658,75 +501,8 @@ class MainWindow_wyliczeniaForm(QWidget):
     def licz_liderzy(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
-            miestac_roboczy = dodatki.data_miesiac_dzis()
-            select_data = '''
-                            select 
-                                gr.nazwa 
-                                ,l.nazwa 
-                                ,( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                    else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) as direct
-                                ,( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                    else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) as indirect
-                                ,ROUND(((( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                    else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )/(( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                    else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) + ( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                    else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )))*100),2) as 'Direct %'
-                                ,ROUND(((( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                    else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )/(( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                    else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) + ( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                    else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )))*100),2) as 'Indirect %'
-                                ,rt.Pl_total_time 
-                                ,rt.Rep_total_time 
-                                ,((rt.Pl_total_time/rt.Rep_total_time)*100) as 'Wydajnosc'
-                                ,ROUND(((( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                    else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )/(( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                    else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa ) + ( select sum(case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                    else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end) from direct d where d.miesiac = '{0}' and d.dzial = l.nazwa )))*((rt.Pl_total_time/rt.Rep_total_time))*100),2) as 'Produktywnosc'
-                                ,i.nr_akt 
-                                ,jp.ppm 
-                                ,jp.reklamacje 
-                            from 
-                                gniazda_robocze gr 
-                                    left join gniazdo_linia gl on gl.id_gniazdo = gr.id 
-                                        left join linie l on l.id = gl.id_linia 
-                                            left join raportowanie_total rt on rt.Work_center = l.nazwa
-                                    left join linia_gniazdo lg on lg.id_grupa = gr.id 
-                                        left join instruktor i on i.id = lg.id_lider 
-                                    left join jakosc_prod jp on jp.grupa_robocza = gr.nazwa 
-                            where 
-                                gr.aktywna = 1
-                                and gl.aktywny = 1
-                                and l.aktywne = 1
-                                and rt.miesiac = '{0}'
-                                and jp.miesiac = '{0}'
-                            group by 
-                                gr.nazwa 
-                                ,l.nazwa 
-                            '''.format(miestac_roboczy)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-            results = db.read_query(connection, select_data)
+            results = db.wywolaj_procedure_zmienna(connection, 'wyliczenia_prod_liderzy_produktywnosc', self.miesiac_roboczy)
             connection.close()
 
 
@@ -794,38 +570,11 @@ class MainWindow_wyliczeniaForm(QWidget):
                     suma_raportowany[klucz] += wartosc
                 else:
                     suma_raportowany[klucz] = wartosc
-            print(suma_indirect)
+            #print(suma_indirect)
 
-            select_data_pracownik = '''
-                                    select 
-                                        i.nr_akt 
-                                        ,p.Kod 
-                                        ,CONCAT(i.nazwisko,' ',i.imie) as 'Nazwisko i imie' 
-                                        ,case 
-                                            when (np.krew + np.rodz + np.rehab + np.nn + np.usp) = 0 then np.krew + np.rodz + np.rehab + np.nn + np.usp + np.inne_nieobecn + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz 
-                                            else np.krew + np.rodz + np.rehab + np.nn + np.usp + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz
-                                        end as nieobecnosci
-                                        ,gr.id
-                                        ,gr.nazwa 
-                                        ,jp.ppm 
-                                        ,jp.reklamacje 
-                                    from 
-                                        instruktor i 
-                                            left join pracownicy p on p.Nr_akt = i.nr_akt 
-                                                left join nieobecnosci_prod np on np.nr_akt = p.Nr_akt and np.miesiac = '{0}' 
-                                            left join linia_gniazdo lg on lg.id_lider = i.id 
-                                                left join gniazda_robocze gr on gr.id = lg.id_grupa 
-                                                    left join jakosc_prod jp on jp.grupa_robocza = gr.nazwa 
-                                    where 
-                                        i.id_ranga = 2
-                                        and p.miesiac = '{0}'
-                                        and jp.miesiac = '{0}'
-                                    group by 
-                                        i.nr_akt 
-                                        ,p.Kod 
-                                    '''.format(miestac_roboczy)
+
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-            results_pracownik = db.read_query(connection, select_data_pracownik)
+            results_pracownik = db.wywolaj_procedure_zmienna(connection, 'wyliczenia_prod_liderzy_pracownik', self.miesiac_roboczy)
             connection.close()
 
 
@@ -1025,67 +774,8 @@ class MainWindow_wyliczeniaForm(QWidget):
     def licz_instruktorzy(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
-            miestac_roboczy = dodatki.data_miesiac_dzis()
-            select_data = '''
-                            select 
-                                d.Nr_akt 
-                                ,d.dzial 
-                                ,case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                    else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end as Direct_  -- dane zawierają wartości czasowe a nie procentowe 
-                                ,case 
-                                    when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                    else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                end as Indirect_  -- dane zawierają wartości czasowe a nie procentowe
-                                ,ROUND(COALESCE(SUM(lz.reported), 0), 2) AS 'raportowany'
-                                ,ROUND(COALESCE(SUM(lz.planned), 0), 2) AS 'planowany'
-                                ,ROUND((SUM(lz.planned) / SUM(lz.reported) * 100), 2) AS 'wydajnosci'
-                                ,case 
-                                    when ROUND(((case 
-                                            when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                            else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                        end / (case 
-                                            when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                            else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                        end + case 
-                                            when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                            else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                        end)) * COALESCE(SUM(lz.planned) / NULLIF(SUM(lz.reported), 0), 0)) * 100, 2) is null then 0
-                                    else ROUND(((case 
-                                            when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                            else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                        end / (case 
-                                            when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Direct_work
-                                            else d.Direct_work + (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                        end + case 
-                                            when (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt) is null then d.Indirect_work
-                                            else d.Indirect_work - (select ki.czas from korekta_indirect ki where ki.miesiac = '{0}' and ki.nr_akt = d.Nr_akt)
-                                        end)) * COALESCE(SUM(lz.planned) / NULLIF(SUM(lz.reported), 0), 0)) * 100, 2) -- produktywność wyliczona za pomocą liczbowych wartości DW i IW wraz z wprowadzonymi korektami
-                                end AS 'produktywnosc' 
-                                ,lz.zmiana 
-                                ,lz.zmiana_lit 
-                                ,lo.lokalizacja 
-                            from 
-                                direct d
-                                    left join logowanie_zlecen lz on d.Nr_akt = lz.nr_akt 
-                                    left join linie l on d.dzial = l.nazwa 
-                                        left join lokalizacja lo on lo.id = l.id_lokalizacja 
-                            where 
-                                d.dzial not in ('2030', '1-210', '4001', '4002', '4003', '4004', '4005', '4006', '4007', '4008', '4009', '4010', '401', '2-305')
-                                and d.miesiac = '{0}'
-                                and lz.miesiac = '{0}'
-                                and d.dzial not in (101)
-                            group by 
-                                d.Nr_akt 
-                                ,d.dzial 
-                                ,d.Direct_work 
-                                -- ,d.Direct_ 
-                                ,d.Indirect_work
-                                -- ,d.Indirect_  
-                            '''.format(miestac_roboczy)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-            results = db.read_query(connection, select_data)
+            results = db.wywolaj_procedure_zmienna(connection, 'wyliczenia_prod_instruktorzy_produktywnosc', self.miesiac_roboczy)
             connection.close()
 
             select_data_ilosc = '''
@@ -1105,43 +795,8 @@ class MainWindow_wyliczeniaForm(QWidget):
             results_ilosc = db.read_query(connection, select_data_ilosc)
             connection.close()
 
-            select_data_instruktor = '''
-                                    select 
-                                        i.nr_akt
-                                        ,CONCAT(i.nazwisko,' ',i.imie) as 'Nazwisko i imie' 
-                                        ,l.lokalizacja 
-                                        ,i.zmiana 
-                                        ,p.Kod 
-                                        ,case
-                                            when np.nr_akt > 5999 then np.razem 
-                                            else 
-                                                case 
-                                                    when (np.krew + np.rodz + np.rehab + np.nn + np.usp) = 0 then np.krew + np.rodz + np.rehab + np.nn + np.usp + np.inne_nieobecn + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz 
-                                                    else np.krew + np.rodz + np.rehab + np.nn + np.usp + np.urlop_wychow + np.opieka_zus + np.urlop_macierz + np.zwol_lek + np.urlop_okolicznosc + np.`Urlop_opieka_(art_188kp)` + np.urlop_szkoleniowy + np.urlop_bezplatny + np.urlop_wypocz
-                                                end
-                                        end as nieobecnosci
-                                        ,jp.ppm 
-                                        ,jp.reklamacje 
-                                    from 
-                                        instruktor i 
-                                            left join linia_gniazdo lg on lg.id_lider = i.id 
-                                                left join lokalizacja l on l.id = lg.id_lokalizacja 
-                                                    left join jakosc_prod jp on jp.grupa_robocza = l.lokalizacja and jp.miesiac = '{0}'
-                                            left join pracownicy p on p.Nr_akt = i.nr_akt 
-                                            left join nieobecnosci_prod np on np.nr_akt = i.nr_akt and np.miesiac = '{0}' 
-                                    where 
-                                        i.aktywny = 1
-                                        and i.id_ranga = 1
-                                    group by 
-                                        i.nr_akt
-                                        ,l.lokalizacja 
-                                        ,i.zmiana 
-                                        ,p.Kod 
-                                    order by 
-                                        l.lokalizacja,i.zmiana 
-                                    '''.format(miestac_roboczy)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-            results_instruktor = db.read_query(connection, select_data_instruktor)
+            results_instruktor = db.wywolaj_procedure_zmienna(connection, 'wyliczenia_prod_instruktorzy_pracownik', self.miesiac_roboczy)
             connection.close()
 
             select_data_progi = "select * from progi_prod pp where pp.id_ranga = 1 and pp.aktywny = 1"
@@ -1163,8 +818,10 @@ class MainWindow_wyliczeniaForm(QWidget):
             ile_czaplinek = results_ilosc[1][1]
             ile_borne = results_ilosc[0][1]
 
+            lista_wpisow_notNone = [tuple(0 if x is None else x for x in wiersz) for wiersz in results]
+
             data_lista = []
-            for row in results:
+            for row in lista_wpisow_notNone:
                 data_lista.append({
                     'NrAkt': row[0],
                     'dział': row[1],
@@ -1201,8 +858,14 @@ class MainWindow_wyliczeniaForm(QWidget):
             lista = []
             for key, values in grouped_data.items():
                 lokalizacja, zmianaLit = key
-                wyd = round((values['planowany']/values['raportowany'])*100,2)
-                prod = round((values['Direct']/(values['Direct']+values['Indirect']))*wyd,2)
+
+                #wyd = 0 if values['raportowany'] == 0 else wyd = round((values['planowany']/values['raportowany'])*100,2)
+                if values['raportowany'] == 0:
+                    wyd = 0.0
+                    prod = 0.0
+                else:
+                    wyd = round((values['planowany']/values['raportowany'])*100,2)
+                    prod = round((values['Direct']/(values['Direct']+values['Indirect']))*wyd,2)
                 lista.append([lokalizacja,zmianaLit,values['Direct'],values['Indirect'],values['raportowany'],values['planowany'],wyd,prod])
                 #lista.append([lokalizacja,zmianaLit,values['Direct'],values['Indirect'],values['raportowany'],values['planowany'],values['wydajnosc'],values['produktywnosc']])
 

@@ -80,7 +80,66 @@ def wywolaj_procedure(connection, procedure):
         cursor.callproc(procedure)
         rows = []
         for result in cursor.stored_results():
-            rows.append(result.fetchall())
+            #rows.append(result.fetchall())
+            rows.extend(result.fetchall())
+        #result = cursor.stored_results()
+        return rows
+
+        #for result in cursor.stored_results():
+        #    rows = result.fetchall()
+        #    for row in rows:
+        #        print(row)
+    except Error as err:
+        print(f"Error: '{err}'")
+    except IndexError as err:
+        print(f"Błąd indeksowania listy: {err}")
+    except Exception as err:
+        print(f"Nieoczekiwany błąd: {err}")
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+            print("Połączenie z bazą danych zostało zamknięte.")
+
+def wywolaj_procedure_zmienna(connection, procedure, input_data):
+    cursor = connection.cursor()
+    result = None
+
+    try:
+        cursor.callproc(procedure, [input_data])
+        rows = []
+        for result in cursor.stored_results():
+            #rows.append(result.fetchall())
+            rows.extend(result.fetchall())
+        #result = cursor.stored_results()
+        return rows
+
+        #for result in cursor.stored_results():
+        #    rows = result.fetchall()
+        #    for row in rows:
+        #        print(row)
+    except Error as err:
+        print(f"Error: '{err}'")
+    except IndexError as err:
+        print(f"Błąd indeksowania listy: {err}")
+    except Exception as err:
+        print(f"Nieoczekiwany błąd: {err}")
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+            print("Połączenie z bazą danych zostało zamknięte.")
+
+def wywolaj_procedure_zmienna2(connection, procedure, input_data, imput_grupa):
+    cursor = connection.cursor()
+    result = None
+
+    try:
+        cursor.callproc(procedure, [input_data, imput_grupa])
+        rows = []
+        for result in cursor.stored_results():
+            #rows.append(result.fetchall())
+            rows.extend(result.fetchall())
         #result = cursor.stored_results()
         return rows
 

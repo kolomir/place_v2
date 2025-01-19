@@ -818,7 +818,7 @@
        </item>
        <item>
         <widget class="QWidget" name="widget_7" native="true">
-         <layout class="QVBoxLayout" name="verticalLayout_5">
+         <layout class="QHBoxLayout" name="horizontalLayout_13">
           <property name="spacing">
            <number>2</number>
           </property>
@@ -835,9 +835,41 @@
            <number>4</number>
           </property>
           <item>
+           <widget class="QLabel" name="lab_dot_oblicz_prod">
+            <property name="minimumSize">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="pixmap">
+             <pixmap resource="../icon.qrc">:/icon/img/svg_icons/dot_red.svg</pixmap>
+            </property>
+            <property name="scaledContents">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="btn_oblicz">
             <property name="text">
              <string>Oblicz dla produkcji</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btn_zestaw_prod">
+            <property name="text">
+             <string>Zestawienie dla produkcji</string>
             </property>
            </widget>
           </item>
@@ -846,7 +878,7 @@
        </item>
        <item>
         <widget class="QWidget" name="widget_9" native="true">
-         <layout class="QVBoxLayout" name="verticalLayout">
+         <layout class="QHBoxLayout" name="horizontalLayout_14">
           <property name="spacing">
            <number>2</number>
           </property>
@@ -863,9 +895,41 @@
            <number>4</number>
           </property>
           <item>
+           <widget class="QLabel" name="lab_dot_oblicz_mag">
+            <property name="minimumSize">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="pixmap">
+             <pixmap resource="../icon.qrc">:/icon/img/svg_icons/dot_red.svg</pixmap>
+            </property>
+            <property name="scaledContents">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="btn_oblicz_magazyn">
             <property name="text">
              <string>Oblicz dla magazynu</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btn_zestaw_magazyn">
+            <property name="text">
+             <string>Zestawienie dla magazynu</string>
             </property>
            </widget>
           </item>
