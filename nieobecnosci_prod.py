@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QTableWidgetItem,QHeaderView
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QTableWidgetItem,QHeaderView, QMenu, QCheckBox, QWidgetAction, QScrollArea, QPushButton, QFrame, QVBoxLayout
+from PyQt5.QtCore import Qt, QPoint
 import configparser
 import openpyxl
 #import sys
@@ -38,6 +38,10 @@ class MainWindow_nieobecnosci(QWidget):
         self.ui.btn_przegladaj.clicked.connect(self.open_file_dialog)
         self.ui.btn_importuj.clicked.connect(self.czytaj_dane)
         self.ui.btn_importuj_obco.clicked.connect(self.czytaj_dane_obco)
+
+        self.ui.tab_dane.horizontalHeader().setSectionsClickable(True)
+        self.ui.tab_dane.horizontalHeader().sectionClicked.connect(self.show_filter_menu)
+        self.active_filters = {}  # Przechowywanie aktywnych filtrów dla każdej kolumny
 
     def load_data_from_database(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
@@ -318,3 +322,83 @@ class MainWindow_nieobecnosci(QWidget):
         if dni_wolne < 0:
             dni_wolne = 0
         return dni_wolne
+
+    def show_filter_menu(self, col):
+        values = set(
+            self.ui.tab_dane.item(row, col).text()
+            for row in range(self.ui.tab_dane.rowCount())
+            if self.ui.tab_dane.item(row, col)
+        )
+
+        menu = QMenu(self)
+
+        # Tworzenie obszaru przewijania
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_content = QFrame()
+        layout = QVBoxLayout(scroll_content)
+
+        checkboxes = {}
+        max_width = 200  # Minimalna szerokość
+        for value in sorted(values):
+            checkbox = QCheckBox(value)
+            checkbox.setChecked(
+                col not in self.active_filters or value in self.active_filters[col]
+            )
+            layout.addWidget(checkbox)
+            checkboxes[checkbox] = value
+
+            # Dostosowanie szerokości na podstawie tekstu
+            width = checkbox.fontMetrics().boundingRect(value).width() + 30
+            max_width = min(max(max_width, width), 800)  # Maksymalna szerokość 800
+
+        # Dodanie przycisków "Zaznacz wszystko" i "Wyczyść wszystko"
+        button_select_all = QPushButton("Zaznacz wszystko")
+        button_clear_all = QPushButton("Wyczyść wszystko")
+        layout.addWidget(button_select_all)
+        layout.addWidget(button_clear_all)
+
+        button_select_all.clicked.connect(lambda: self.set_all_checkboxes(checkboxes, True))
+        button_clear_all.clicked.connect(lambda: self.set_all_checkboxes(checkboxes, False))
+
+        scroll_area.setWidget(scroll_content)
+        scroll_area.setFixedHeight(200)  # Ograniczenie widocznych elementów do około 10 pozycji
+        scroll_area.setMinimumWidth(max_width)
+        scroll_area.setMaximumWidth(800)
+
+        # Dodanie przewijanego obszaru do menu
+        scroll_action = QWidgetAction(self)
+        scroll_action.setDefaultWidget(scroll_area)
+        menu.addAction(scroll_action)
+
+        apply_action = menu.addAction("Zastosuj filtr")
+        menu.addSeparator()
+        clear_action = menu.addAction("Wyczyść filtr")
+
+        header_pos = self.ui.tab_dane.mapToGlobal(self.ui.tab_dane.horizontalHeader().pos())
+        section_pos = self.ui.tab_dane.horizontalHeader().sectionPosition(col)
+        menu_pos = header_pos + QPoint(section_pos, self.ui.tab_dane.horizontalHeader().height())
+        selected_action = menu.exec(menu_pos)
+
+        if selected_action == apply_action:
+            selected_values = [value for checkbox, value in checkboxes.items() if checkbox.isChecked()]
+            self.active_filters[col] = selected_values
+            self.apply_filters()
+        elif selected_action == clear_action:
+            if col in self.active_filters:
+                del self.active_filters[col]
+            self.apply_filters()
+
+    def set_all_checkboxes(self, checkboxes, state):
+        for checkbox in checkboxes.keys():
+            checkbox.setChecked(state)
+
+    def apply_filters(self):
+        for row in range(self.ui.tab_dane.rowCount()):
+            show_row = True
+            for col, filter_values in self.active_filters.items():
+                item = self.ui.tab_dane.item(row, col)
+                if item and item.text() not in filter_values:
+                    show_row = False
+                    break
+            self.ui.tab_dane.setRowHidden(row, not show_row)

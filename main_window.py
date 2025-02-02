@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QMainWindow, qApp, QApplication
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtGui import QPixmap
 import configparser
-#import sys
+import sys
 from datetime import date, datetime
 
 from _main_ui import Ui_MainWindow
@@ -79,6 +79,27 @@ class MainWindow(QMainWindow):
         self.dostep = self.config['dostep']['poziom']
         #------------------------------------------------------------------
 
+        if "--user" in sys.argv:
+            user_index = sys.argv.index("--user") + 1
+            if user_index < len(sys.argv):
+                self.user = sys.argv[user_index]
+                if self.user == 'admin':
+                    self.dostep = '0'
+                if self.user == 'hr':
+                    self.dostep = '1'
+                if self.user == 'jakosc':
+                    self.dostep = '2'
+                if self.user == 'produkcja':
+                    self.dostep = '3'
+                if self.user == 'magazyn':
+                    self.dostep = '4'
+                print(f"Uruchomiono aplikację dla użytkownika: {self.user}")
+                print(f"dostęp_ustalony = {self.dostep}")
+            else:
+                print("Nie podano nazwy użytkownika!")
+        else:
+            print("Brak parametru --user!")
+
         # Inicjalizacja
         self.worker = None
 
@@ -115,14 +136,31 @@ class MainWindow(QMainWindow):
 
     #- TESTY --------------------------------------------------
     def otwarty_miesiac_2(self):
-        miestac_roboczy = self.data_miesiac_dzis()
-        select_data = "SELECT * FROM aktywny_miesiac WHERE blokada = 0"
+        miestac_roboczy = dodatki.data_miesiac_dzis()
+        miestac_prev = dodatki.data_prev_miesiac()
+        print(f"miestac_roboczy: {miestac_roboczy}")
+        print(f"miestac_prev: {miestac_prev}")
+        select_data = "SELECT * FROM aktywny_miesiac WHERE miesiac = '%s' and blokada = 0" % (str(miestac_roboczy))
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         result = db.read_query(connection, select_data)
         #print('result1:', result)
         #print('result2:', result[0][1])
-        print(f"Wyniki zapytania: {result}")
-        print(f"miestac_roboczy: {miestac_roboczy}")
+        #print(f"Wyniki zapytania: {result}")
+        #print(f"miestac_roboczy: {miestac_roboczy}")
+        if result:
+            print('result2:', result[0][1])
+        else:
+            print('Brak wyników')
+            try:
+                #sql_query = f"UPDATE aktywny_miesiac SET blokada = 1 WHERE miesiac = {miestac_prev}"
+                #date_str = str_to_date({miestac_prev},'%Y-%m-%d')
+                sql_query = f"UPDATE aktywny_miesiac SET blokada = 1 WHERE miesiac = '{miestac_prev}'"
+                connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+                db.execute_query(connection, sql_query)
+                print('sql_query:', sql_query)
+
+            except db.Error as e:
+                print(f"Błąd zapisu do bazy danych: {e}")
 
         # Sprawdź, czy wynik jest pusty
         if result:
@@ -272,8 +310,8 @@ class MainWindow(QMainWindow):
     def otwarty_miesiac(self):
         miestac_roboczy = self.data_miesiac_dzis()
         #print('miestac_roboczy:', miestac_roboczy)
-        select_data = "SELECT * FROM aktywny_miesiac WHERE miesiac = '%s'" % (str(miestac_roboczy))
-        select_data = "SELECT * FROM aktywny_miesiac WHERE blokada = 0"
+        select_data = "SELECT * FROM aktywny_miesiac WHERE miesiac = '%s' and blokada = 0" % (str(miestac_roboczy))
+        #select_data = "SELECT * FROM aktywny_miesiac WHERE blokada = 0"
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         result = db.read_query(connection, select_data)
         #print('result1:', result)

@@ -1,5 +1,6 @@
-from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QTableWidgetItem,QHeaderView
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QTableWidgetItem,QHeaderView, QMenu, QCheckBox, QWidgetAction, QScrollArea, QPushButton, QFrame, QVBoxLayout
+from PyQt5.QtCore import Qt, QPoint
+from PyQt5 import QtGui
 import configparser
 import openpyxl
 #import sys
@@ -40,6 +41,17 @@ class MainWindow_wyliczeniaForm(QWidget):
 
         self.miesiac_roboczy = dodatki.data_miesiac_dzis()
 
+        self.sprzwdzenie_raportow()
+        self.ui.btn_zapisz.setEnabled(False)
+
+        self.ui.tab_dane_nieobecnosci.horizontalHeader().setSectionsClickable(True)
+        self.ui.tab_dane_nieobecnosci.horizontalHeader().sectionClicked.connect(self.show_filter_menu_nieobecnosci)
+        self.active_filters_nieobecnosci = {}  # Przechowywanie aktywnych filtrów dla każdej kolumny
+
+        self.ui.tab_dane_pracownicy.horizontalHeader().setSectionsClickable(True)
+        self.ui.tab_dane_pracownicy.horizontalHeader().sectionClicked.connect(self.show_filter_menu_pracownicy)
+        self.active_filters_pracownicy = {}  # Przechowywanie aktywnych filtrów dla każdej kolumny
+
     def przeliczenie(self):
         self.miesiac_info_nieobecnosci()
         self.licz_nieobecnosci()
@@ -47,6 +59,7 @@ class MainWindow_wyliczeniaForm(QWidget):
         self.licz_wsparcie()
         self.licz_liderzy()
         self.licz_instruktorzy()
+        self.ui.btn_zapisz.setEnabled(True)
 
     def miesiac_robocze(self):
         data_str = dodatki.data_miesiac_dzis()
@@ -59,6 +72,23 @@ class MainWindow_wyliczeniaForm(QWidget):
         robocze = results[0][4]
         connection.close()
         return robocze
+
+    def sprzwdzenie_raportow(self):
+        data_miesiac = str(dodatki.data_miesiac_dzis())
+        select_data_eksport = "SELECT * FROM eksport_danych ed WHERE ed.miesiac = '{0}'".format(data_miesiac)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        result_eksport = db.read_query(connection, select_data_eksport)
+        connection.close()
+
+        licz_cz = 0
+        for dane in result_eksport:
+            if dane[6] == 'prod':
+                licz_cz += 1
+
+        if licz_cz == 0:
+            self.ui.lab_dot_eksport_enova_prod.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_red.svg"))
+        else:
+            self.ui.lab_dot_eksport_enova_prod.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_green.svg"))
 
 #---------------------------------------------------------------
 #- belka podsumowująca w zakładce nieobecności -----------------
@@ -155,6 +185,86 @@ class MainWindow_wyliczeniaForm(QWidget):
 
         except db.Error as e:
             print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
+
+    def show_filter_menu_nieobecnosci(self, col):
+        values = set(
+            self.ui.tab_dane_nieobecnosci.item(row, col).text()
+            for row in range(self.ui.tab_dane_nieobecnosci.rowCount())
+            if self.ui.tab_dane_nieobecnosci.item(row, col)
+        )
+
+        menu = QMenu(self)
+
+        # Tworzenie obszaru przewijania
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_content = QFrame()
+        layout = QVBoxLayout(scroll_content)
+
+        checkboxes = {}
+        max_width = 200  # Minimalna szerokość
+        for value in sorted(values):
+            checkbox = QCheckBox(value)
+            checkbox.setChecked(
+                col not in self.active_filters_nieobecnosci or value in self.active_filters_nieobecnosci[col]
+            )
+            layout.addWidget(checkbox)
+            checkboxes[checkbox] = value
+
+            # Dostosowanie szerokości na podstawie tekstu
+            width = checkbox.fontMetrics().boundingRect(value).width() + 30
+            max_width = min(max(max_width, width), 800)  # Maksymalna szerokość 800
+
+        # Dodanie przycisków "Zaznacz wszystko" i "Wyczyść wszystko"
+        button_select_all = QPushButton("Zaznacz wszystko")
+        button_clear_all = QPushButton("Wyczyść wszystko")
+        layout.addWidget(button_select_all)
+        layout.addWidget(button_clear_all)
+
+        button_select_all.clicked.connect(lambda: self.set_all_checkboxes_nieobecnosci(checkboxes, True))
+        button_clear_all.clicked.connect(lambda: self.set_all_checkboxes_nieobecnosci(checkboxes, False))
+
+        scroll_area.setWidget(scroll_content)
+        scroll_area.setFixedHeight(200)  # Ograniczenie widocznych elementów do około 10 pozycji
+        scroll_area.setMinimumWidth(max_width)
+        scroll_area.setMaximumWidth(800)
+
+        # Dodanie przewijanego obszaru do menu
+        scroll_action = QWidgetAction(self)
+        scroll_action.setDefaultWidget(scroll_area)
+        menu.addAction(scroll_action)
+
+        apply_action = menu.addAction("Zastosuj filtr")
+        menu.addSeparator()
+        clear_action = menu.addAction("Wyczyść filtr")
+
+        header_pos = self.ui.tab_dane_nieobecnosci.mapToGlobal(self.ui.tab_dane_nieobecnosci.horizontalHeader().pos())
+        section_pos = self.ui.tab_dane_nieobecnosci.horizontalHeader().sectionPosition(col)
+        menu_pos = header_pos + QPoint(section_pos, self.ui.tab_dane_nieobecnosci.horizontalHeader().height())
+        selected_action = menu.exec(menu_pos)
+
+        if selected_action == apply_action:
+            selected_values = [value for checkbox, value in checkboxes.items() if checkbox.isChecked()]
+            self.active_filters_nieobecnosci[col] = selected_values
+            self.apply_filters_nieobecnosci()
+        elif selected_action == clear_action:
+            if col in self.active_filters_nieobecnosci:
+                del self.active_filters_nieobecnosci[col]
+            self.apply_filters_nieobecnosci()
+
+    def set_all_checkboxes_nieobecnosci(self, checkboxes, state):
+        for checkbox in checkboxes.keys():
+            checkbox.setChecked(state)
+
+    def apply_filters_nieobecnosci(self):
+        for row in range(self.ui.tab_dane_nieobecnosci.rowCount()):
+            show_row = True
+            for col, filter_values in self.active_filters_nieobecnosci.items():
+                item = self.ui.tab_dane_nieobecnosci.item(row, col)
+                if item and item.text() not in filter_values:
+                    show_row = False
+                    break
+            self.ui.tab_dane_nieobecnosci.setRowHidden(row, not show_row)
 
 # =========================================================================================================================================================================
 # = PRACOWNICY PRODUKCJI =========================================================================================================================================================
@@ -300,6 +410,86 @@ class MainWindow_wyliczeniaForm(QWidget):
 
         except db.Error as e:
             print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
+
+    def show_filter_menu_pracownicy(self, col):
+        values = set(
+            self.ui.tab_dane_pracownicy.item(row, col).text()
+            for row in range(self.ui.tab_dane_pracownicy.rowCount())
+            if self.ui.tab_dane_pracownicy.item(row, col)
+        )
+
+        menu = QMenu(self)
+
+        # Tworzenie obszaru przewijania
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_content = QFrame()
+        layout = QVBoxLayout(scroll_content)
+
+        checkboxes = {}
+        max_width = 200  # Minimalna szerokość
+        for value in sorted(values):
+            checkbox = QCheckBox(value)
+            checkbox.setChecked(
+                col not in self.active_filters_pracownicy or value in self.active_filters_pracownicy[col]
+            )
+            layout.addWidget(checkbox)
+            checkboxes[checkbox] = value
+
+            # Dostosowanie szerokości na podstawie tekstu
+            width = checkbox.fontMetrics().boundingRect(value).width() + 30
+            max_width = min(max(max_width, width), 800)  # Maksymalna szerokość 800
+
+        # Dodanie przycisków "Zaznacz wszystko" i "Wyczyść wszystko"
+        button_select_all = QPushButton("Zaznacz wszystko")
+        button_clear_all = QPushButton("Wyczyść wszystko")
+        layout.addWidget(button_select_all)
+        layout.addWidget(button_clear_all)
+
+        button_select_all.clicked.connect(lambda: self.set_all_checkboxes_pracownicy(checkboxes, True))
+        button_clear_all.clicked.connect(lambda: self.set_all_checkboxes_pracownicy(checkboxes, False))
+
+        scroll_area.setWidget(scroll_content)
+        scroll_area.setFixedHeight(200)  # Ograniczenie widocznych elementów do około 10 pozycji
+        scroll_area.setMinimumWidth(max_width)
+        scroll_area.setMaximumWidth(800)
+
+        # Dodanie przewijanego obszaru do menu
+        scroll_action = QWidgetAction(self)
+        scroll_action.setDefaultWidget(scroll_area)
+        menu.addAction(scroll_action)
+
+        apply_action = menu.addAction("Zastosuj filtr")
+        menu.addSeparator()
+        clear_action = menu.addAction("Wyczyść filtr")
+
+        header_pos = self.ui.tab_dane_pracownicy.mapToGlobal(self.ui.tab_dane_pracownicy.horizontalHeader().pos())
+        section_pos = self.ui.tab_dane_pracownicy.horizontalHeader().sectionPosition(col)
+        menu_pos = header_pos + QPoint(section_pos, self.ui.tab_dane_pracownicy.horizontalHeader().height())
+        selected_action = menu.exec(menu_pos)
+
+        if selected_action == apply_action:
+            selected_values = [value for checkbox, value in checkboxes.items() if checkbox.isChecked()]
+            self.active_filters_pracownicy[col] = selected_values
+            self.apply_filters_pracownicy()
+        elif selected_action == clear_action:
+            if col in self.active_filters_pracownicy:
+                del self.active_filters_pracownicy[col]
+            self.apply_filters_pracownicy()
+
+    def set_all_checkboxes_pracownicy(self, checkboxes, state):
+        for checkbox in checkboxes.keys():
+            checkbox.setChecked(state)
+
+    def apply_filters_pracownicy(self):
+        for row in range(self.ui.tab_dane_pracownicy.rowCount()):
+            show_row = True
+            for col, filter_values in self.active_filters_pracownicy.items():
+                item = self.ui.tab_dane_pracownicy.item(row, col)
+                if item and item.text() not in filter_values:
+                    show_row = False
+                    break
+            self.ui.tab_dane_pracownicy.setRowHidden(row, not show_row)
 
 # =========================================================================================================================================================================
 # = WSPARCIE ==============================================================================================================================================================
@@ -636,7 +826,7 @@ class MainWindow_wyliczeniaForm(QWidget):
                 print('dane[3]:', dane[3], 'wsp:', wsp, 'wynik:', wynik, 'wynik_n:', wynik_n)
 
                 print([dane[0], dane[1], dane[2], direct, indirect, wydajnosc, produktywnosc, wynik, wsp, wynik_n, kwota_j, wynik_j])
-                self.lista_pracownik_lider.append([dane[0], dane[1], dane[2], wydajnosc, produktywnosc, wynik, wsp, wynik_n, kwota_j, wynik_j])
+                self.lista_pracownik_lider.append([dane[0], dane[1], dane[2], dane[8], wydajnosc, produktywnosc, wynik, wsp, wynik_n, kwota_j, wynik_j])
 
             #print(self.lista_pracownik_lider)
             suma_kwot = sum(round(float(wiersz[9]), 2) for wiersz in self.lista_pracownik_lider)
@@ -645,12 +835,13 @@ class MainWindow_wyliczeniaForm(QWidget):
 
             self.ui.tab_dane_liderzy.setSortingEnabled(True)
 
-            self.ui.tab_dane_liderzy.setColumnCount(10)  # Zmień na liczbę kolumn w twojej tabeli
+            self.ui.tab_dane_liderzy.setColumnCount(11)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane_liderzy.setRowCount(0)  # Ustawienie liczby wierszy na 0
             self.ui.tab_dane_liderzy.setHorizontalHeaderLabels([
                 'Nr akt',
                 'Kod',
                 'Imię i nazwisko',
+                'WC',
                 'Wydajność',
                 'Produktywność',
                 'Premia_prod',
@@ -681,6 +872,7 @@ class MainWindow_wyliczeniaForm(QWidget):
                     self.ui.tab_dane_liderzy.setColumnWidth(7, 75)  # Stała szerokość: 150 pikseli
                     self.ui.tab_dane_liderzy.setColumnWidth(8, 75)  # Stała szerokość: 150 pikseli
                     self.ui.tab_dane_liderzy.setColumnWidth(9, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_liderzy.setColumnWidth(10, 75)  # Stała szerokość: 150 pikseli
 
                     self.ui.tab_dane_liderzy.setItem(row_idx, col_idx, item)
 
@@ -1582,3 +1774,4 @@ class MainWindow_wyliczeniaForm(QWidget):
                 db.execute_query(connection, insert_data)
 
             connection.close()
+            self.ui.lab_dot_eksport_enova_prod.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_green.svg"))

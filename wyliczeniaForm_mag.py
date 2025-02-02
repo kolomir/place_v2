@@ -1,5 +1,6 @@
-from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QTableWidgetItem,QHeaderView
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QTableWidgetItem,QHeaderView, QMenu, QCheckBox, QWidgetAction, QScrollArea, QPushButton, QFrame, QVBoxLayout
+from PyQt5.QtCore import Qt, QPoint
+from PyQt5 import QtGui
 import configparser
 import openpyxl
 #import sys
@@ -41,6 +42,13 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
 
         self.miesiac_roboczy = dodatki.data_miesiac_dzis()
 
+        self.sprzwdzenie_raportow()
+        self.ui.btn_zapisz.setEnabled(False)
+
+        self.ui.tab_dane_nieobecnosci.horizontalHeader().setSectionsClickable(True)
+        self.ui.tab_dane_nieobecnosci.horizontalHeader().sectionClicked.connect(self.show_filter_menu)
+        self.active_filters = {}  # Przechowywanie aktywnych filtrów dla każdej kolumny
+
     def przeliczenie(self):
         self.miesiac_info_nieobecnosci()
         self.licz_nieobecnosci()
@@ -49,6 +57,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
         self.licz_transport_bs()
         self.licz_transport_cz()
         self.licz_wysylka()
+        self.ui.btn_zapisz.setEnabled(True)
 
     def miesiac_robocze(self):
         data_str = dodatki.data_miesiac_dzis()
@@ -61,6 +70,24 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
         robocze = results[0][4]
         connection.close()
         return robocze
+
+    def sprzwdzenie_raportow(self):
+        data_miesiac = str(dodatki.data_miesiac_dzis())
+
+        select_data_eksport = "SELECT * FROM eksport_danych ed WHERE ed.miesiac = '{0}'".format(data_miesiac)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        result_eksport = db.read_query(connection, select_data_eksport)
+        connection.close()
+
+        licz_bs = 0
+        for dane in result_eksport:
+            if dane[6] == 'mag':
+                licz_bs += 1
+
+        if licz_bs == 0:
+            self.ui.lab_dot_eksport_enova_mag.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_red.svg"))
+        else:
+            self.ui.lab_dot_eksport_enova_mag.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_green.svg"))
 
     def miesiac_info_nieobecnosci(self):
         dni_robocze = self.miesiac_robocze()
@@ -150,6 +177,86 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
 
         except db.Error as e:
             print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
+
+    def show_filter_menu(self, col):
+        values = set(
+            self.ui.tab_dane_nieobecnosci.item(row, col).text()
+            for row in range(self.ui.tab_dane_nieobecnosci.rowCount())
+            if self.ui.tab_dane_nieobecnosci.item(row, col)
+        )
+
+        menu = QMenu(self)
+
+        # Tworzenie obszaru przewijania
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_content = QFrame()
+        layout = QVBoxLayout(scroll_content)
+
+        checkboxes = {}
+        max_width = 200  # Minimalna szerokość
+        for value in sorted(values):
+            checkbox = QCheckBox(value)
+            checkbox.setChecked(
+                col not in self.active_filters or value in self.active_filters[col]
+            )
+            layout.addWidget(checkbox)
+            checkboxes[checkbox] = value
+
+            # Dostosowanie szerokości na podstawie tekstu
+            width = checkbox.fontMetrics().boundingRect(value).width() + 30
+            max_width = min(max(max_width, width), 800)  # Maksymalna szerokość 800
+
+        # Dodanie przycisków "Zaznacz wszystko" i "Wyczyść wszystko"
+        button_select_all = QPushButton("Zaznacz wszystko")
+        button_clear_all = QPushButton("Wyczyść wszystko")
+        layout.addWidget(button_select_all)
+        layout.addWidget(button_clear_all)
+
+        button_select_all.clicked.connect(lambda: self.set_all_checkboxes(checkboxes, True))
+        button_clear_all.clicked.connect(lambda: self.set_all_checkboxes(checkboxes, False))
+
+        scroll_area.setWidget(scroll_content)
+        scroll_area.setFixedHeight(200)  # Ograniczenie widocznych elementów do około 10 pozycji
+        scroll_area.setMinimumWidth(max_width)
+        scroll_area.setMaximumWidth(800)
+
+        # Dodanie przewijanego obszaru do menu
+        scroll_action = QWidgetAction(self)
+        scroll_action.setDefaultWidget(scroll_area)
+        menu.addAction(scroll_action)
+
+        apply_action = menu.addAction("Zastosuj filtr")
+        menu.addSeparator()
+        clear_action = menu.addAction("Wyczyść filtr")
+
+        header_pos = self.ui.tab_dane_nieobecnosci.mapToGlobal(self.ui.tab_dane_nieobecnosci.horizontalHeader().pos())
+        section_pos = self.ui.tab_dane_nieobecnosci.horizontalHeader().sectionPosition(col)
+        menu_pos = header_pos + QPoint(section_pos, self.ui.tab_dane_nieobecnosci.horizontalHeader().height())
+        selected_action = menu.exec(menu_pos)
+
+        if selected_action == apply_action:
+            selected_values = [value for checkbox, value in checkboxes.items() if checkbox.isChecked()]
+            self.active_filters[col] = selected_values
+            self.apply_filters()
+        elif selected_action == clear_action:
+            if col in self.active_filters:
+                del self.active_filters[col]
+            self.apply_filters()
+
+    def set_all_checkboxes(self, checkboxes, state):
+        for checkbox in checkboxes.keys():
+            checkbox.setChecked(state)
+
+    def apply_filters(self):
+        for row in range(self.ui.tab_dane_nieobecnosci.rowCount()):
+            show_row = True
+            for col, filter_values in self.active_filters.items():
+                item = self.ui.tab_dane_nieobecnosci.item(row, col)
+                if item and item.text() not in filter_values:
+                    show_row = False
+                    break
+            self.ui.tab_dane_nieobecnosci.setRowHidden(row, not show_row)
 
 # ========================================================================================================================================================================
 # = WYDANIA ==============================================================================================================================================================
@@ -1009,3 +1116,4 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                 db.execute_query(connection, insert_data)
 
             connection.close()
+            self.ui.lab_dot_eksport_enova_mag.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_green.svg"))

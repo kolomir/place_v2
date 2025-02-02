@@ -37,7 +37,7 @@ class MainWindow_liderzy(QWidget):
     def load_data_from_database(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
-            select_data = "select i.id, i.nr_akt, i.nazwisko, i.imie, r.ranga, i.aktywny, i.uzyte, i.zmiana from instruktor i left join ranga r on r.id = i.id_ranga order by i.nazwisko ASC;"
+            select_data = "select i.id, i.imie, i.nazwisko, i.nr_akt, r.ranga, i.aktywny, i.uzyte, i.zmiana from instruktor i left join ranga r on r.id = i.id_ranga order by i.nazwisko ASC;"
             # select_data = "select * from kpi_mag"
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             results = db.read_query(connection, select_data)
