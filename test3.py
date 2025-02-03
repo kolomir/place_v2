@@ -1,37 +1,36 @@
-from openpyxl import load_workbook
-import os, math
+# Przykładowe dane jako lista list
+data = [
+    ["403",'','','',''"MICHAŁ USZAKIEWICZ | 2899",'',''"PRACOWNIK DZIAŁU JAKOŚCI","05.09.2022",2,'','','','','','','','','','','','','','','','','','','','',2],
+    ["404",'','','',''"KAROL WARACKI | 322",'',''"PRACOWNIK DZIAŁU UTRZYMANIA RUCHU","01.06.2006",'2,25','','','','','','','','','','','','','','','','','','','','','2,25'],
+    ["405",'','','',''"ZBIGNIEW SKRZYPIEC | 1684",'',''"PRACOWNIK DZIAŁU UTRZYMANIA RUCHU","06.06.2011",2,'','','','','','','','','','','','','','','','','','','','',2],
+    ["406",'','','',''"TOMASZ KUŹMA | 1847",'',''"PRACOWNIK DZIAŁU UTRZYMANIA RUCHU","06.03.2023",'1,1875','','','','','','','','','','','','','','','','','',1,'','','2,1875'],
+    ["407",'','','',''"TOMASZ WOJTKIW | 2010",'',''"PRACOWNIK DZIAŁU UTRZYMANIA RUCHU","20.04.2015",2,'','','','','','','','','','','','','','','','','','','','',2],
+    ["408",'','','',''"JACEK FLAGA | 2062",'',''"PRACOWNIK DZIAŁU UTRZYMANIA RUCHU","01.03.2016",'2,5','','','','','','','','','','','','','','','','','','','','','2,5'],
+    ["409",'','','',''"MAŁGORZATA KISIEL | 1593",'',''"PRACOWNIK INWENTARYZACJI CIĄGŁEJ","27.09.2010",2,'','','','','','','','','','','','','','','','','','','','',2],
+    ["448",'','','',''"AGNIESZKA GROMADA | 210",'',''"SPECJALISTA DS. BUDOWY I PROGRAMOWANIA URZĄDZEŃ TE","01.09.2005",3,'','','','','','','','','','','','','','','','','','','','',3],
+    ["449",'','','',''"ADAM SZTECHMILER | 3061",'',''"SPECJALISTA DS. BUDOWY I PROGRAMOWANIA URZĄDZEŃ TESTUJĄCY","18.08.2021",'4,7188','','','','','','','','','','','','','','','','','','','','','4,7188'],
+    ["450",'','','',''"PRZEMYSŁAW HANDZEL | 2868",'',''"SPECJALISTA DS. BUDOWY I PROGRAMOWANIA URZĄDZEŃ TESTUJĄCYCH","14.02.2019",8,'','','',1,'','','','','','','','','','','','','','','','',9],
+    ["451",'','','',''"ANETA DRZAZGA | 2774",'',''"SPECJALISTA DS. JAKOŚCI","06.08.2018",2,'','','','','','','','','','','','','','','','','','','','',2],
+    ["455",'','','',''"MATEUSZ DRAPAŁA | 2721",'',''"SPECJALISTA DS. PLANOWANIA PRODUKCJI","18.06.2018",'','','','','','','','','','','','','','','','',21,'','','','',21],
+    ["456",'','','',''"EMILIA STRONA | 2945",'',''"SPECJALISTA DS. PLANOWANIA PRODUKCJI","18.01.2021",'2,625','','','','','','','','','','',3,'','','','','','','','','','5,625'],
+    ["457",'','','',''"TOMASZ BIERNAT | 81",'',''"SPECJALISTA DS. SERWISU MASZYN I URZĄDZEŃ","13.09.2024",'2,25','','','','','','','','','','','','','','','','','','',1,'','3,25'],
+    ["458",'','','',''"ROBERT LITWIŃCZUK | 1464",'',''"SPECJALISTA DS. ZAKUPÓW OPERACYJNYCH","22.05.2017",2,'','','','','','','','','','','','','','','','','','','','',2]
+    ]
 
-# Ścieżka do pliku Excel
-file_path = "D:\\ProjektyPython\\place_v2\\bledy\\styczeń\\testy - nie uzywac.xlsx"
+# Funkcja do zaokrąglania wartości w wierszach
+def convert_and_round(value):
+    if isinstance(value, str) and ',' in value:
+        return round(float(value.replace(',', '.')))
+    elif isinstance(value, (int, float)):
+        return round(value)
+    else:
+        return value
 
-def truncate_float(value):
-    try:
-        return math.floor(float(value))
-    except ValueError:
-        return value  # Jeśli to nie jest liczba, zwraca wartość oryginalną
+# Przetwarzanie danych
+for row in data:
+    for i in range(len(row)):
+        row[i] = convert_and_round(row[i])
 
-def load_data_from_excel(file_path):
-    workbook = load_workbook(os.path.join(file_path))
-    sheet = workbook.active
-    data = []
-    for row in sheet.iter_rows(values_only=True):
-        data.append(row)
-    return data
-
-def save_to_mysql(data):
-
-    lista_wpisow_notNone = [tuple(0 if x is None else x for x in wiersz) for wiersz in data[1:]]
-    # Przygotowanie zapytania SQL
-    for row in lista_wpisow_notNone:  # Pomijamy nagłówki
-
-        truncated_row = [truncate_float(value) if isinstance(value, (int, float)) else value for value in row]
-        placeholders = ", ".join(["%s"] * len(truncated_row))
-        print(truncated_row[1],truncated_row[2])
-
-        #sql = f"INSERT INTO {table_name} VALUES ({placeholders})"
-        #cursor.execute(sql, truncated_row)
-
-# Wczytanie danych
-data = load_data_from_excel(file_path)
-
-save_to_mysql(data)
+# Wyświetlenie wyników
+for row in data:
+    print(row)

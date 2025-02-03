@@ -147,6 +147,10 @@ class MainWindow_raportowanie_prod(QWidget):
                     zmiana_lit = row[13][3]
                 else:
                     zmiana_lit = 'inna'
+                if row[8] == '' or row[8] < 0:
+                    planned = 0
+                else:
+                    planned = row[8]
                 wydajnosc = 0
                 if row[6] == '' or row[6] < 0:
                     wydajnosc = 0
@@ -159,12 +163,13 @@ class MainWindow_raportowanie_prod(QWidget):
                 else:
                     wydajnosc = row[6] / row[8]
                 #print(i,[row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],wydajnosc,data_miesiac,teraz])
-                lista_wpisow.append([row[0],row[1],row[2],data_miesiac,row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],row[13],zmiana_lit,wydajnosc,data_miesiac,teraz])
+                lista_wpisow.append([row[0],row[1],row[2],data_miesiac,row[4],row[5],row[6],row[7],planned,row[9],row[10],row[11],row[12],row[13],zmiana_lit,wydajnosc,data_miesiac,teraz])
                 i=i+1
             else:
                 break
 
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+
 
         for row in lista_wpisow:
             insert_data = "INSERT INTO logowanie_zlecen VALUES (NULL,'%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');" % (row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],row[13],row[14],row[15],row[16],row[17])
