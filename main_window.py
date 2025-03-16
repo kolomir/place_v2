@@ -89,10 +89,12 @@ class MainWindow(QMainWindow):
                     self.dostep = '1'
                 if self.user == 'jakosc':
                     self.dostep = '2'
-                if self.user == 'produkcja':
+                if self.user == 'produkcja_cz':
                     self.dostep = '3'
-                if self.user == 'magazyn':
+                if self.user == 'produkcja_bs':
                     self.dostep = '4'
+                if self.user == 'magazyn':
+                    self.dostep = '5'
                 print(f"Uruchomiono aplikację dla użytkownika: {self.user}")
                 print(f"dostęp_ustalony = {self.dostep}")
             else:
@@ -149,6 +151,9 @@ class MainWindow(QMainWindow):
         #print(f"miestac_roboczy: {miestac_roboczy}")
         if result:
             print('result2:', result[0][1])
+            select_dir = "select * from direct d where miesiac = '{0}'".format(str(miestac_roboczy))
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+            result_dir = db.read_query(connection, select_dir)
         else:
             print('Brak wyników')
             try:
@@ -240,8 +245,8 @@ class MainWindow(QMainWindow):
                 self.ui.btn_ustawienia_mag.setEnabled(False)
                 self.ui.btn_oblicz_magazyn.setEnabled(False)
 
-            if self.dostep == '3':
-                print('Dostep 3:', self.dostep)
+            if self.dostep == '3' or self.dostep == '4':
+                print('Dostep 3 lub 4:', self.dostep)
                 self.ui.btn_zaladuj_pracownicy.setEnabled(False)
                 self.ui.lab_pracownicy.setEnabled(False)
                 self.ui.btn_nieobecnosci.setEnabled(False)
@@ -258,8 +263,8 @@ class MainWindow(QMainWindow):
                 self.ui.btn_ustawienia_mag.setEnabled(False)
                 self.ui.btn_oblicz_magazyn.setEnabled(False)
 
-            if self.dostep == '4':
-                print('Dostep 4:', self.dostep)
+            if self.dostep == '5':
+                print('Dostep 5:', self.dostep)
                 self.ui.btn_zaladuj_pracownicy.setEnabled(False)
                 self.ui.lab_pracownicy.setEnabled(False)
                 self.ui.btn_nieobecnosci.setEnabled(False)
@@ -403,7 +408,10 @@ class MainWindow(QMainWindow):
         self.okno_jakoscForm.show()
 
     def otworz_okno_korektaIW(self):
-        self.okno_korekta_indirect_prod = MainWindow_korekta_indirect_prod()
+        #dzial = self.dostep
+        self.dzial = 5
+        print('dzial 1',self.dzial)
+        self.okno_korekta_indirect_prod = MainWindow_korekta_indirect_prod(self.dzial)
         self.okno_korekta_indirect_prod.show()
 
     def otworz_okno_ustawieniaMenu_mag(self):
@@ -471,3 +479,4 @@ class MainWindow(QMainWindow):
         self.ui.lab_dot_kpi_magazyn.setPixmap(QPixmap(
             ":/icon/img/svg_icons/dot_green.svg" if status_map.get("kpi_mag") else ":/icon/img/svg_icons/dot_red.svg"
         ))
+        self.ui.btn_zaladuj_korekta.setEnabled(True if status_map.get("direct") else False)

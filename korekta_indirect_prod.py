@@ -26,7 +26,7 @@ class NumericTableWidgetItem(QTableWidgetItem):
         return super().__lt__(other)
 
 class MainWindow_korekta_indirect_prod(QWidget):
-    def __init__(self):
+    def __init__(self, dzial):
         super().__init__()
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -41,6 +41,13 @@ class MainWindow_korekta_indirect_prod(QWidget):
         self.ui.tab_dane.horizontalHeader().setSectionsClickable(True)
         self.ui.tab_dane.horizontalHeader().sectionClicked.connect(self.show_filter_menu)
         self.active_filters = {}  # Przechowywanie aktywnych filtrów dla każdej kolumny
+        print('dzial 2',dzial)
+        if dzial == 3:
+            self.dzial_nazwa = "prod_cz"
+        if dzial == 4:
+            self.dzial_nazwa = "prod_bs"
+        if dzial == 5:
+            self.dzial_nazwa = "mag"
 
     def open_file_dialog(self):
         # Otwieranie dialogu wyboru pliku
@@ -86,14 +93,14 @@ class MainWindow_korekta_indirect_prod(QWidget):
                 for dane in results:
                     if int(dane[0]) == row[0]:
                         pracownik = dane[1]
-                lista_wpisow.append([row[0], pracownik, row[1], row[2], data_miesiac, teraz])
+                lista_wpisow.append([row[0], pracownik, row[1], row[2], data_miesiac, teraz, self.dzial_nazwa])
             else:
                 break
 
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
 
         for row in lista_wpisow:
-            insert_data = "INSERT INTO korekta_indirect VALUES (NULL,'%s','%s','%s','%s','%s','%s');" % (row[0], row[1], row[2], row[3], row[4], row[5])
+            insert_data = "INSERT INTO korekta_indirect VALUES (NULL,'%s','%s','%s','%s','%s','%s','%s');" % (row[0], row[1], row[2], row[3], row[4], row[5], row[6])
             db.execute_query(connection, insert_data)
 
         self.ui.tab_dane.blockSignals(True)
@@ -104,21 +111,22 @@ class MainWindow_korekta_indirect_prod(QWidget):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
             miestac_roboczy = dodatki.data_miesiac_dzis()
-            select_data = "select ki.id, ki.nr_akt, ki.`nazwisko_i_imie`, ki.czas, ki.opis, ki.miesiac from korekta_indirect ki where miesiac = '{0}';".format(miestac_roboczy)
+            select_data = "select ki.id, ki.nr_akt, ki.`nazwisko_i_imie`, ki.czas, ki.opis, ki.miesiac, ki.dzial from korekta_indirect ki where miesiac = '{0}';".format(miestac_roboczy)
             #select_data = "select * from kpi_mag"
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             results = db.read_query(connection, select_data)
 
             self.ui.tab_dane.setSortingEnabled(True)
 
-            self.ui.tab_dane.setColumnCount(5)  # Zmień na liczbę kolumn w twojej tabeli
+            self.ui.tab_dane.setColumnCount(6)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
             self.ui.tab_dane.setHorizontalHeaderLabels([
                 'Nr akt',
                 'Nazwisko i imię',
                 'Korekta',
                 'Opis',
-                'Data dodania'
+                'Data dodania',
+                'Dział'
             ])
 
             # Ustawianie liczby wierszy na podstawie danych z bazy
@@ -137,8 +145,9 @@ class MainWindow_korekta_indirect_prod(QWidget):
                     self.ui.tab_dane.setColumnWidth(2, 75)  # Stała szerokość: 150 pikseli
                     self.ui.tab_dane.setColumnWidth(3, 75)  # Stała szerokość: 150 pikseli
                     self.ui.tab_dane.setColumnWidth(4, 150)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane.setColumnWidth(5, 100)  # Stała szerokość: 150 pikseli
 
-                    if col_idx == 0 or col_idx == 1 or col_idx == 4:  # Zablokowanie edycji dla kolumny "nazwa"
+                    if col_idx == 0 or col_idx == 1 or col_idx == 5:  # Zablokowanie edycji dla kolumny "nazwa"
                         item.setFlags(item.flags() & ~Qt.ItemIsEditable)  # Usuwamy flagę edytowalności
                     else:
                         item.setFlags(item.flags() | Qt.ItemIsEditable)  # Ustawienie komórek jako edytowalne
@@ -165,12 +174,24 @@ class MainWindow_korekta_indirect_prod(QWidget):
             sql_query = f"UPDATE korekta_indirect SET {column_name} = %s WHERE id = %s"
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             db.execute_query_virable(connection,sql_query,(new_value, record_id))
+
+            #self.sprawdz_dzial()
             #self.cursor.execute(sql_query, (new_value, record_id))
             #self.db_connection.commit()
             #print(f"Zaktualizowano rekord o id {record_id}, {column_name} = {new_value}")
 
         except db.Error as e:
             print(f"Błąd zapisu do bazy danych: {e}")
+
+    #def sprawdz_dzial(self, item):
+    #    row = item.row()
+    #    record_id = self.row_ids[row]
+
+    #    select_data = "select ki.id, ki.dzial from korekta_indirect ki where id = '{0}';".format(record_id)
+    #    connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+    #    results = db.read_query(connection, select_data)
+    #    print('Sprawdzenie: ',results[0],'; ',results[1])
+
 
     def on_item_changed(self, item):
         """Funkcja wywoływana przy każdej zmianie komórki."""
@@ -181,11 +202,22 @@ class MainWindow_korekta_indirect_prod(QWidget):
         # Pobranie id rekordu dla zmienionego wiersza
         record_id = self.row_ids[row]
 
-        # Zapis zmienionych danych do bazy
-        self.update_database(record_id, col, new_value)
+        select_data = "select ki.id, ki.dzial from korekta_indirect ki where id = {0};".format(record_id)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, select_data)
+        #print('Sprawdzenie: ', results)
+        #print('Sprawdzenie: ', results[0][0], '; ', results[0][1], '; ', self.dzial_nazwa)
+
+        if results[0][1] == self.dzial_nazwa:
+            # Zapis zmienionych danych do bazy
+            self.update_database(record_id, col, new_value)
+        else:
+            QMessageBox.critical(self, 'Error', 'Prawdopodobnie to nie jest Twój pracownik! <br />Wybierz inne nazwisko do korekty czasu.')
+            return
 
     def otworz_okno_korekta_indirect_prod_dodaj(self):
-        self.okno_korekta_indirect_prod_dodaj = MainWindow_korekta_indirect_prod_dodaj()
+        dzial = self.dzial_nazwa
+        self.okno_korekta_indirect_prod_dodaj = MainWindow_korekta_indirect_prod_dodaj(dzial)
         self.okno_korekta_indirect_prod_dodaj.show()
 
     def szablon(self):
@@ -219,7 +251,7 @@ class MainWindow_korekta_indirect_prod(QWidget):
 
     def sprawdz_wpisy(self):
         miestac_roboczy = dodatki.data_miesiac_dzis()
-        select_data = "SELECT * FROM `korekta_indirect` WHERE miesiac = '%s';" % (miestac_roboczy)  # (miestac_roboczy)
+        select_data = "SELECT * FROM `korekta_indirect` WHERE miesiac = '%s' and dzial = '%s';" % (miestac_roboczy, self.dzial_nazwa)  # (miestac_roboczy)
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         results = db.read_query(connection, select_data)
         connection.close()
@@ -227,7 +259,7 @@ class MainWindow_korekta_indirect_prod(QWidget):
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         if results:
             for x in results:
-                delete_data = "delete from korekta_indirect where id = '%s' and miesiac = '%s';" % (x[0],miestac_roboczy)
+                delete_data = "delete from korekta_indirect where id = '%s' and miesiac = '%s' and dzial = '%s';" % (x[0],miestac_roboczy, self.dzial_nazwa)
                 print('Do skasowania:',delete_data)
                 db.execute_query(connection, delete_data)
         else:

@@ -42,6 +42,8 @@ class MainWindow_wyliczeniaForm(QWidget):
         self.miesiac_roboczy = dodatki.data_miesiac_dzis()
 
         self.sprzwdzenie_raportow()
+        self.sprawdzenie_zapisu_prod()
+        self.ui.check_blokada.setChecked(False)
         self.ui.btn_zapisz.setEnabled(False)
 
         self.ui.tab_dane_nieobecnosci.horizontalHeader().setSectionsClickable(True)
@@ -52,7 +54,10 @@ class MainWindow_wyliczeniaForm(QWidget):
         self.ui.tab_dane_pracownicy.horizontalHeader().sectionClicked.connect(self.show_filter_menu_pracownicy)
         self.active_filters_pracownicy = {}  # Przechowywanie aktywnych filtrów dla każdej kolumny
 
+
+
     def przeliczenie(self):
+        self.sprawdzenie_zapisu_prod()
         self.miesiac_info_nieobecnosci()
         self.licz_nieobecnosci()
         self.licz_pracownicy()
@@ -89,6 +94,19 @@ class MainWindow_wyliczeniaForm(QWidget):
             self.ui.lab_dot_eksport_enova_prod.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_red.svg"))
         else:
             self.ui.lab_dot_eksport_enova_prod.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_green.svg"))
+
+    def sprawdzenie_zapisu_prod(self):
+        query = "SELECT COUNT(*) > 0 AS status FROM eksport_danych WHERE miesiac = '{0}' and dzial = 'prod'".format(self.miesiac_roboczy)
+                #"SELECT * FROM eksport_danych ed WHERE ed.miesiac = '{0}' and ed.dzial = 'prod'".format(data_miesiac)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, query)
+        connection.close()
+        if results[0][0] == 1:
+            print("Zapisane wyliczenia produkcji")
+            self.ui.check_blokada.setChecked(True)
+        else:
+            print("Jeszcze nie zapisane wyliczenia produkcji")
+            self.ui.check_blokada.setChecked(False)
 
 #---------------------------------------------------------------
 #- belka podsumowująca w zakładce nieobecności -----------------
@@ -319,13 +337,13 @@ class MainWindow_wyliczeniaForm(QWidget):
                         wynik_n = wynik / 2
 
                     wynik_b = wynik_n
-                    if dane[13] == 1:
-                        wynik_b = (wynik_n / 4) * 3
                     if dane[13] == 2:
-                        wynik_b = wynik_n / 2
+                        wynik_b = (wynik_n / 4) * 3
                     if dane[13] == 3:
+                        wynik_b = wynik_n / 2
+                    if dane[13] == 4:
                         wynik_b = wynik_n / 4
-                    if dane[13] > 3:
+                    if dane[13] > 4:
                         wynik_b = 0.0
 
                 else:
@@ -821,7 +839,7 @@ class MainWindow_wyliczeniaForm(QWidget):
                             wynik_j = float(wynik_n) + float(kwota_jakosc)
                             kwota_j = float(kwota_jakosc)
                     else:
-                        wynik_j = 0
+                        wynik_j = float(wynik_n)
 
                 print('dane[3]:', dane[3], 'wsp:', wsp, 'wynik:', wynik, 'wynik_n:', wynik_n)
 
@@ -829,7 +847,7 @@ class MainWindow_wyliczeniaForm(QWidget):
                 self.lista_pracownik_lider.append([dane[0], dane[1], dane[2], dane[8], wydajnosc, produktywnosc, wynik, wsp, wynik_n, kwota_j, wynik_j])
 
             #print(self.lista_pracownik_lider)
-            suma_kwot = sum(round(float(wiersz[9]), 2) for wiersz in self.lista_pracownik_lider)
+            suma_kwot = sum(round(float(wiersz[10]), 2) for wiersz in self.lista_pracownik_lider)
             self.ui.lab_sumaLiderzy.setText(str(suma_kwot))
             self.ui.lab_sumaLiderzy2.setText(str(suma_kwot))
 
@@ -1415,7 +1433,7 @@ class MainWindow_wyliczeniaForm(QWidget):
                         wynik_j = float(wynik_n) + float(kwota_jakosc)
                         kwota_j = float(kwota_jakosc)
                 else:
-                    wynik_j = 0
+                    wynik_j = float(wynik_n)
 
                 self.lista_instruktor_prem.append([dane[0],dane[1],dane[2],dane[3],dane[4],wynik,wsp,wynik_n,kwota_j,wynik_j])
             print(self.lista_instruktor_prem)
@@ -1686,6 +1704,10 @@ class MainWindow_wyliczeniaForm(QWidget):
             print('--Brak wpisów jeszcze--')
 
     def zapis_dane_pracownicy(self):
+        blokada = self.ui.check_blokada.isChecked()
+        if blokada:
+            QMessageBox.critical(self, 'Error', 'Dane są już zapisane. Zdejmij blokadę i zapisz raz jeszcze.!')
+            return
         data_miesiac = str(dodatki.data_miesiac_dzis())
         teraz = datetime.today()
         self.sprawdz_wpisy()
@@ -1750,7 +1772,7 @@ class MainWindow_wyliczeniaForm(QWidget):
                 nr_akt = dane_lider[0]  # nr akt
                 kod = dane_lider[1]  # kod
                 imie_i_nazwisko = dane_lider[2]  # Imie i nazwisko
-                kwota = dane_lider[9]  # kwota
+                kwota = dane_lider[10]  # kwota
                 opis = 'lider'
                 dzial = 'prod'
 
@@ -1772,6 +1794,8 @@ class MainWindow_wyliczeniaForm(QWidget):
                 # print(test[0],test[1],test[2],test[3],test[4],test[5],test[6],test[7])
                 insert_data = "INSERT INTO eksport_danych VALUES (NULL,'%s','%s','%s','%s','%s','%s','%s','%s');" % (test[0], test[1], test[2], test[3], test[4], test[5], test[6], test[7])
                 db.execute_query(connection, insert_data)
+
+            self.ui.check_blokada.setChecked(True)
 
             connection.close()
             self.ui.lab_dot_eksport_enova_prod.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_green.svg"))

@@ -43,6 +43,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
         self.miesiac_roboczy = dodatki.data_miesiac_dzis()
 
         self.sprzwdzenie_raportow()
+        self.sprawdzenie_zapisu_mag()
+        self.ui.check_blokada.setChecked(False)
         self.ui.btn_zapisz.setEnabled(False)
 
         self.ui.tab_dane_nieobecnosci.horizontalHeader().setSectionsClickable(True)
@@ -50,6 +52,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
         self.active_filters = {}  # Przechowywanie aktywnych filtrów dla każdej kolumny
 
     def przeliczenie(self):
+        self.sprawdzenie_zapisu_mag()
         self.miesiac_info_nieobecnosci()
         self.licz_nieobecnosci()
         self.licz_wydania()
@@ -88,6 +91,19 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
             self.ui.lab_dot_eksport_enova_mag.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_red.svg"))
         else:
             self.ui.lab_dot_eksport_enova_mag.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_green.svg"))
+
+    def sprawdzenie_zapisu_mag(self):
+        query = "SELECT COUNT(*) > 0 AS status FROM eksport_danych WHERE miesiac = '{0}' and dzial = 'mag'".format(self.miesiac_roboczy)
+                #"SELECT * FROM eksport_danych ed WHERE ed.miesiac = '{0}' and ed.dzial = 'prod'".format(data_miesiac)
+        connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+        results = db.read_query(connection, query)
+        connection.close()
+        if results[0][0] == 1:
+            print("Zapisane wyliczenia produkcji")
+            self.ui.check_blokada.setChecked(True)
+        else:
+            print("Jeszcze nie zapisane wyliczenia produkcji")
+            self.ui.check_blokada.setChecked(False)
 
     def miesiac_info_nieobecnosci(self):
         dni_robocze = self.miesiac_robocze()
@@ -429,6 +445,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
             kwota_produkt = results_wytyczne[2][8]
 
             for dane in results_pracownik:
+                print(dane[2])
                 blad_zew = blad_wew = prod_zmian = suma = 0.0
                 prod_prem = iw_prem = 0
                 for blad in results_bledy:
@@ -591,11 +608,13 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
             kwota_reklamacje = results_wytyczne[1][8]
             if dp_dane >= target_dp_init:
                 prem_dp = int(kwota_dp_init)
+            else:
+                prem_dp = 0
 
             for dane in results:
                 for blad in results_bledy:
                     if dane[0] == blad[1]:
-                        blad = blad[3]
+                        blad = blad[2] # <------ Poprawione ponieważ wybrana była kolumna blad[3] a powinna być blad[2]
                         print('blad:',blad)
                         if int(blad) == 0:
                             prem_blad = float(kwota_reklamacje)
@@ -934,7 +953,9 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
             prog50 = self.ui.lab_pracujacych050Nieobecnosci.text()
 
             prem_delivery = bledy_zew = 0
+            prem_bledy = 0
             delivery = int(results_kpi[0][1])
+            reklamacje_kpi = int(results_kpi[0][2])
             target_bledy = int(results_wytyczne[0][3])
             kwota_bledy = results_wytyczne[0][8]
             target_delivery = int(results_wytyczne[1][3])
@@ -943,17 +964,20 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
             if delivery >= target_delivery:
                 prem_delivery = int(kwota_delivery)
 
-            for dane in results:
-                for blad in results_bledy:
-                    if dane[0] == blad[1]:
-                        blad = blad[2]
-                        if int(blad) == target_bledy:
-                            prem_blad = int(kwota_bledy)
-                        else:
-                            prem_blad = 0
-                        break
+            if reklamacje_kpi == target_bledy: # -----> Poprawiony sposób liczenia premii za reklamacje - do wyjaśnienia dla Darka
+                prem_bledy = int(kwota_bledy)
 
-                suma_prem = prem_delivery + prem_blad
+            for dane in results:
+                #for blad in results_bledy:
+                #    if dane[0] == blad[1]:
+                #        blad = blad[2]
+                #        if int(blad) == target_bledy:
+                #           prem_blad = int(kwota_bledy)
+                #        else:
+                #            prem_blad = 0
+                #        break
+
+                suma_prem = prem_delivery + prem_bledy
 
                 wsp = 0
                 wynik_n = suma_prem
@@ -965,7 +989,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                     wynik_n = suma_prem / 2
 
                 #print(dane[0],dane[1],dane[2],prem_dp,prem_blad,suma_prem,wsp,wynik_n)
-                self.lista_pracownik_wysylka.append([dane[0],dane[4],dane[1],dane[2],prem_delivery,prem_blad,suma_prem,wsp,wynik_n])
+                self.lista_pracownik_wysylka.append([dane[0],dane[4],dane[1],dane[2],prem_delivery,prem_bledy,suma_prem,wsp,wynik_n])
 
                 suma_kwot = sum(round(float(wiersz[8]), 2) for wiersz in self.lista_pracownik_wysylka)
                 self.ui.lab_sumaWysylka.setText(str(suma_kwot))
@@ -1035,6 +1059,10 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
             print('--Brak wpisów jeszcze--')
 
     def zapis_dane_pracownicy(self):
+        blokada = self.ui.check_blokada.isChecked()
+        if blokada:
+            QMessageBox.critical(self, 'Error', 'Dane są już zapisane. Zdejmij blokadę i zapisz raz jeszcze.!')
+            return
         data_miesiac = str(dodatki.data_miesiac_dzis())
         teraz = datetime.today()
         self.sprawdz_wpisy()
@@ -1114,6 +1142,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                 insert_data = "INSERT INTO eksport_danych VALUES (NULL,'%s','%s','%s','%s','%s','%s','%s','%s');" % (
                 test[0], test[1], test[2], test[3], test[4], test[5], test[6], test[7])
                 db.execute_query(connection, insert_data)
+
+            self.ui.check_blokada.setChecked(True)
 
             connection.close()
             self.ui.lab_dot_eksport_enova_mag.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_green.svg"))

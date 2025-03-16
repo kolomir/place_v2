@@ -268,8 +268,10 @@ class MainWindow_nieobecnosci(QWidget):
                     tekst = row[4].split('|')
                     nazwisko = tekst[0].strip()
                     nr_akt = tekst[1].strip()
-                    #
-                    lista_wpisow.append([nazwisko,nr_akt,row[6],row[8],row[9],row[10],row[11],row[12],row[17],row[18],row[19],row[20],row[21],row[22],row[23],row[24],row[26],row[27],row[29],data_miesiac,teraz])
+
+                    wpis = [nazwisko, nr_akt, row[6], row[8], row[9], row[10], row[11], row[12], row[17], row[18], row[19], row[20], row[21], row[22], row[23], row[24], row[26], row[27], row[29],data_miesiac, teraz]
+                    wpis = [self.convert_if_float(x) for x in wpis]
+                    lista_wpisow.append(wpis)
                     #print(nazwisko,nr_akt,row[6],row[8],row[9],row[10],row[11],row[12],row[17],row[18],row[19],row[20],row[21],row[22],row[23],row[24],row[26],row[27],row[29],data_miesiac,teraz)
             else:
                 break
@@ -285,6 +287,25 @@ class MainWindow_nieobecnosci(QWidget):
             db.execute_query(connection, insert_data)
 
         self.load_data_from_database()
+
+    def convert_if_float(self, val):
+        if val is None:
+            return val
+        # Jeśli wartość jest już typu float, zaokrąglamy i konwertujemy
+        if isinstance(val, float):
+            return int(round(val))
+        # Jeśli wartość jest typu string, spróbujemy ją przekonwertować
+        if isinstance(val, str):
+            # Zamieniamy przecinek na kropkę, aby umożliwić konwersję
+            temp = val.replace(',', '.')
+            try:
+                num = float(temp)
+                return int(round(num))
+            except ValueError:
+                # Jeśli nie udało się przekonwertować, pozostawiamy oryginalny string
+                return val
+        # Inne typy pozostawiamy bez zmian
+        return val
 
     def truncate_float(value):
         try:

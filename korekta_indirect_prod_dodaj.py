@@ -5,7 +5,7 @@ import db, dodatki
 from datetime import datetime
 
 class MainWindow_korekta_indirect_prod_dodaj(QWidget):
-    def __init__(self):
+    def __init__(self, dzial):
         super().__init__()
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -14,6 +14,8 @@ class MainWindow_korekta_indirect_prod_dodaj(QWidget):
         self.ui.combo_nr_akt.currentIndexChanged.connect(self.on_combobox_changed)
 
         self.ui.btn_zapisz.clicked.connect(self.zapisz)
+        print('dzial 3',dzial)
+        self.dzial_nazwa = dzial
 
     def combo_pracownik(self):
         miestac_roboczy = dodatki.data_miesiac_dzis()
@@ -80,13 +82,15 @@ class MainWindow_korekta_indirect_prod_dodaj(QWidget):
                             ,ki.`nazwisko_i_imie` 
                             ,ki.czas 
                             ,ki.opis 
-                            ,ki.data_dodania 
+                            ,ki.data_dodania
+                            ,ki.dzial
                         from 
                             korekta_indirect ki 
                         where 
                             miesiac = '{0}'
                             and ki.nr_akt = '{1}'
-                        '''.format(miestac,dane)
+                            and ki.dzial = '{2}'
+                        '''.format(miestac,dane,self.dzial_nazwa)
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         results = db.read_query(connection, select_data)
         connection.close()
@@ -111,7 +115,7 @@ class MainWindow_korekta_indirect_prod_dodaj(QWidget):
             QMessageBox.warning(self, "Błąd", "Osoba ma już zmieniony czas IW!")
         else:
 
-            insert_data = "INSERT INTO korekta_indirect VALUES (NULL, '%s', '%s', '%s', '%s', '%s', '%s');" % (nr_akt, pole_nazwisko_i_imie, pole_czas, pole_powod, miestac, teraz)
+            insert_data = "INSERT INTO korekta_indirect VALUES (NULL, '%s', '%s', '%s', '%s', '%s', '%s', '%s');" % (nr_akt, pole_nazwisko_i_imie, pole_czas, pole_powod, miestac, teraz, self.dzial_nazwa)
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             db.execute_query(connection, insert_data)
             connection.close()

@@ -1,74 +1,80 @@
-from PyQt5.QtWidgets import (
-    QApplication, QTableView, QVBoxLayout, QWidget, QLineEdit, QHBoxLayout, QHeaderView, QAbstractItemView
-)
-from PyQt5.QtCore import Qt, QSortFilterProxyModel, QAbstractTableModel
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
+import openpyxl, os, dodatki
+from datetime import date, datetime
 
+file_path = "C:\\Users\\plmko\\Downloads\\Zestawienie nieobecności w roboczych.xlsx"
+print(file_path)
 
-class FilterableTable(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Filtrowanie w nagłówkach")
-        self.resize(800, 400)
+teraz = datetime.today()
+data_miesiac = str(dodatki.data_miesiac_dzis())
 
-        # Model danych
-        self.model = QStandardItemModel(10, 3)  # 10 wierszy, 3 kolumny
-        self.model.setHorizontalHeaderLabels(["Kolumna 1", "Kolumna 2", "Kolumna 3"])
-        dane = [
-            ["Jabłko", "123", "A"],
-            ["Gruszka", "45", "B"],
-            ["Banan", "789", "C"],
-            ["Jabłko", "567", "A"],
-            ["Gruszka", "234", "C"],
-            ["Banan", "12", "B"],
-            ["Ananas", "890", "C"],
-            ["Winogrono", "678", "A"],
-            ["Melon", "345", "B"],
-            ["Pomarańcza", "456", "A"],
-        ]
-        for row, row_data in enumerate(dane):
-            for col, value in enumerate(row_data):
-                self.model.setItem(row, col, QStandardItem(value))
+wb = openpyxl.load_workbook(os.path.join(file_path))
+sheet = wb.active
+used_columns = sheet.max_column
 
-        # Proxy model do filtrowania danych
-        self.proxy_model = QSortFilterProxyModel(self)
-        self.proxy_model.setSourceModel(self.model)
-        self.proxy_model.setFilterCaseSensitivity(Qt.CaseInsensitive)  # Ignorujemy wielkość liter
+# Funkcja pomocnicza do konwersji liczb
+def convert_if_float(val):
+    if val is None:
+        return val
+    # Jeśli wartość jest już typu float, zaokrąglamy i konwertujemy
+    if isinstance(val, float):
+        return int(round(val))
+    # Jeśli wartość jest typu string, spróbujemy ją przekonwertować
+    if isinstance(val, str):
+        # Zamieniamy przecinek na kropkę, aby umożliwić konwersję
+        temp = val.replace(',', '.')
+        try:
+            num = float(temp)
+            return int(round(num))
+        except ValueError:
+            # Jeśli nie udało się przekonwertować, pozostawiamy oryginalny string
+            return val
+    # Inne typy pozostawiamy bez zmian
+    return val
 
-        # Tabela
-        self.table = QTableView()
-        self.table.setModel(self.proxy_model)
-        self.table.setSortingEnabled(True)
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+lista_wpisow = []
 
-        # Wiersz z filtrami
-        self.add_filter_row()
+for row in sheet.iter_rows(min_row=13, min_col=0, max_col=30, values_only=True):
+    # Sprawdzamy czy wiersz nie jest pusty (zakładając, że pusty wiersz ma wszystkie komórki jako None i kończy zestawienie)
+    if any(cell is not None for cell in row):
+        if row[4] is None:
+            break
+        else:
+            tekst = row[4].split('|')
+            nazwisko = tekst[0].strip()
+            nr_akt = tekst[1].strip()
+            wpis = [
+                nazwisko,
+                nr_akt,
+                row[6],
+                row[8],
+                row[9],
+                row[10],
+                row[11],
+                row[12],
+                row[17],
+                row[18],
+                row[19],
+                row[20],
+                row[21],
+                row[22],
+                row[23],
+                row[24],
+                row[26],
+                row[27],
+                row[29],
+                data_miesiac,
+                teraz
+            ]
+            # Konwertujemy każdy element w wierszu
+            wpis = [convert_if_float(x) for x in wpis]
+            lista_wpisow.append(wpis)
+    else:
+        break
 
-        # Układ główny
-        layout = QVBoxLayout()
-        layout.addWidget(self.filter_row)
-        layout.addWidget(self.table)
-        self.setLayout(layout)
+# Jeśli chcesz zastąpić None wartością 0, możesz wykonać poniższą konwersję
+lista_wpisow_notNone = [tuple(0 if x is None else x for x in wiersz) for wiersz in lista_wpisow]
 
-    def add_filter_row(self):
-        # Tworzymy układ poziomy na filtry
-        self.filter_row = QWidget()
-        filter_layout = QHBoxLayout()
-        filter_layout.setContentsMargins(0, 0, 0, 0)
-        self.filter_inputs = []
-
-        for col in range(self.model.columnCount()):
-            filter_input = QLineEdit()
-            filter_input.setPlaceholderText(f"Filtruj kolumnę {col + 1}")
-            filter_input.textChanged.connect(lambda text, column=col: self.proxy_model.setFilterKeyColumn(column) or self.proxy_model.setFilterRegularExpression(text))
-            filter_layout.addWidget(filter_input)
-            self.filter_inputs.append(filter_input)
-
-        self.filter_row.setLayout(filter_layout)
-
-
-app = QApplication([])
-window = FilterableTable()
-window.show()
-app.exec_()
+i = 13
+for row in lista_wpisow_notNone:
+    print(i, ' ', row)
+    i += 1
