@@ -135,6 +135,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
     def licz_nieobecnosci(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
+            self.ui.tab_dane_nieobecnosci.setSortingEnabled(False)
             miestac_roboczy = dodatki.data_miesiac_dzis()
             select_data = "SELECT * FROM `nieobecnosci_prod` WHERE miesiac = '%s';" % (miestac_roboczy)
             # select_data = "select * from kpi_mag"
@@ -159,8 +160,6 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                 if suma <= int(float(prog50)) and suma > (int(float(prog100)) - int(float(prog75))):
                     wsp = 1
                 lista.append([dane[0], dane[1], dane[2], dane[3], suma, wsp])
-
-            self.ui.tab_dane_nieobecnosci.setSortingEnabled(True)
 
             self.ui.tab_dane_nieobecnosci.setColumnCount(5)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane_nieobecnosci.setRowCount(0)  # Ustawienie liczby wierszy na 0
@@ -190,6 +189,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                     self.ui.tab_dane_nieobecnosci.setColumnWidth(4, 75)  # Stała szerokość: 150 pikseli
 
                     self.ui.tab_dane_nieobecnosci.setItem(row_idx, col_idx, item)
+
+            self.ui.tab_dane_nieobecnosci.setSortingEnabled(True)
 
         except db.Error as e:
             print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
@@ -280,6 +281,10 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
     def licz_wydania(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
+
+            self.ui.tab_wyliczenia_wydania.setSortingEnabled(False)
+            self.ui.tab_dane_wydania.setSortingEnabled(False)
+
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             results_direct = db.wywolaj_procedure_zmienna(connection, 'wyliczenia_mag_wydania_direct', self.miesiac_roboczy)
             connection.close()
@@ -491,8 +496,6 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
             self.ui.lab_sumaWydania.setText(str(suma_kwot))
             self.ui.lab_sumaWydania2.setText(str(suma_kwot))
 
-            self.ui.tab_wyliczenia_wydania.setSortingEnabled(True)
-
             self.ui.tab_wyliczenia_wydania.setColumnCount(9)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_wyliczenia_wydania.setRowCount(0)  # Ustawienie liczby wierszy na 0
             self.ui.tab_wyliczenia_wydania.setHorizontalHeaderLabels([
@@ -529,7 +532,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
 
                     self.ui.tab_wyliczenia_wydania.setItem(row_idx, col_idx, item)
 
-            self.ui.tab_dane_wydania.setSortingEnabled(True)
+            self.ui.tab_wyliczenia_wydania.setSortingEnabled(True)
 
             self.ui.tab_dane_wydania.setColumnCount(9)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane_wydania.setRowCount(0)  # Ustawienie liczby wierszy na 0
@@ -568,6 +571,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
 
                     self.ui.tab_dane_wydania.setItem(row_idx, col_idx, item)
 
+            self.ui.tab_dane_wydania.setSortingEnabled(True)
+
         except db.Error as e:
             print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
 
@@ -577,6 +582,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
     def licz_przyjecia(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
+            self.ui.tab_dane_przyjecia.setSortingEnabled(False)
+
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             grupa_mag = 2                               # jest to ID grypy pracowników magazynu zgodnie z tabelą grupy_mag
             results = db.wywolaj_procedure_zmienna2(connection, 'wyliczenia_mag_pracownik', self.miesiac_roboczy, grupa_mag)
@@ -643,8 +650,6 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                 self.ui.lab_sumaPrzyjecia.setText(str(suma_kwot))
                 self.ui.lab_sumaPrzyjecia2.setText(str(suma_kwot))
 
-            self.ui.tab_dane_przyjecia.setSortingEnabled(True)
-
             self.ui.tab_dane_przyjecia.setColumnCount(9)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane_przyjecia.setRowCount(0)  # Ustawienie liczby wierszy na 0
             self.ui.tab_dane_przyjecia.setHorizontalHeaderLabels([
@@ -682,6 +687,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
 
                     self.ui.tab_dane_przyjecia.setItem(row_idx, col_idx, item)
 
+            self.ui.tab_dane_przyjecia.setSortingEnabled(True)
+
         except db.Error as e:
             print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
 
@@ -691,6 +698,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
     def licz_transport_bs(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
+            self.ui.tab_dane_transport_bs.setSortingEnabled(False)
+
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             grupa_mag = 3  # jest to ID grypy pracowników magazynu zgodnie z tabelą grupy_mag
             results = db.wywolaj_procedure_zmienna2(connection, 'wyliczenia_mag_pracownik', self.miesiac_roboczy, grupa_mag)
@@ -761,7 +770,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                 self.ui.lab_sumaTransport_BS.setText(str(suma_kwot))
                 self.ui.lab_sumaTransport_BS2.setText(str(suma_kwot))
 
-            self.ui.tab_dane_transport_bs.setSortingEnabled(True)
+
 
             self.ui.tab_dane_transport_bs.setColumnCount(10)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane_transport_bs.setRowCount(0)  # Ustawienie liczby wierszy na 0
@@ -802,6 +811,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
 
                     self.ui.tab_dane_transport_bs.setItem(row_idx, col_idx, item)
 
+            self.ui.tab_dane_transport_bs.setSortingEnabled(True)
+
         except db.Error as e:
             print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
 
@@ -811,6 +822,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
     def licz_transport_cz(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
+            self.ui.tab_dane_transport_Cz.setSortingEnabled(False)
+
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             grupa_mag = 4  # jest to ID grypy pracowników magazynu zgodnie z tabelą grupy_mag
             results = db.wywolaj_procedure_zmienna2(connection, 'wyliczenia_mag_pracownik', self.miesiac_roboczy, grupa_mag)
@@ -876,7 +889,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                 self.ui.lab_sumaTransport_Cz.setText(str(suma_kwot))
                 self.ui.lab_sumaTransport_Cz2.setText(str(suma_kwot))
 
-            self.ui.tab_dane_transport_Cz.setSortingEnabled(True)
+
 
             self.ui.tab_dane_transport_Cz.setColumnCount(11)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane_transport_Cz.setRowCount(0)  # Ustawienie liczby wierszy na 0
@@ -919,6 +932,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
 
                     self.ui.tab_dane_transport_Cz.setItem(row_idx, col_idx, item)
 
+            self.ui.tab_dane_transport_Cz.setSortingEnabled(True)
+
         except db.Error as e:
             print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
 
@@ -928,6 +943,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
     def licz_wysylka(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
+            self.ui.tab_dane_wysylka.setSortingEnabled(False)
+
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             grupa_mag = 5  # jest to ID grypy pracowników magazynu zgodnie z tabelą grupy_mag
             results = db.wywolaj_procedure_zmienna2(connection, 'wyliczenia_mag_pracownik', self.miesiac_roboczy, grupa_mag)
@@ -995,7 +1012,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                 self.ui.lab_sumaWysylka.setText(str(suma_kwot))
                 self.ui.lab_sumaWysylka2.setText(str(suma_kwot))
 
-            self.ui.tab_dane_wysylka.setSortingEnabled(True)
+
 
             self.ui.tab_dane_wysylka.setColumnCount(9)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane_wysylka.setRowCount(0)  # Ustawienie liczby wierszy na 0
@@ -1033,6 +1050,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                     self.ui.tab_dane_wysylka.setColumnWidth(8, 75)  # Stała szerokość: 150 pikseli
 
                     self.ui.tab_dane_wysylka.setItem(row_idx, col_idx, item)
+
+            self.ui.tab_dane_wysylka.setSortingEnabled(True)
 
         except db.Error as e:
             print(f"Błąd przy pobieraniu danych z bazy danych: {e}")

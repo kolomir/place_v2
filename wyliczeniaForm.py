@@ -141,6 +141,8 @@ class MainWindow_wyliczeniaForm(QWidget):
     def licz_nieobecnosci(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
+            self.ui.tab_dane_nieobecnosci.setSortingEnabled(False)
+
             miestac_roboczy = dodatki.data_miesiac_dzis()
             select_data = "SELECT * FROM `nieobecnosci_prod` WHERE miesiac = '%s';" % (miestac_roboczy)
             # select_data = "select * from kpi_mag"
@@ -166,7 +168,7 @@ class MainWindow_wyliczeniaForm(QWidget):
                     wsp = 1
                 lista.append([dane[0], dane[1], dane[2], dane[3], suma, wsp])
 
-            self.ui.tab_dane_nieobecnosci.setSortingEnabled(True)
+
 
             self.ui.tab_dane_nieobecnosci.setColumnCount(5)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane_nieobecnosci.setRowCount(0)  # Ustawienie liczby wierszy na 0
@@ -196,6 +198,8 @@ class MainWindow_wyliczeniaForm(QWidget):
                     self.ui.tab_dane_nieobecnosci.setColumnWidth(4, 75)  # Stała szerokość: 150 pikseli
 
                     self.ui.tab_dane_nieobecnosci.setItem(row_idx, col_idx, item)
+
+            self.ui.tab_dane_nieobecnosci.setSortingEnabled(True)
 
             # Przechowywanie id wierszy
             self.row_ids = [row_data[0] for row_data in lista]
@@ -290,6 +294,8 @@ class MainWindow_wyliczeniaForm(QWidget):
     def licz_pracownicy(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
+            self.ui.tab_dane_pracownicy.setSortingEnabled(False)
+
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             results = db.wywolaj_procedure_zmienna(connection, 'wyliczenia_prod_pracownicy_produktywnosc', self.miesiac_roboczy)
             connection.close()
@@ -365,8 +371,6 @@ class MainWindow_wyliczeniaForm(QWidget):
             self.ui.lab_sumaPracownicy.setText(str(suma_kwot))
             self.ui.lab_sumaPracownicy2.setText(str(suma_kwot))
 
-            self.ui.tab_dane_pracownicy.setSortingEnabled(True)
-
             self.ui.tab_dane_pracownicy.setColumnCount(18)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane_pracownicy.setRowCount(0)  # Ustawienie liczby wierszy na 0
             self.ui.tab_dane_pracownicy.setHorizontalHeaderLabels([
@@ -421,6 +425,8 @@ class MainWindow_wyliczeniaForm(QWidget):
                     self.ui.tab_dane_pracownicy.setColumnWidth(17, 75)  # Stała szerokość: 150 pikseli
 
                     self.ui.tab_dane_pracownicy.setItem(row_idx, col_idx, item)
+
+            self.ui.tab_dane_pracownicy.setSortingEnabled(True)
 
             # Przechowywanie id wierszy
             self.row_ids = [row_data[0] for row_data in self.lista]
@@ -515,6 +521,9 @@ class MainWindow_wyliczeniaForm(QWidget):
     def licz_wsparcie(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
+            self.ui.tab_dane_pomoc.setSortingEnabled(False)
+            self.ui.tab_wyliczenia_pomoc.setSortingEnabled(False)
+
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             results = db.wywolaj_procedure_zmienna(connection, 'wyliczenia_prod_wsparcie_produktywnosc', self.miesiac_roboczy)
             connection.close()
@@ -616,8 +625,6 @@ class MainWindow_wyliczeniaForm(QWidget):
             self.ui.lab_sumaPomoc.setText(str(suma_kwot))
             self.ui.lab_sumaPomoc2.setText(str(suma_kwot))
 
-            self.ui.tab_dane_pomoc.setSortingEnabled(True)
-
             self.ui.tab_dane_pomoc.setColumnCount(8)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane_pomoc.setRowCount(0)  # Ustawienie liczby wierszy na 0
             self.ui.tab_dane_pomoc.setHorizontalHeaderLabels([
@@ -653,11 +660,11 @@ class MainWindow_wyliczeniaForm(QWidget):
 
                     self.ui.tab_dane_pomoc.setItem(row_idx, col_idx, item)
 
+            self.ui.tab_dane_pomoc.setSortingEnabled(True)
+
             # Przechowywanie id wierszy
             #self.row_ids = [row_data[0] for row_data in self.lista_pracownik_wsparcia]
             #print(row_data[0] for row_data in results)
-
-            self.ui.tab_wyliczenia_pomoc.setSortingEnabled(True)
 
             self.ui.tab_wyliczenia_pomoc.setColumnCount(9)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_wyliczenia_pomoc.setRowCount(0)  # Ustawienie liczby wierszy na 0
@@ -696,6 +703,8 @@ class MainWindow_wyliczeniaForm(QWidget):
 
                     self.ui.tab_wyliczenia_pomoc.setItem(row_idx, col_idx, item)
 
+            self.ui.tab_wyliczenia_pomoc.setSortingEnabled(True)
+
             # Przechowywanie id wierszy
             #self.row_ids = [row_data[0] for row_data in self.lista_pracownik_wsparcia]
             # print(row_data[0] for row_data in results)
@@ -709,6 +718,9 @@ class MainWindow_wyliczeniaForm(QWidget):
     def licz_liderzy(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
+            self.ui.tab_dane_liderzy.setSortingEnabled(False)
+            self.ui.tab_wyliczenia_liderzy.setSortingEnabled(False)
+
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             results = db.wywolaj_procedure_zmienna(connection, 'wyliczenia_prod_liderzy_produktywnosc', self.miesiac_roboczy)
             connection.close()
@@ -851,8 +863,6 @@ class MainWindow_wyliczeniaForm(QWidget):
             self.ui.lab_sumaLiderzy.setText(str(suma_kwot))
             self.ui.lab_sumaLiderzy2.setText(str(suma_kwot))
 
-            self.ui.tab_dane_liderzy.setSortingEnabled(True)
-
             self.ui.tab_dane_liderzy.setColumnCount(11)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane_liderzy.setRowCount(0)  # Ustawienie liczby wierszy na 0
             self.ui.tab_dane_liderzy.setHorizontalHeaderLabels([
@@ -894,11 +904,11 @@ class MainWindow_wyliczeniaForm(QWidget):
 
                     self.ui.tab_dane_liderzy.setItem(row_idx, col_idx, item)
 
+            self.ui.tab_dane_liderzy.setSortingEnabled(True)
+
             # Przechowywanie id wierszy
             #self.row_ids = [row_data[0] for row_data in results]
             #print(row_data[0] for row_data in results)
-
-            self.ui.tab_wyliczenia_liderzy.setSortingEnabled(True)
 
             self.ui.tab_wyliczenia_liderzy.setColumnCount(9)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_wyliczenia_liderzy.setRowCount(0)  # Ustawienie liczby wierszy na 0
@@ -935,6 +945,8 @@ class MainWindow_wyliczeniaForm(QWidget):
                     self.ui.tab_wyliczenia_liderzy.setColumnWidth(7, 75)  # Stała szerokość: 150 pikseli
 
                     self.ui.tab_wyliczenia_liderzy.setItem(row_idx, col_idx, item)
+
+            self.ui.tab_wyliczenia_liderzy.setSortingEnabled(True)
 
         except db.Error as e:
             print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
@@ -984,6 +996,10 @@ class MainWindow_wyliczeniaForm(QWidget):
     def licz_instruktorzy(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
+            self.ui.tab_dane_instruktorzy.setSortingEnabled(False)
+            self.ui.tab_wyliczenia_zmiany_instruktorzy.setSortingEnabled(False)
+            self.ui.tab_wyliczenia_all_instruktorzy.setSortingEnabled(False)
+
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             results = db.wywolaj_procedure_zmienna(connection, 'wyliczenia_prod_instruktorzy_produktywnosc', self.miesiac_roboczy)
             connection.close()
@@ -1539,8 +1555,6 @@ class MainWindow_wyliczeniaForm(QWidget):
             self.ui.lab_sumaInstruktorzy.setText(str(suma_kwot))
             self.ui.lab_sumaInstruktorzy2.setText(str(suma_kwot))
 
-            self.ui.tab_dane_instruktorzy.setSortingEnabled(True)
-
             self.ui.tab_dane_instruktorzy.setColumnCount(10)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane_instruktorzy.setRowCount(0)  # Ustawienie liczby wierszy na 0
             self.ui.tab_dane_instruktorzy.setHorizontalHeaderLabels([
@@ -1580,11 +1594,11 @@ class MainWindow_wyliczeniaForm(QWidget):
 
                     self.ui.tab_dane_instruktorzy.setItem(row_idx, col_idx, item)
 
+            self.ui.tab_dane_instruktorzy.setSortingEnabled(True)
+
             # Przechowywanie id wierszy
             #self.row_ids = [row_data[0] for row_data in results]
             #print(row_data[0] for row_data in results)
-
-            self.ui.tab_wyliczenia_zmiany_instruktorzy.setSortingEnabled(True)
 
             self.ui.tab_wyliczenia_zmiany_instruktorzy.setColumnCount(8)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_wyliczenia_zmiany_instruktorzy.setRowCount(0)  # Ustawienie liczby wierszy na 0
@@ -1621,7 +1635,7 @@ class MainWindow_wyliczeniaForm(QWidget):
 
                     self.ui.tab_wyliczenia_zmiany_instruktorzy.setItem(row_idx, col_idx, item)
 
-            self.ui.tab_wyliczenia_all_instruktorzy.setSortingEnabled(True)
+            self.ui.tab_wyliczenia_zmiany_instruktorzy.setSortingEnabled(True)
 
             self.ui.tab_wyliczenia_all_instruktorzy.setColumnCount(8)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_wyliczenia_all_instruktorzy.setRowCount(0)  # Ustawienie liczby wierszy na 0
@@ -1657,6 +1671,8 @@ class MainWindow_wyliczeniaForm(QWidget):
                     self.ui.tab_wyliczenia_all_instruktorzy.setColumnWidth(7, 75)  # Stała szerokość: 150 pikseli
 
                     self.ui.tab_wyliczenia_all_instruktorzy.setItem(row_idx, col_idx, item)
+
+            self.ui.tab_wyliczenia_all_instruktorzy.setSortingEnabled(True)
 
         except db.Error as e:
             print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
