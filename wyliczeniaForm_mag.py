@@ -52,6 +52,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
         self.active_filters = {}  # Przechowywanie aktywnych filtrów dla każdej kolumny
 
     def przeliczenie(self):
+        self.czysc_tabele()
         self.sprawdzenie_zapisu_mag()
         self.miesiac_info_nieobecnosci()
         self.licz_nieobecnosci()
@@ -1166,3 +1167,30 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
 
             connection.close()
             self.ui.lab_dot_eksport_enova_mag.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_green.svg"))
+
+    def czysc_tabele(self):
+        self.ui.tab_dane_nieobecnosci.clearContents()
+        self.ui.tab_dane_nieobecnosci.setRowCount(0)
+
+        self.ui.tab_wyliczenia_wydania.clearContents()
+        self.ui.tab_wyliczenia_wydania.setRowCount(0)
+        self.ui.tab_dane_wydania.clearContents()
+        self.ui.tab_dane_wydania.setRowCount(0)
+
+        self.ui.tab_dane_przyjecia.clearContents()
+        self.ui.tab_dane_przyjecia.setRowCount(0)
+
+        self.ui.tab_dane_transport_bs.clearContents()
+        self.ui.tab_dane_transport_bs.setRowCount(0)
+
+        self.ui.tab_dane_transport_Cz.clearContents()
+        self.ui.tab_dane_transport_Cz.setRowCount(0)
+
+        self.ui.tab_dane_wysylka.clearContents()
+        self.ui.tab_dane_wysylka.setRowCount(0)
+
+        self.lista_pracownik_wydania.clear()
+        self.lista_pracownik_przyjecia.clear()
+        self.lista_pracownik_transport_bs.clear()
+        self.lista_pracownik_transport_cz.clear()
+        self.lista_pracownik_wysylka.clear()

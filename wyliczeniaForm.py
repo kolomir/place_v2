@@ -57,6 +57,7 @@ class MainWindow_wyliczeniaForm(QWidget):
 
 
     def przeliczenie(self):
+        self.czysc_tabele()
         self.sprawdzenie_zapisu_prod()
         self.miesiac_info_nieobecnosci()
         self.licz_nieobecnosci()
@@ -1815,3 +1816,32 @@ class MainWindow_wyliczeniaForm(QWidget):
 
             connection.close()
             self.ui.lab_dot_eksport_enova_prod.setPixmap(QtGui.QPixmap(":/icon/img/svg_icons/dot_green.svg"))
+
+    def czysc_tabele(self):
+        self.ui.tab_dane_nieobecnosci.clearContents()
+        self.ui.tab_dane_nieobecnosci.setRowCount(0)
+
+        self.ui.tab_dane_pracownicy.clearContents()
+        self.ui.tab_dane_pracownicy.setRowCount(0)
+
+        self.ui.tab_dane_pomoc.clearContents()
+        self.ui.tab_dane_pomoc.setRowCount(0)
+        self.ui.tab_wyliczenia_pomoc.clearContents()
+        self.ui.tab_wyliczenia_pomoc.setRowCount(0)
+
+        self.ui.tab_dane_liderzy.clearContents()
+        self.ui.tab_dane_liderzy.setRowCount(0)
+        self.ui.tab_wyliczenia_liderzy.clearContents()
+        self.ui.tab_wyliczenia_liderzy.setRowCount(0)
+
+        self.ui.tab_dane_instruktorzy.clearContents()
+        self.ui.tab_dane_instruktorzy.setRowCount(0)
+        self.ui.tab_wyliczenia_zmiany_instruktorzy.clearContents()
+        self.ui.tab_wyliczenia_zmiany_instruktorzy.setRowCount(0)
+        self.ui.tab_wyliczenia_all_instruktorzy.clearContents()
+        self.ui.tab_wyliczenia_all_instruktorzy.setRowCount(0)
+
+        self.lista.clear()
+        self.lista_pracownik_wsparcia.clear()
+        self.lista_pracownik_lider.clear()
+        self.lista_instruktor_prem.clear()
