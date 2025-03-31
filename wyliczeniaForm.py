@@ -35,6 +35,7 @@ class MainWindow_wyliczeniaForm(QWidget):
         self.ui.btn_zapisz.clicked.connect(self.zapis_dane_pracownicy)
 
         self.lista = []
+        self.lista_pracownik_transport_cz = []
         self.lista_pracownik_wsparcia = []
         self.lista_pracownik_lider = []
         self.lista_instruktor_prem = []
@@ -62,6 +63,7 @@ class MainWindow_wyliczeniaForm(QWidget):
         self.miesiac_info_nieobecnosci()
         self.licz_nieobecnosci()
         self.licz_pracownicy()
+        self.licz_transport_cz()
         self.licz_wsparcie()
         self.licz_liderzy()
         self.licz_instruktorzy()
@@ -324,6 +326,8 @@ class MainWindow_wyliczeniaForm(QWidget):
                 if dane[11] is not None:
                     prod_wartosc = dane[11]
 
+                prod_wartosc = float(round(prod_wartosc, 0))
+
                 if dir_wartosc > prog:
                     if prod_wartosc > results_progi[0][6]:
                         wynik = results_progi[0][7]
@@ -402,6 +406,10 @@ class MainWindow_wyliczeniaForm(QWidget):
             for row_idx, row_data in enumerate(self.lista):
                 # Przechowujemy id każdego wiersza
                 for col_idx, value in enumerate(row_data[0:]):  # Pomijamy id
+                    if isinstance(value, int):
+                        value = f"{float(value):.2f}"
+                    elif isinstance(value, float):
+                        value = f"{value:.2f}"
                     item = NumericTableWidgetItem(str(value))              # Użycie klasy soryującej dane numeryczne
 
                     item.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
@@ -517,7 +525,208 @@ class MainWindow_wyliczeniaForm(QWidget):
             self.ui.tab_dane_pracownicy.setRowHidden(row, not show_row)
 
 # =========================================================================================================================================================================
-# = WSPARCIE ==============================================================================================================================================================
+# = TRANSPORT Cz ==========================================================================================================================================================
+
+    def licz_transport_cz(self):
+        """Funkcja do załadowania danych z bazy do QTableWidget."""
+        try:
+            self.ui.tab_dane_transportcz.setSortingEnabled(False)
+            self.ui.tab_wyliczenia_transportcz.setSortingEnabled(False)
+
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+            results = db.wywolaj_procedure_zmienna(connection, 'wyliczenia_prod_transport_cz_produktywnosc', self.miesiac_roboczy)
+            connection.close()
+
+            select_data_progi = "select * from progi_prod pp where pp.id_ranga = 3 and pp.aktywny = 1"
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+            results_progi = db.read_query(connection, select_data_progi)
+            connection.close()
+
+            prog100 = self.ui.lab_pracujacychNieobecnosci.text()
+            prog75 = self.ui.lab_pracujacych075Nieobecnosci.text()
+            prog50 = self.ui.lab_pracujacych050Nieobecnosci.text()
+
+            lista = []
+            for dane in results:
+                # print([dane[0], dane[1], dane[2], dane[3], dane[4], dane[5], dane[6], dane[7], dane[8]])
+                lista.append([dane[0], dane[1], dane[2], dane[3], dane[4], dane[5], dane[6], dane[7], dane[8]])
+
+            lista2 = []
+            for dane in results:
+                # print([dane[0], dane[1], dane[2], dane[3], dane[4], dane[5], dane[6], dane[7], dane[8]])
+                lista2.append([dane[9], dane[1], dane[2], dane[5], dane[6]])
+
+            suma_direct = {}
+            suma_indirect = {}
+            suma_planowany = {}
+            suma_raportowany = {}
+
+            # Iterujemy po liście
+            for wiersz in lista2:
+                klucz = wiersz[0]  # Wartość z pierwszej kolumny
+                wartosc = wiersz[1]  # Wartość z trzeciej kolumny
+
+                if klucz in suma_direct:
+                    suma_direct[klucz] += wartosc
+                else:
+                    suma_direct[klucz] = wartosc
+            for wiersz in lista2:
+                klucz = wiersz[0]  # Wartość z pierwszej kolumny
+                wartosc = wiersz[2]  # Wartość z trzeciej kolumny
+
+                if klucz in suma_indirect:
+                    suma_indirect[klucz] += wartosc
+                else:
+                    suma_indirect[klucz] = wartosc
+            for wiersz in lista2:
+                klucz = wiersz[0]  # Wartość z pierwszej kolumny
+                wartosc = wiersz[3]  # Wartość z trzeciej kolumny
+
+                if klucz in suma_planowany:
+                    suma_planowany[klucz] += wartosc
+                else:
+                    suma_planowany[klucz] = wartosc
+            for wiersz in lista2:
+                klucz = wiersz[0]  # Wartość z pierwszej kolumny
+                wartosc = wiersz[4]  # Wartość z trzeciej kolumny
+
+                if klucz in suma_raportowany:
+                    suma_raportowany[klucz] += wartosc
+                else:
+                    suma_raportowany[klucz] = wartosc
+
+
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+            results_pracownik = db.wywolaj_procedure_zmienna(connection, 'wyliczenia_prod_transport_cz_pracownik', self.miesiac_roboczy)
+            connection.close()
+
+            # self.lista_pracownik_transport_cz = []
+            for dane in results_pracownik:
+
+                direct = round(suma_direct[dane[0]] / (suma_direct[dane[0]] + suma_indirect[dane[0]]), 2)
+                indirect = round(suma_indirect[dane[0]] / (suma_direct[dane[0]] + suma_indirect[dane[0]]), 2)
+                wydajnosc = round((suma_planowany[dane[0]] / suma_raportowany[dane[0]]) * 100, 2)
+                produktywnosc = round((direct * (suma_planowany[dane[0]] / suma_raportowany[dane[0]])) * 100, 0)
+
+                wynik = 0
+                if produktywnosc > results_progi[0][6]:
+                    wynik = results_progi[0][7]
+                elif produktywnosc > results_progi[0][4]:
+                    wynik = results_progi[0][5]
+                elif produktywnosc > results_progi[0][2]:
+                    wynik = results_progi[0][3]
+
+                wsp = 0
+                wynik_n = wynik
+                if dane[3] > int(float(prog50)):
+                    wsp = 2
+                    wynik_n = 0.0
+                if dane[3] <= int(float(prog50)) and dane[3] > (int(float(prog100)) - int(float(prog75))):
+                    wsp = 1
+                    wynik_n = wynik / 2
+                # print('dane[3]:', dane[3], 'wsp:', wsp, 'wynik:', wynik, 'wynik_n:', wynik_n)
+
+                # print([dane[0], dane[1], dane[2],direct, indirect, wydajnosc, produktywnosc,wynik, wsp, wynik_n])
+                self.lista_pracownik_transport_cz.append([dane[0], dane[1], dane[2], wydajnosc, float(produktywnosc), wynik, wsp, wynik_n])
+
+            # print(lista_pracownik_transport_cz)
+            suma_kwot = sum(round(float(wiersz[7]), 2) for wiersz in self.lista_pracownik_transport_cz)
+            self.ui.lab_sumaTransportCz.setText(str(suma_kwot))
+            self.ui.lab_sumaTransportCz2.setText(str(suma_kwot))
+
+            self.ui.tab_dane_transportcz.setColumnCount(8)  # Zmień na liczbę kolumn w twojej tabeli
+            self.ui.tab_dane_transportcz.setRowCount(0)  # Ustawienie liczby wierszy na 0
+            self.ui.tab_dane_transportcz.setHorizontalHeaderLabels([
+                'Nr akt',
+                'Kod',
+                'Imię i nazwisko',
+                'Wydajność',
+                'Produktywność',
+                'Premia_prod',
+                'Chorował',
+                'Premia'
+            ])
+
+            # Ustawianie liczby wierszy na podstawie danych z bazy
+            self.ui.tab_dane_transportcz.setRowCount(len(self.lista_pracownik_transport_cz))
+
+            # Wypełnianie tabeli danymi
+            for row_idx, row_data in enumerate(self.lista_pracownik_transport_cz):
+                # Przechowujemy id każdego wiersza
+                for col_idx, value in enumerate(row_data[0:]):  # Pomijamy id
+                    item = NumericTableWidgetItem(str(value))              # Użycie klasy soryującej dane numeryczne
+
+                    item.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+
+                    self.ui.tab_dane_transportcz.setColumnWidth(0, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transportcz.setColumnWidth(1, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transportcz.setColumnWidth(2, 150)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transportcz.setColumnWidth(3, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transportcz.setColumnWidth(4, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transportcz.setColumnWidth(5, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transportcz.setColumnWidth(6, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_transportcz.setColumnWidth(7, 75)  # Stała szerokość: 150 pikseli
+
+                    self.ui.tab_dane_transportcz.setItem(row_idx, col_idx, item)
+
+            self.ui.tab_dane_transportcz.setSortingEnabled(True)
+
+            # Przechowywanie id wierszy
+            #self.row_ids = [row_data[0] for row_data in self.lista_pracownik_transport_cz]
+            #print(row_data[0] for row_data in results)
+
+            self.ui.tab_wyliczenia_transportcz.setColumnCount(9)  # Zmień na liczbę kolumn w twojej tabeli
+            self.ui.tab_wyliczenia_transportcz.setRowCount(0)  # Ustawienie liczby wierszy na 0
+            self.ui.tab_wyliczenia_transportcz.setHorizontalHeaderLabels([
+                'Linia',
+                'Direct',
+                'Indirect',
+                'Direct %',
+                'Indirect %',
+                'Planowany',
+                'Raportowany',
+                'Wydajność',
+                'Produktywność'
+            ])
+
+            # Ustawianie liczby wierszy na podstawie danych z bazy
+            self.ui.tab_wyliczenia_transportcz.setRowCount(len(lista))
+
+            # Wypełnianie tabeli danymi
+            for row_idx, row_data in enumerate(lista):
+                # Przechowujemy id każdego wiersza
+                for col_idx, value in enumerate(row_data[0:]):  # Pomijamy id
+                    if isinstance(value, int):
+                        value = f"{float(value):.2f}"
+                    elif isinstance(value, float):
+                        value = f"{value:.2f}"
+                    item = NumericTableWidgetItem(str(value))              # Użycie klasy soryującej dane numeryczne
+
+                    item.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+
+                    self.ui.tab_wyliczenia_transportcz.setColumnWidth(0, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_wyliczenia_transportcz.setColumnWidth(1, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_wyliczenia_transportcz.setColumnWidth(2, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_wyliczenia_transportcz.setColumnWidth(3, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_wyliczenia_transportcz.setColumnWidth(4, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_wyliczenia_transportcz.setColumnWidth(5, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_wyliczenia_transportcz.setColumnWidth(6, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_wyliczenia_transportcz.setColumnWidth(7, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_wyliczenia_transportcz.setColumnWidth(8, 75)  # Stała szerokość: 150 pikseli
+
+                    self.ui.tab_wyliczenia_transportcz.setItem(row_idx, col_idx, item)
+
+            self.ui.tab_wyliczenia_transportcz.setSortingEnabled(True)
+
+            # Przechowywanie id wierszy
+            #self.row_ids = [row_data[0] for row_data in self.lista_pracownik_transport_cz]
+            # print(row_data[0] for row_data in results)
+
+        except db.Error as e:
+            print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
+
+# =========================================================================================================================================================================
+# = WSPARCIE BS ===========================================================================================================================================================
 
     def licz_wsparcie(self):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
@@ -598,7 +807,7 @@ class MainWindow_wyliczeniaForm(QWidget):
                 direct = round(suma_direct[dane[0]] / (suma_direct[dane[0]] + suma_indirect[dane[0]]), 2)
                 indirect = round(suma_indirect[dane[0]] / (suma_direct[dane[0]] + suma_indirect[dane[0]]), 2)
                 wydajnosc = round((suma_planowany[dane[0]] / suma_raportowany[dane[0]]) * 100, 2)
-                produktywnosc = round((direct * (suma_planowany[dane[0]] / suma_raportowany[dane[0]])) * 100, 2)
+                produktywnosc = round((direct * (suma_planowany[dane[0]] / suma_raportowany[dane[0]])) * 100, 0)
 
                 wynik = 0
                 if produktywnosc > results_progi[0][6]:
@@ -619,7 +828,7 @@ class MainWindow_wyliczeniaForm(QWidget):
                 # print('dane[3]:', dane[3], 'wsp:', wsp, 'wynik:', wynik, 'wynik_n:', wynik_n)
 
                 # print([dane[0], dane[1], dane[2],direct, indirect, wydajnosc, produktywnosc,wynik, wsp, wynik_n])
-                self.lista_pracownik_wsparcia.append([dane[0], dane[1], dane[2], wydajnosc, produktywnosc, wynik, wsp, wynik_n])
+                self.lista_pracownik_wsparcia.append([dane[0], dane[1], dane[2], wydajnosc, float(produktywnosc), wynik, wsp, wynik_n])
 
             # print(lista_pracownik_wsparcia)
             suma_kwot = sum(round(float(wiersz[7]), 2) for wiersz in self.lista_pracownik_wsparcia)
@@ -688,6 +897,10 @@ class MainWindow_wyliczeniaForm(QWidget):
             for row_idx, row_data in enumerate(lista):
                 # Przechowujemy id każdego wiersza
                 for col_idx, value in enumerate(row_data[0:]):  # Pomijamy id
+                    if isinstance(value, int):
+                        value = f"{float(value):.2f}"
+                    elif isinstance(value, float):
+                        value = f"{value:.2f}"
                     item = NumericTableWidgetItem(str(value))              # Użycie klasy soryującej dane numeryczne
 
                     item.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
@@ -798,13 +1011,14 @@ class MainWindow_wyliczeniaForm(QWidget):
             results_pracownik = db.wywolaj_procedure_zmienna(connection, 'wyliczenia_prod_liderzy_pracownik', self.miesiac_roboczy)
             connection.close()
 
-
             for dane in results_pracownik:
 
                 direct = round(suma_direct[dane[5]] / (suma_direct[dane[5]] + suma_indirect[dane[5]]), 2)
                 indirect = round(suma_indirect[dane[5]] / (suma_direct[dane[5]] + suma_indirect[dane[5]]), 2)
                 wydajnosc = round((suma_planowany[dane[5]] / suma_raportowany[dane[5]]) * 100, 2)
-                produktywnosc = round((direct * (suma_planowany[dane[5]] / suma_raportowany[dane[5]])) * 100, 2)
+                produktywnosc = round((direct * (suma_planowany[dane[5]] / suma_raportowany[dane[5]])) * 100, 0)
+                #produktywnosc_2 = round((direct * (suma_planowany[dane[5]] / suma_raportowany[dane[5]])) * 100, 2)
+                #print(f"prod:{produktywnosc:.2f} - {produktywnosc_2:.2f}")
 
                 wynik = 0
                 if produktywnosc > results_progi[0][6]:
@@ -854,10 +1068,10 @@ class MainWindow_wyliczeniaForm(QWidget):
                     else:
                         wynik_j = float(wynik_n)
 
-                print('dane[3]:', dane[3], 'wsp:', wsp, 'wynik:', wynik, 'wynik_n:', wynik_n)
+                #print('dane[3]:', dane[3], 'wsp:', wsp, 'wynik:', wynik, 'wynik_n:', wynik_n)
 
-                print([dane[0], dane[1], dane[2], direct, indirect, wydajnosc, produktywnosc, wynik, wsp, wynik_n, kwota_j, wynik_j])
-                self.lista_pracownik_lider.append([dane[0], dane[1], dane[2], dane[8], wydajnosc, produktywnosc, wynik, wsp, wynik_n, kwota_j, wynik_j])
+                #print([dane[0], dane[1], dane[2], direct, indirect, wydajnosc, produktywnosc, wynik, wsp, wynik_n, kwota_j, wynik_j])
+                self.lista_pracownik_lider.append([dane[0], dane[1], dane[2], dane[8], wydajnosc, float(produktywnosc), wynik, wsp, wynik_n, kwota_j, wynik_j])
 
             #print(self.lista_pracownik_lider)
             suma_kwot = sum(round(float(wiersz[10]), 2) for wiersz in self.lista_pracownik_lider)
@@ -887,6 +1101,10 @@ class MainWindow_wyliczeniaForm(QWidget):
             for row_idx, row_data in enumerate(self.lista_pracownik_lider):
                 # Przechowujemy id każdego wiersza
                 for col_idx, value in enumerate(row_data[0:]):  # Pomijamy id
+                    if isinstance(value, int):
+                        value = f"{float(value):.2f}"
+                    elif isinstance(value, float):
+                        value = f"{value:.2f}"
                     item = NumericTableWidgetItem(str(value))              # Użycie klasy soryującej dane numeryczne
 
                     item.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
@@ -1145,7 +1363,9 @@ class MainWindow_wyliczeniaForm(QWidget):
                         ppm = dane_czaplinek[6]
                         reklamacje = dane_czaplinek[7]
                         dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
-                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 0)
+                        #dane_produktywnosc_2 = round(((dane_direct/(dane_direct+dane_indirect))*dane_wydajnosc),2)
+                        #print("test:",dane_produktywnosc," - ",dane_produktywnosc_2)
                         lista_instruktor.append(
                             [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
                              reklamacje])
@@ -1178,7 +1398,9 @@ class MainWindow_wyliczeniaForm(QWidget):
                         ppm = dane_czaplinek[6]
                         reklamacje = dane_czaplinek[7]
                         dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
-                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 0)
+                        #dane_produktywnosc_2 = round(((dane_direct/(dane_direct+dane_indirect))*dane_wydajnosc),2)
+                        #print("test:",dane_produktywnosc," - ",dane_produktywnosc_2)
                         lista_instruktor.append(
                             [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
                              reklamacje])
@@ -1196,7 +1418,9 @@ class MainWindow_wyliczeniaForm(QWidget):
                         ppm = dane_czaplinek[6]
                         reklamacje = dane_czaplinek[7]
                         dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
-                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 0)
+                        #dane_produktywnosc_2 = round(((dane_direct/(dane_direct+dane_indirect))*dane_wydajnosc),2)
+                        #print("test:",dane_produktywnosc," - ",dane_produktywnosc_2)
                         lista_instruktor.append(
                             [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
                              reklamacje])
@@ -1229,7 +1453,9 @@ class MainWindow_wyliczeniaForm(QWidget):
                         ppm = dane_czaplinek[6]
                         reklamacje = dane_czaplinek[7]
                         dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
-                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 0)
+                        #dane_produktywnosc_2 = round(((dane_direct/(dane_direct+dane_indirect))*dane_wydajnosc),2)
+                        #print("test:",dane_produktywnosc," - ",dane_produktywnosc_2)
                         lista_instruktor.append(
                             [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
                              reklamacje])
@@ -1247,7 +1473,9 @@ class MainWindow_wyliczeniaForm(QWidget):
                         ppm = dane_czaplinek[6]
                         reklamacje = dane_czaplinek[7]
                         dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
-                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 0)
+                        #dane_produktywnosc_2 = round(((dane_direct/(dane_direct+dane_indirect))*dane_wydajnosc),2)
+                        #print("test:",dane_produktywnosc," - ",dane_produktywnosc_2)
                         lista_instruktor.append(
                             [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
                              reklamacje])
@@ -1265,7 +1493,9 @@ class MainWindow_wyliczeniaForm(QWidget):
                         ppm = dane_czaplinek[6]
                         reklamacje = dane_czaplinek[7]
                         dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
-                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 0)
+                        #dane_produktywnosc_2 = round(((dane_direct/(dane_direct+dane_indirect))*dane_wydajnosc),2)
+                        #print("test:",dane_produktywnosc," - ",dane_produktywnosc_2)
                         lista_instruktor.append(
                             [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
                              reklamacje])
@@ -1292,7 +1522,9 @@ class MainWindow_wyliczeniaForm(QWidget):
                         ppm = dane_czaplinek[6]
                         reklamacje = dane_czaplinek[7]
                         dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
-                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 0)
+                        #dane_produktywnosc_2 = round(((dane_direct/(dane_direct+dane_indirect))*dane_wydajnosc),2)
+                        #print("test:",dane_produktywnosc," - ",dane_produktywnosc_2)
                         lista_instruktor.append(
                             [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
                              reklamacje])
@@ -1325,7 +1557,9 @@ class MainWindow_wyliczeniaForm(QWidget):
                         ppm = dane_czaplinek[6]
                         reklamacje = dane_czaplinek[7]
                         dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
-                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 0)
+                        #dane_produktywnosc_2 = round(((dane_direct/(dane_direct+dane_indirect))*dane_wydajnosc),2)
+                        #print("test:",dane_produktywnosc," - ",dane_produktywnosc_2)
                         lista_instruktor.append(
                             [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
                              reklamacje])
@@ -1343,7 +1577,9 @@ class MainWindow_wyliczeniaForm(QWidget):
                         ppm = dane_czaplinek[6]
                         reklamacje = dane_czaplinek[7]
                         dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
-                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 0)
+                        #dane_produktywnosc_2 = round(((dane_direct/(dane_direct+dane_indirect))*dane_wydajnosc),2)
+                        #print("test:",dane_produktywnosc," - ",dane_produktywnosc_2)
                         lista_instruktor.append(
                             [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
                              reklamacje])
@@ -1376,7 +1612,9 @@ class MainWindow_wyliczeniaForm(QWidget):
                         ppm = dane_czaplinek[6]
                         reklamacje = dane_czaplinek[7]
                         dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
-                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 0)
+                        #dane_produktywnosc_2 = round(((dane_direct/(dane_direct+dane_indirect))*dane_wydajnosc),2)
+                        #print("test:",dane_produktywnosc," - ",dane_produktywnosc_2)
                         lista_instruktor.append(
                             [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
                              reklamacje])
@@ -1394,7 +1632,9 @@ class MainWindow_wyliczeniaForm(QWidget):
                         ppm = dane_czaplinek[6]
                         reklamacje = dane_czaplinek[7]
                         dane_wydajnosc = round((dane_planowany / dane_raportowany) * 100, 2)
-                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 2)
+                        dane_produktywnosc = round(((dane_direct / (dane_direct + dane_indirect)) * dane_wydajnosc), 0)
+                        #dane_produktywnosc_2 = round(((dane_direct/(dane_direct+dane_indirect))*dane_wydajnosc),2)
+                        #print("test:",dane_produktywnosc," - ",dane_produktywnosc_2)
                         lista_instruktor.append(
                             [nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm,
                              reklamacje])
@@ -1412,7 +1652,9 @@ class MainWindow_wyliczeniaForm(QWidget):
                         ppm = dane_czaplinek[6]
                         reklamacje = dane_czaplinek[7]
                         dane_wydajnosc = round((dane_planowany/dane_raportowany)*100,2)
-                        dane_produktywnosc = round(((dane_direct/(dane_direct+dane_indirect))*dane_wydajnosc),2)
+                        dane_produktywnosc = round(((dane_direct/(dane_direct+dane_indirect))*dane_wydajnosc),0)
+                        #dane_produktywnosc_2 = round(((dane_direct/(dane_direct+dane_indirect))*dane_wydajnosc),2)
+                        #print("test:",dane_produktywnosc," - ",dane_produktywnosc_2)
                         lista_instruktor.append([nrAkt, kod, instruktor, dane_wydajnosc, dane_produktywnosc, chorowal, lokalizacje, ppm, reklamacje])
 
 
@@ -1578,6 +1820,10 @@ class MainWindow_wyliczeniaForm(QWidget):
             for row_idx, row_data in enumerate(self.lista_instruktor_prem):
                 # Przechowujemy id każdego wiersza
                 for col_idx, value in enumerate(row_data[0:]):  # Pomijamy id
+                    if isinstance(value, int):
+                        value = f"{float(value):.2f}"
+                    elif isinstance(value, float):
+                        value = f"{value:.2f}"
                     item = NumericTableWidgetItem(str(value))              # Użycie klasy soryującej dane numeryczne
 
                     item.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
@@ -1774,6 +2020,17 @@ class MainWindow_wyliczeniaForm(QWidget):
                 if kwota > 0:
                     lista_place.append([nr_akt, kod, imie_i_nazwisko, kwota, opis, dzial, data_miesiac, teraz])
 
+            for dane_wsparcie in self.lista_pracownik_transport_cz:
+                nr_akt = dane_wsparcie[0]  # nr akt
+                kod = dane_wsparcie[1]  # kod
+                imie_i_nazwisko = dane_wsparcie[2]  # Imie i nazwisko
+                kwota = dane_wsparcie[7]  # kwota
+                opis = 'transport_cz'
+                dzial = 'prod'
+
+                if dane_wsparcie[7] > 0:
+                    lista_place.append([nr_akt, kod, imie_i_nazwisko, kwota, opis, dzial, data_miesiac, teraz])
+
             for dane_wsparcie in self.lista_pracownik_wsparcia:
                 nr_akt = dane_wsparcie[0]  # nr akt
                 kod = dane_wsparcie[1]  # kod
@@ -1824,6 +2081,11 @@ class MainWindow_wyliczeniaForm(QWidget):
         self.ui.tab_dane_pracownicy.clearContents()
         self.ui.tab_dane_pracownicy.setRowCount(0)
 
+        self.ui.tab_dane_transportcz.clearContents()
+        self.ui.tab_dane_transportcz.setRowCount(0)
+        self.ui.tab_wyliczenia_transportcz.clearContents()
+        self.ui.tab_wyliczenia_transportcz.setRowCount(0)
+
         self.ui.tab_dane_pomoc.clearContents()
         self.ui.tab_dane_pomoc.setRowCount(0)
         self.ui.tab_wyliczenia_pomoc.clearContents()
@@ -1842,6 +2104,7 @@ class MainWindow_wyliczeniaForm(QWidget):
         self.ui.tab_wyliczenia_all_instruktorzy.setRowCount(0)
 
         self.lista.clear()
+        self.lista_pracownik_transport_cz.clear()
         self.lista_pracownik_wsparcia.clear()
         self.lista_pracownik_lider.clear()
         self.lista_instruktor_prem.clear()

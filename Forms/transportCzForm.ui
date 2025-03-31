@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>357</width>
-    <height>137</height>
+    <width>300</width>
+    <height>282</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,25 +31,10 @@
    </property>
    <item row="0" column="0">
     <widget class="QWidget" name="widget" native="true">
-     <layout class="QVBoxLayout" name="verticalLayout">
-      <property name="spacing">
-       <number>2</number>
-      </property>
-      <property name="leftMargin">
-       <number>4</number>
-      </property>
-      <property name="topMargin">
-       <number>4</number>
-      </property>
-      <property name="rightMargin">
-       <number>4</number>
-      </property>
-      <property name="bottomMargin">
-       <number>4</number>
-      </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
       <item>
        <widget class="QWidget" name="widget_2" native="true">
-        <layout class="QVBoxLayout" name="verticalLayout_2">
+        <layout class="QVBoxLayout" name="verticalLayout">
          <property name="spacing">
           <number>0</number>
          </property>
@@ -73,7 +58,7 @@
             </font>
            </property>
            <property name="text">
-            <string>KPI magazynu - dodawanie</string>
+            <string>Transport Czaplinek</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
@@ -102,91 +87,21 @@
       </item>
       <item>
        <widget class="QWidget" name="widget_3" native="true">
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <layout class="QHBoxLayout" name="horizontalLayout">
          <property name="spacing">
-          <number>2</number>
+          <number>0</number>
          </property>
          <property name="leftMargin">
-          <number>4</number>
+          <number>0</number>
          </property>
          <property name="topMargin">
-          <number>4</number>
+          <number>0</number>
          </property>
          <property name="rightMargin">
-          <number>4</number>
+          <number>0</number>
          </property>
          <property name="bottomMargin">
-          <number>4</number>
-         </property>
-         <item>
-          <widget class="QLineEdit" name="text_delivery">
-           <property name="placeholderText">
-            <string>DELIVERY (poz50)</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="text_reklamacje">
-           <property name="placeholderText">
-            <string>REKLAMACJE</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </item>
-      <item>
-       <widget class="QWidget" name="widget_5" native="true">
-        <layout class="QHBoxLayout" name="horizontalLayout_3">
-         <property name="spacing">
-          <number>2</number>
-         </property>
-         <property name="leftMargin">
-          <number>4</number>
-         </property>
-         <property name="topMargin">
-          <number>4</number>
-         </property>
-         <property name="rightMargin">
-          <number>4</number>
-         </property>
-         <property name="bottomMargin">
-          <number>4</number>
-         </property>
-         <item>
-          <widget class="QLineEdit" name="text_dp_init">
-           <property name="placeholderText">
-            <string>DP po initial (poz, 49)</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="text_zgodnosc">
-           <property name="placeholderText">
-            <string>Zgodność stanów na materiałach pomocniczych</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </item>
-      <item>
-       <widget class="QWidget" name="widget_4" native="true">
-        <layout class="QHBoxLayout" name="horizontalLayout_6">
-         <property name="spacing">
-          <number>2</number>
-         </property>
-         <property name="leftMargin">
-          <number>4</number>
-         </property>
-         <property name="topMargin">
-          <number>4</number>
-         </property>
-         <property name="rightMargin">
-          <number>4</number>
-         </property>
-         <property name="bottomMargin">
-          <number>4</number>
+          <number>0</number>
          </property>
          <item>
           <spacer name="horizontalSpacer">
@@ -195,7 +110,7 @@
            </property>
            <property name="sizeHint" stdset="0">
             <size>
-             <width>139</width>
+             <width>204</width>
              <height>20</height>
             </size>
            </property>
@@ -204,12 +119,15 @@
          <item>
           <widget class="QPushButton" name="btn_zapisz">
            <property name="text">
-            <string>Zapisz</string>
+            <string>dodaj</string>
            </property>
           </widget>
          </item>
         </layout>
        </widget>
+      </item>
+      <item>
+       <widget class="QTableWidget" name="tab_dane"/>
       </item>
      </layout>
     </widget>

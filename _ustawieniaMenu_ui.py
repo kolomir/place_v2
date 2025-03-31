@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Forms\ustawieniaMenu.ui'
+# Form implementation generated from reading ui file 'forms/ustawieniaMenu.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.10
 #
@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
-        Form.resize(194, 331)
+        Form.resize(194, 360)
         self.gridLayout = QtWidgets.QGridLayout(Form)
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
         self.gridLayout.setSpacing(0)
@@ -56,6 +56,9 @@ class Ui_Form(object):
         self.btn_pomoc = QtWidgets.QPushButton(self.widget_2)
         self.btn_pomoc.setObjectName("btn_pomoc")
         self.verticalLayout.addWidget(self.btn_pomoc)
+        self.btn_transport_cz = QtWidgets.QPushButton(self.widget_2)
+        self.btn_transport_cz.setObjectName("btn_transport_cz")
+        self.verticalLayout.addWidget(self.btn_transport_cz)
         self.gridLayout.addWidget(self.widget_2, 0, 0, 1, 1)
 
         self.retranslateUi(Form)
@@ -75,3 +78,4 @@ class Ui_Form(object):
         self.btn_progiJak.setText(_translate("Form", "Wytyczne - Jakość"))
         self.btn_dniPracujace.setText(_translate("Form", "Dni wolne w roku"))
         self.btn_pomoc.setText(_translate("Form", "Wsparcie Prod."))
+        self.btn_transport_cz.setText(_translate("Form", "Transport Cz"))

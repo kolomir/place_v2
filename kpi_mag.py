@@ -36,22 +36,20 @@ class MainWindow_kpi_mag(QWidget):
         """Funkcja do załadowania danych z bazy do QTableWidget."""
         try:
             miestac_roboczy = dodatki.data_miesiac_dzis()
-            select_data = "select * from kpi_mag where miesiac = '%s';" % (miestac_roboczy)
+            select_data = "select id, delivery, reklamacje, zgodnosc, dp_init, miesiac, data_dodania from kpi_mag where miesiac = '%s';" % (miestac_roboczy)
             #select_data = "select * from kpi_mag"
             connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
             results = db.read_query(connection, select_data)
 
             self.ui.tab_dane.setSortingEnabled(True)
 
-            self.ui.tab_dane.setColumnCount(8)  # Zmień na liczbę kolumn w twojej tabeli
+            self.ui.tab_dane.setColumnCount(6)  # Zmień na liczbę kolumn w twojej tabeli
             self.ui.tab_dane.setRowCount(0)  # Ustawienie liczby wierszy na 0
             self.ui.tab_dane.setHorizontalHeaderLabels([
                 'Delivery',
                 'Reklamacje',
                 'DP po initial',
                 'Zgodnosc',
-                'Zapasy',
-                'Raportowanie',
                 'Miesiac',
                 'Data dodania'
             ])
@@ -72,11 +70,9 @@ class MainWindow_kpi_mag(QWidget):
                     self.ui.tab_dane.setColumnWidth(2, 75)  # Stała szerokość: 150 pikseli
                     self.ui.tab_dane.setColumnWidth(3, 75)  # Stała szerokość: 150 pikseli
                     self.ui.tab_dane.setColumnWidth(4, 75)  # Stała szerokość: 150 pikseli
-                    self.ui.tab_dane.setColumnWidth(5, 75)  # Stała szerokość: 150 pikseli
-                    self.ui.tab_dane.setColumnWidth(6, 75)  # Stała szerokość: 150 pikseli
-                    self.ui.tab_dane.setColumnWidth(7, 150)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane.setColumnWidth(5, 150)  # Stała szerokość: 150 pikseli
 
-                    if col_idx == 6 or col_idx == 7:  # Zablokowanie edycji dla kolumny "nazwa"
+                    if col_idx == 4 or col_idx == 5:  # Zablokowanie edycji dla kolumny "nazwa"
                         item.setFlags(item.flags() & ~Qt.ItemIsEditable)  # Usuwamy flagę edytowalności
                     else:
                         item.setFlags(item.flags() | Qt.ItemIsEditable)  # Ustawienie komórek jako edytowalne
@@ -106,7 +102,7 @@ class MainWindow_kpi_mag(QWidget):
         """Funkcja do aktualizacji konkretnej komórki w bazie danych."""
         try:
             # Mapowanie indeksu kolumny na nazwę kolumny w bazie
-            column_names = ["delivery", "reklamacje", "dp_init", "zgodnosc", "zapasy", "raportowanie"]
+            column_names = ["delivery", "reklamacje", "dp_init", "zgodnosc"]
             column_name = column_names[col]
 
             # Aktualizacja w bazie danych

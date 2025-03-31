@@ -37,8 +37,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
         self.lista_pracownik_wydania = []
         self.lista_pracownik_przyjecia = []
         self.lista_pracownik_transport_bs = []
-        self.lista_pracownik_transport_cz = []
         self.lista_pracownik_wysylka = []
+        self.lista_pracownik_inwentaryzacja = []
 
         self.miesiac_roboczy = dodatki.data_miesiac_dzis()
 
@@ -59,8 +59,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
         self.licz_wydania()
         self.licz_przyjecia()
         self.licz_transport_bs()
-        self.licz_transport_cz()
         self.licz_wysylka()
+        self.licz_inwentaryzacja()
         self.ui.btn_zapisz.setEnabled(True)
 
     def miesiac_robocze(self):
@@ -315,8 +315,8 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                                 reported = round(reported + row2[0], 2)
                                 planned = round(planned + row2[1], 2)
                         wydaj = round((planned / reported) * 100, 2)
-                        produkt = round(direct * (planned / reported), 2)
-                    lista.append([zmiana, dir, indir, direct, indirect, reported, planned, wydaj, produkt])
+                        produkt = round(direct * (planned / reported), 0)
+                    lista.append([zmiana, dir, indir, direct, indirect, reported, planned, wydaj, float(produkt)])
 
             if ile_zmian == 2:
                 for row in results_direct:
@@ -341,7 +341,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                                 planned = round(planned + (row2[1] / 2), 2)
                                 wydajnosci = round(wydajnosci + (row2[2] / 2), 2)
                         wydaj = round((planned / reported) * 100, 2)
-                        produkt = round(direct * (planned / reported), 2)
+                        produkt = round(direct * (planned / reported), 0)
                     if row[2] == 'B':
                         zmiana = row[2]
                         dir = round(row[0], 2)
@@ -358,11 +358,11 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                                 planned = planned + round((row2[1] / 2), 2)
                             if row2[3] == 'inna':
                                 reported = reported + round((row2[0] / 2), 2)
-                                planned = planned + round((row2[1] / 2), 2)
+                                planned = planned + round((row2[1] / 2), 0)
 
                         wydaj = round((planned / reported) * 100, 2)
-                        produkt = round(direct * (planned / reported), 2)
-                    lista.append([zmiana, dir, indir, direct, indirect, reported, planned, wydaj, produkt])
+                        produkt = round(direct * (planned / reported), 0)
+                    lista.append([zmiana, dir, indir, direct, indirect, reported, planned, wydaj, float(produkt)])
 
             if ile_zmian == 3:
                 for row in results_direct:
@@ -383,7 +383,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                                 planned = round(planned + (row2[1] / 3), 2)
                                 wydajnosci = round(wydajnosci + (row2[2] / 3), 2)
                         wydaj = round((planned / reported) * 100, 2)
-                        produkt = round(direct * (planned / reported), 2)
+                        produkt = round(direct * (planned / reported), 0)
                     if row[2] == 'B':
                         zmiana = row[2]
                         dir = round(row[0], 2)
@@ -400,7 +400,7 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                                 planned = round(planned + (row2[1] / 3), 2)
 
                         wydaj = round((planned / reported) * 100, 2)
-                        produkt = round(direct * (planned / reported), 2)
+                        produkt = round(direct * (planned / reported), 0)
                     if row[2] == 'C':
                         zmiana = row[2]
                         dir = round(row[0], 2)
@@ -417,9 +417,9 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                                 planned = round(planned + (row2[1] / 3), 2)
 
                         wydaj = round((planned / reported) * 100, 2)
-                        produkt = round(direct * (planned / reported), 2)
+                        produkt = round(direct * (planned / reported), 0)
 
-                    lista.append([zmiana, dir, indir, direct, indirect, reported, planned, wydaj, produkt])
+                    lista.append([zmiana, dir, indir, direct, indirect, reported, planned, wydaj, float(produkt)])
 
             prog100 = self.ui.lab_pracujacychNieobecnosci.text()
             prog75 = self.ui.lab_pracujacych075Nieobecnosci.text()
@@ -818,127 +818,6 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
             print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
 
 # ========================================================================================================================================================================
-# = TRANSPORT CZ =========================================================================================================================================================
-
-    def licz_transport_cz(self):
-        """Funkcja do załadowania danych z bazy do QTableWidget."""
-        try:
-            self.ui.tab_dane_transport_Cz.setSortingEnabled(False)
-
-            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-            grupa_mag = 4  # jest to ID grypy pracowników magazynu zgodnie z tabelą grupy_mag
-            results = db.wywolaj_procedure_zmienna2(connection, 'wyliczenia_mag_pracownik', self.miesiac_roboczy, grupa_mag)
-            connection.close()
-
-            select_kpi = ''' select * from kpi_mag km where km.miesiac = '{0}' '''.format(self.miesiac_roboczy)
-            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-            results_kpi = db.read_query(connection, select_kpi)
-            connection.close()
-
-            select_bledy = ''' select * from bledy_mag bm where bm.miesiac = '{0}' '''.format(self.miesiac_roboczy)
-            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-            results_bledy = db.read_query(connection, select_bledy)
-            connection.close()
-
-            select_wytyczne = ''' select * from wytyczne_mag wm where wm.aktywny = 1 and wm.id_grupa = 4 '''
-            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
-            results_wytyczne = db.read_query(connection, select_wytyczne)
-            connection.close()
-
-            prog100 = self.ui.lab_pracujacychNieobecnosci.text()
-            prog75 = self.ui.lab_pracujacych075Nieobecnosci.text()
-            prog50 = self.ui.lab_pracujacych050Nieobecnosci.text()
-
-            prem_dp = prem_zgodnosc = prem_zapasy = prem_raportowanie = 0
-            dp_dane = int(results_kpi[0][3])
-            zgodnosc_dane = int(results_kpi[0][4])
-            zapasy_dane = int(results_kpi[0][5])
-            raportowanie_dane = int(results_kpi[0][6])
-            target_dp_init = int(results_wytyczne[0][3])
-            kwota_dp_init = results_wytyczne[0][8]
-            target_zgodnosc = int(results_wytyczne[1][3])
-            kwota_zgodnosc = results_wytyczne[1][8]
-            target_zapasy = int(results_wytyczne[2][3])
-            kwota_zapasy = results_wytyczne[2][8]
-            target_raportowanie = int(results_wytyczne[3][3])
-            kwota_raportowanie = results_wytyczne[3][8]
-            if dp_dane >= target_dp_init:
-                prem_dp = int(kwota_dp_init)
-            if zgodnosc_dane >= target_zgodnosc:
-                prem_zgodnosc = int(kwota_zgodnosc)
-            if zapasy_dane <= target_zapasy:
-                prem_zapasy = int(kwota_zapasy)
-            if raportowanie_dane <= target_raportowanie:
-                prem_raportowanie = int(kwota_raportowanie)
-
-            for dane in results:
-                suma_prem = prem_dp + prem_zgodnosc + prem_zapasy + prem_raportowanie
-
-                wsp = 0
-                wynik_n = suma_prem
-                if dane[3] > int(float(prog50)):
-                    wsp = 2
-                    wynik_n = 0.0
-                if dane[3] <= int(float(prog50)) and dane[3] > (int(float(prog100)) - int(float(prog75))):
-                    wsp = 1
-                    wynik_n = suma_prem / 2
-
-                #print(dane[0],dane[1],dane[2],prem_dp,prem_blad,suma_prem,wsp,wynik_n)
-                self.lista_pracownik_transport_cz.append([dane[0],dane[4],dane[1],dane[2],prem_dp,prem_zgodnosc,prem_zapasy,prem_raportowanie,suma_prem,wsp,wynik_n])
-
-                suma_kwot = sum(round(float(wiersz[10]), 2) for wiersz in self.lista_pracownik_transport_cz)
-                self.ui.lab_sumaTransport_Cz.setText(str(suma_kwot))
-                self.ui.lab_sumaTransport_Cz2.setText(str(suma_kwot))
-
-
-
-            self.ui.tab_dane_transport_Cz.setColumnCount(11)  # Zmień na liczbę kolumn w twojej tabeli
-            self.ui.tab_dane_transport_Cz.setRowCount(0)  # Ustawienie liczby wierszy na 0
-            self.ui.tab_dane_transport_Cz.setHorizontalHeaderLabels([
-                'Nr akt',
-                'Kod',
-                'Imię i nazwisko',
-                'Dział',
-                'DP',
-                'stany mat.',
-                'lokal. ****',
-                'oper. Przych. ',
-                'Suma Prem',
-                'Chorował',
-                'PREMIA'
-            ])
-
-            # Ustawianie liczby wierszy na podstawie danych z bazy
-            self.ui.tab_dane_transport_Cz.setRowCount(len(self.lista_pracownik_transport_cz))
-
-            # Wypełnianie tabeli danymi
-            for row_idx, row_data in enumerate(self.lista_pracownik_transport_cz):
-                # Przechowujemy id każdego wiersza
-                for col_idx, value in enumerate(row_data[0:]):  # Pomijamy id
-                    item = NumericTableWidgetItem(str(value))              # Użycie klasy soryującej dane numeryczne
-
-                    item.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-
-                    self.ui.tab_dane_transport_Cz.setColumnWidth(0, 75)  # Stała szerokość: 150 pikseli
-                    self.ui.tab_dane_transport_Cz.setColumnWidth(1, 75)  # Stała szerokość: 150 pikseli
-                    self.ui.tab_dane_transport_Cz.setColumnWidth(2, 200)  # Stała szerokość: 150 pikseli
-                    self.ui.tab_dane_transport_Cz.setColumnWidth(3, 75)  # Stała szerokość: 150 pikseli
-                    self.ui.tab_dane_transport_Cz.setColumnWidth(4, 75)  # Stała szerokość: 150 pikseli
-                    self.ui.tab_dane_transport_Cz.setColumnWidth(5, 75)  # Stała szerokość: 150 pikseli
-                    self.ui.tab_dane_transport_Cz.setColumnWidth(6, 75)  # Stała szerokość: 150 pikseli
-                    self.ui.tab_dane_transport_Cz.setColumnWidth(7, 75)  # Stała szerokość: 150 pikseli
-                    self.ui.tab_dane_transport_Cz.setColumnWidth(8, 75)  # Stała szerokość: 150 pikseli
-                    self.ui.tab_dane_transport_Cz.setColumnWidth(9, 75)  # Stała szerokość: 150 pikseli
-                    self.ui.tab_dane_transport_Cz.setColumnWidth(10, 75)  # Stała szerokość: 150 pikseli
-
-                    self.ui.tab_dane_transport_Cz.setItem(row_idx, col_idx, item)
-
-            self.ui.tab_dane_transport_Cz.setSortingEnabled(True)
-
-        except db.Error as e:
-            print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
-
-# ========================================================================================================================================================================
 # = WYSYŁKA ==============================================================================================================================================================
 
     def licz_wysylka(self):
@@ -1058,6 +937,145 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
             print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
 
 # ========================================================================================================================================================================
+# = INWENTARYZACJA =======================================================================================================================================================
+
+    def licz_inwentaryzacja(self):
+        """Funkcja do załadowania danych z bazy do QTableWidget."""
+        try:
+            self.ui.tab_dane_inwentaryzacja.setSortingEnabled(False)
+
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+            grupa_mag = 7  # jest to ID grypy pracowników magazynu zgodnie z tabelą grupy_mag
+            results = db.wywolaj_procedure_zmienna2(connection, 'wyliczenia_mag_pracownik', self.miesiac_roboczy, grupa_mag)
+            connection.close()
+
+            select_kpi = ''' select * from kpi_mag km where km.miesiac = '{0}' '''.format(self.miesiac_roboczy)
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+            results_kpi = db.read_query(connection, select_kpi)
+            connection.close()
+
+            select_wytyczne = ''' select * from wytyczne_mag wm where wm.aktywny = 1 and wm.id_grupa = 7 '''
+            connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
+            results_wytyczne = db.read_query(connection, select_wytyczne)
+            connection.close()
+
+            prog100 = self.ui.lab_pracujacychNieobecnosci.text()
+            prog75 = self.ui.lab_pracujacych075Nieobecnosci.text()
+            prog50 = self.ui.lab_pracujacych050Nieobecnosci.text()
+
+            plan_na_czas = 99
+            zgodnosc_liczenia_97 = int(results_wytyczne[0][3])
+            zgodnosc_liczenia_97_kwota = results_wytyczne[0][8]
+            zgodnosc_liczenia_95 = int(results_wytyczne[1][3])
+            zgodnosc_liczenia_95_kwota = results_wytyczne[1][8]
+            zgodnosc_liczenia_90 = int(results_wytyczne[2][3])
+            zgodnosc_liczenia_90_kwota = results_wytyczne[2][8]
+
+            plan_na_czas_kpi = int(results_kpi[0][9])
+            zgodnosc_liczenia_kpi = int(results_kpi[0][10])
+            dzialanie_na_czas_kpi = int(results_kpi[0][11])
+
+            prem_zgod = prem_dzial = 0
+            wsp = 0
+
+            if plan_na_czas_kpi >= plan_na_czas:
+                if zgodnosc_liczenia_kpi >= zgodnosc_liczenia_97:
+                    prem_zgod = zgodnosc_liczenia_97_kwota
+                elif zgodnosc_liczenia_kpi >= zgodnosc_liczenia_95:
+                    prem_zgod = zgodnosc_liczenia_95_kwota
+                elif zgodnosc_liczenia_kpi >= zgodnosc_liczenia_90:
+                    prem_zgod = zgodnosc_liczenia_90_kwota
+
+                if dzialanie_na_czas_kpi >= 90:
+                    prem_dzial = prem_zgod
+                elif  dzialanie_na_czas_kpi >= 85:
+                    prem_dzial = prem_zgod * 0.75
+                elif  dzialanie_na_czas_kpi >= 80:
+                    prem_dzial = prem_zgod * 0.5
+                elif  dzialanie_na_czas_kpi >= 75:
+                    prem_dzial = prem_zgod * 0.25
+                else:
+                    prem_dzial = 0
+
+
+                for dane in results:
+                    wynik_n = prem_dzial
+                    if dane[3] > int(float(prog50)):
+                        wsp = 2
+                        wynik_n = 0.0
+                    if dane[3] <= int(float(prog50)) and dane[3] > (int(float(prog100)) - int(float(prog75))):
+                        wsp = 1
+                        wynik_n = prem_dzial / 2
+
+                    self.lista_pracownik_inwentaryzacja.append([dane[0], dane[4], dane[1], dane[2],plan_na_czas_kpi, zgodnosc_liczenia_kpi, prem_zgod, dzialanie_na_czas_kpi, prem_dzial, wsp, wynik_n])
+
+                    suma_kwot = sum(round(float(wiersz[10]), 2) for wiersz in self.lista_pracownik_inwentaryzacja)
+
+            else:
+                for dane in results:
+                    wynik_n = 0
+                    if dane[3] > int(float(prog50)):
+                        wsp = 2
+                        wynik_n = 0.0
+                    if dane[3] <= int(float(prog50)) and dane[3] > (int(float(prog100)) - int(float(prog75))):
+                        wsp = 1
+                        wynik_n = 0.0
+
+                    self.lista_pracownik_inwentaryzacja.append([dane[0], dane[4], dane[1], dane[2], plan_na_czas_kpi, zgodnosc_liczenia_kpi, 0, dzialanie_na_czas_kpi, 0, wsp, wynik_n])
+                suma_kwot = 0
+
+            self.ui.lab_sumaInwentaryzacja.setText(str(suma_kwot))
+            self.ui.lab_sumaInwentaryzacja2.setText(str(suma_kwot))
+
+#--------- WYKONANE ^^^^^^^ -------------------------------------------------
+
+            self.ui.tab_dane_inwentaryzacja.setColumnCount(11)  # Zmień na liczbę kolumn w twojej tabeli
+            self.ui.tab_dane_inwentaryzacja.setRowCount(0)  # Ustawienie liczby wierszy na 0
+            self.ui.tab_dane_inwentaryzacja.setHorizontalHeaderLabels([
+                'Nr akt',
+                'Kod',
+                'Imię i nazwisko',
+                'Dział',
+                'Plan na czas',
+                'Zgodność liczenia',
+                'Kwota',
+                'Działania na czas',
+                'Suma Prem',
+                'Chorował',
+                'PREMIA'
+            ])
+
+            # Ustawianie liczby wierszy na podstawie danych z bazy
+            self.ui.tab_dane_inwentaryzacja.setRowCount(len(self.lista_pracownik_inwentaryzacja))
+
+            # Wypełnianie tabeli danymi
+            for row_idx, row_data in enumerate(self.lista_pracownik_inwentaryzacja):
+                # Przechowujemy id każdego wiersza
+                for col_idx, value in enumerate(row_data[0:]):  # Pomijamy id
+                    item = NumericTableWidgetItem(str(value))              # Użycie klasy soryującej dane numeryczne
+
+                    item.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+
+                    self.ui.tab_dane_inwentaryzacja.setColumnWidth(0, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_inwentaryzacja.setColumnWidth(1, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_inwentaryzacja.setColumnWidth(2, 200)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_inwentaryzacja.setColumnWidth(3, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_inwentaryzacja.setColumnWidth(4, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_inwentaryzacja.setColumnWidth(5, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_inwentaryzacja.setColumnWidth(6, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_inwentaryzacja.setColumnWidth(7, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_inwentaryzacja.setColumnWidth(8, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_inwentaryzacja.setColumnWidth(9, 75)  # Stała szerokość: 150 pikseli
+                    self.ui.tab_dane_inwentaryzacja.setColumnWidth(10, 75)  # Stała szerokość: 150 pikseli
+
+                    self.ui.tab_dane_inwentaryzacja.setItem(row_idx, col_idx, item)
+
+            self.ui.tab_dane_inwentaryzacja.setSortingEnabled(True)
+
+        except db.Error as e:
+            print(f"Błąd przy pobieraniu danych z bazy danych: {e}")
+
+# ========================================================================================================================================================================
 # = INNE =================================================================================================================================================================
     def sprawdz_wpisy(self):
         miestac_roboczy = dodatki.data_miesiac_dzis()
@@ -1135,23 +1153,23 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
                 if kwota > 0:
                     lista_place.append([nr_akt, kod, imie_i_nazwisko, kwota, opis, dzial, data_miesiac, teraz])
 
-            for dane_place in self.lista_pracownik_transport_cz:
-                nr_akt = dane_place[0]  # nr akt
-                kod = dane_place[1]  # kod
-                imie_i_nazwisko = dane_place[2]  # Imie i nazwisko
-                kwota = dane_place[10]  # kwota
-                opis = 'transport_cz'
-                dzial = 'mag'
-
-                if kwota > 0:
-                    lista_place.append([nr_akt, kod, imie_i_nazwisko, kwota, opis, dzial, data_miesiac, teraz])
-
             for dane_place in self.lista_pracownik_wysylka:
                 nr_akt = dane_place[0]  # nr akt
                 kod = dane_place[1]  # kod
                 imie_i_nazwisko = dane_place[2]  # Imie i nazwisko
                 kwota = dane_place[8]  # kwota
                 opis = 'wysylka'
+                dzial = 'mag'
+
+                if kwota > 0:
+                    lista_place.append([nr_akt, kod, imie_i_nazwisko, kwota, opis, dzial, data_miesiac, teraz])
+
+            for dane_place in self.lista_pracownik_inwentaryzacja:
+                nr_akt = dane_place[0]  # nr akt
+                kod = dane_place[1]  # kod
+                imie_i_nazwisko = dane_place[2]  # Imie i nazwisko
+                kwota = dane_place[10]  # kwota
+                opis = 'inwentaryzacja_bs'
                 dzial = 'mag'
 
                 if kwota > 0:
@@ -1183,14 +1201,14 @@ class MainWindow_wyliczeniaForm_mag(QWidget):
         self.ui.tab_dane_transport_bs.clearContents()
         self.ui.tab_dane_transport_bs.setRowCount(0)
 
-        self.ui.tab_dane_transport_Cz.clearContents()
-        self.ui.tab_dane_transport_Cz.setRowCount(0)
-
         self.ui.tab_dane_wysylka.clearContents()
         self.ui.tab_dane_wysylka.setRowCount(0)
+
+        self.ui.tab_dane_inwentaryzacja.clearContents()
+        self.ui.tab_dane_inwentaryzacja.setRowCount(0)
 
         self.lista_pracownik_wydania.clear()
         self.lista_pracownik_przyjecia.clear()
         self.lista_pracownik_transport_bs.clear()
-        self.lista_pracownik_transport_cz.clear()
         self.lista_pracownik_wysylka.clear()
+        self.lista_pracownik_inwentaryzacja.clear()

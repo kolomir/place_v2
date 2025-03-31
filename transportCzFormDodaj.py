@@ -1,10 +1,10 @@
 from PyQt5.QtWidgets import QWidget, QMessageBox
 
-from _pomocFormDodaj_ui import Ui_Form
+from _transportCzFormDodaj_ui import Ui_Form
 import db, re
 from datetime import datetime
 
-class MainWindow_pomocFormDodaj(QWidget):
+class MainWindow_transportCzFormDodaj(QWidget):
     def __init__(self):
         super().__init__()
         self.ui = Ui_Form()
@@ -15,7 +15,7 @@ class MainWindow_pomocFormDodaj(QWidget):
         self.ui.btn_zapisz.clicked.connect(self.zapisz)
 
     def combo_pomoc(self):
-        query = "SELECT * FROM instruktor WHERE aktywny = 1 and id_ranga = 4;"
+        query = "SELECT * FROM instruktor WHERE aktywny = 1 and id_ranga = 5;"
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         results = db.read_query(connection, query)
         print('results', results)
@@ -59,7 +59,7 @@ class MainWindow_pomocFormDodaj(QWidget):
         teraz = datetime.today()
         print('pole_wsparcie_id:',pole_wsparcie_id)
         print('pole_linie:',pole_linie)
-        insert_data1 = "INSERT INTO wsparcie_produkcji VALUES (NULL, '%s', '%s', '%s', '%s', '%s');" % (pole_wsparcie_id,pole_linie,str(aktywny), teraz, teraz)
+        insert_data1 = "INSERT INTO transport_produkcji VALUES (NULL, '%s', '%s', '%s', '%s', '%s');" % (pole_wsparcie_id,pole_linie,str(aktywny), teraz, teraz)
         print('insert_data1',insert_data1)
         connection1 = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         db.execute_query(connection1, insert_data1)
