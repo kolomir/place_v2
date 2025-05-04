@@ -72,30 +72,52 @@ class MainWindow_korekta_indirect_prod(QWidget):
         print(data_miesiac)
 
         query = '''
-                        select 
-                            d.Nr_akt 
-                            ,d.Nazwisko_i_imie 
-                        from 
-                            direct d 
-                        where 
-                            miesiac = '{0}'
-                        '''.format(data_miesiac)
+                    select 
+                        d.Nr_akt 
+                        ,d.Nazwisko_i_imie 
+                    from 
+                        direct d 
+                    where 
+                        miesiac = '{0}'
+                    '''.format(data_miesiac)
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
         results = db.read_query(connection, query)
         connection.close()
 
         lista_wpisow = []
+        dane = {}  # Format: {nr_prac: [całkowity_czas, [lista_opisów]]}
 
         # czytamy wszystkie kolumny i wiersze ze wskazanego pliku
         for row in sheet.iter_rows(min_row=2, min_col=1, max_col=3, values_only=True):
+            nr_prac = row[0]
+            czas = row[1]
+            opis = row[2]
+
             # sprawdzamy czy wiersz nie jest pusty (zakładając że pusty wiersz ma wszystkie kolumny o wartosci None i kończy zestawienie)
             if any(cell is not None for cell in row):
-                for dane in results:
-                    if int(dane[0]) == row[0]:
-                        pracownik = dane[1]
-                lista_wpisow.append([row[0], pracownik, row[1], row[2], data_miesiac, teraz, self.dzial_nazwa])
+                if nr_prac in dane:
+                    # Jeśli pracownik już istnieje, sumujemy czas i dodajemy opis
+                    dane[nr_prac][0] += czas
+                    dane[nr_prac][1].append(opis)
+                else:
+                    # Jeśli pracownik pojawia się po raz pierwszy, inicjalizujemy dane
+                    dane[nr_prac] = [czas, [opis]]
             else:
                 break
+
+        # Wyszukiwanie nazwisk dla każdego numeru pracownika i formatowanie końcowych danych
+        for nr_prac, (total_czas, opisy) in dane.items():
+            pracownik = ""
+            for dane_pracownika in results:
+                if int(dane_pracownika[0]) == nr_prac:
+                    pracownik = dane_pracownika[1]
+                    break
+
+            # Łączymy wszystkie opisy dla tego pracownika w jeden tekst, oddzielając średnikiem
+            polaczony_opis = "; ".join(filter(None, opisy))  # filter(None, opisy) usuwa puste opisy
+
+            lista_wpisow.append(
+                [nr_prac, pracownik, total_czas, polaczony_opis, data_miesiac, teraz, self.dzial_nazwa])
 
         connection = db.create_db_connection(db.host_name, db.user_name, db.password, db.database_name)
 
